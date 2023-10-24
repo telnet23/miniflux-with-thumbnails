@@ -28,6 +28,7 @@ func (h *handler) showSearchEntriesPage(w http.ResponseWriter, r *http.Request) 
 	builder.WithoutStatus(model.EntryStatusRemoved)
 	builder.WithOffset(offset)
 	builder.WithLimit(user.EntriesPerPage)
+	builder.WithEnclosures()
 
 	entries, err := builder.GetEntries()
 	if err != nil {

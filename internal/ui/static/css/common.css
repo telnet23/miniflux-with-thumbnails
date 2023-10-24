@@ -705,6 +705,13 @@ template {
     box-shadow: var(--current-item-box-shadow);
 }
 
+.item-thumbnail {
+    float: right;
+    margin-left: 4px;
+    max-height: 100px;
+    max-width: 150px;
+}
+
 .item-title a {
     text-decoration: none;
     font-weight: var(--item-title-link-font-weight);

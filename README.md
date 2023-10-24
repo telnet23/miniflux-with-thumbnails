@@ -1,3 +1,12 @@
+miniflux-with-thumbnails
+========================
+
+A fork of the Miniflux feed reader that displays thumbnails next to feed entries:
+
+![](screenshot.png)
+
+---
+
 Miniflux 2
 ==========
 

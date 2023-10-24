@@ -37,6 +37,7 @@
     <div class="items hide-read-items">
         {{ range .entries }}
         <article role="article" class="item entry-item {{ if $.user.EntrySwipe }}entry-swipe{{ end }} item-status-{{ .Status }}" data-id="{{ .ID }}">
+            {{ template "item_thumbnail" . }}
             <div class="item-header" dir="auto">
                 <span class="item-title">
                     {{ if ne .Feed.Icon.IconID 0 }}

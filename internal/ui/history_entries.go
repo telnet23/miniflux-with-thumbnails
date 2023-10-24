@@ -28,6 +28,7 @@ func (h *handler) showHistoryPage(w http.ResponseWriter, r *http.Request) {
 	builder.WithSorting("published_at", "DESC")
 	builder.WithOffset(offset)
 	builder.WithLimit(user.EntriesPerPage)
+	builder.WithEnclosures()
 
 	entries, err := builder.GetEntries()
 	if err != nil {
