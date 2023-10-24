@@ -1113,3 +1113,19 @@ audio, video {
 .integration-form details .form-section {
     margin-top: 15px;
 }
+
+div.item-container {
+    display: flex;
+}
+
+div.item-container-left {
+    margin-right: auto;
+}
+
+div.item-container-right {
+    margin-left: auto;
+}
+
+img.item-thumbnail {
+      height: 100px;
+}

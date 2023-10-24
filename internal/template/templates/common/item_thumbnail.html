@@ -1,0 +1,8 @@
+{{ define "item_thumbnail" }}
+{{ range .Enclosures }}
+{{ if eq .MimeType "image/*" }}
+    <img class="item-thumbnail" referrerpolicy="no-referrer" src="{{ .URL }}">
+    {{ break }}
+{{ end }}
+{{ end }}
+{{ end }}
