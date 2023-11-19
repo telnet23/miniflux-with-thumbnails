@@ -11,7 +11,7 @@
                     <a href="{{ route "feedEntries" "feedID" .ID }}">{{ .Title }}</a>
                 </span>
                 <span class="feed-entries-counter">
-                    (<span title="{{ t "page.feeds.unread_counter" }}">{{ .UnreadCount }}</span>/<span title="{{ t "page.feeds.read_counter" }}">{{ .ReadCount }}</span>)
+                    (<span title="{{ t "page.feeds.unread_counter" }}">{{ .UnreadCount }}</span>/<span>{{ .NumberOfVisibleEntries }}</span>)
                 </span>
                 <span class="category">
                     <a href="{{ route "categoryEntries" "categoryID" .Category.ID }}">{{ .Category.Title }}</a>
@@ -25,6 +25,12 @@
                     <li class="item-meta-info-checked-at">
                         {{ t "page.feeds.last_check" }} <time datetime="{{ isodate .CheckedAt }}" title="{{ isodate .CheckedAt }}">{{ elapsed $.user.Timezone .CheckedAt }}</time>
                     </li>
+                    {{ $nextCheckDuration := duration .NextCheckAt }}
+                    {{ if ne $nextCheckDuration "" }}
+                    <li class="item-meta-info-next-check-at">
+                        {{ t "page.feeds.next_check" }} <time datetime="{{ isodate .NextCheckAt }}" title="{{ isodate .NextCheckAt }}">{{ $nextCheckDuration }}</time>
+                    </li>
+                    {{ end }}
                 </ul>
                 <ul class="item-meta-icons">
                     <li class="item-meta-icons-refresh">

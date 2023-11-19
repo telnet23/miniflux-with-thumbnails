@@ -783,4 +783,46 @@ var migrations = []func(tx *sql.Tx) error{
 		_, err = tx.Exec(sql)
 		return err
 	},
+	func(tx *sql.Tx) (err error) {
+		sql := `
+			-- Speed up has_enclosure
+			CREATE INDEX enclosures_entry_id_idx ON enclosures(entry_id);
+
+			-- Speed up unread page
+			CREATE INDEX entries_user_status_published_idx ON entries(user_id, status, published_at);
+			CREATE INDEX entries_user_status_created_idx ON entries(user_id, status, created_at);
+			CREATE INDEX feeds_feed_id_hide_globally_idx ON feeds(id, hide_globally);
+
+			-- Speed up history page
+			CREATE INDEX entries_user_status_changed_published_idx ON entries(user_id, status, changed_at, published_at);
+		`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `
+			ALTER TABLE integrations ADD COLUMN rssbridge_enabled bool default 'f';
+			ALTER TABLE integrations ADD COLUMN rssbridge_url text default '';
+		`
+		_, err = tx.Exec(sql)
+		return
+	},
+	func(tx *sql.Tx) (err error) {
+		_, err = tx.Exec(`
+			CREATE TABLE webauthn_credentials (
+				handle bytea primary key,
+				cred_id bytea unique not null,
+				user_id int references users(id) on delete cascade not null,
+				public_key bytea not null,
+				attestation_type varchar(255) not null,
+				aaguid bytea,
+				sign_count bigint,
+				clone_warning bool,
+				name text,
+				added_on timestamp with time zone default now(),
+				last_seen_on timestamp with time zone default now()
+			);
+		`)
+		return
+	},
 }
