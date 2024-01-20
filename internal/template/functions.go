@@ -107,7 +107,8 @@ func (f *funcMap) Map() template.FuncMap {
 		"nonce": func() string {
 			return crypto.GenerateRandomStringHex(16)
 		},
-		"deRef": func(i *int) int { return *i },
+		"deRef":    func(i *int) int { return *i },
+		"duration": duration,
 
 		// These functions are overrode at runtime after the parsing.
 		"elapsed": func(timezone string, t time.Time) string {
@@ -158,6 +159,27 @@ func truncate(str string, max int) string {
 func isEmail(str string) bool {
 	_, err := mail.ParseAddress(str)
 	return err == nil
+}
+
+// Returns the duration in human readable format (hours and minutes).
+func duration(t time.Time) string {
+	return durationImpl(t, time.Now())
+}
+
+// Accepts now argument for easy testing
+func durationImpl(t time.Time, now time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+
+	diff := t.Sub(now)
+
+	if diff < 0 {
+		return ""
+	}
+
+	// Round to nearest second to get e.g. "14m56s" rather than "14m56.245483933s"
+	return diff.Round(time.Second).String()
 }
 
 func elapsedTime(printer *locale.Printer, tz string, t time.Time) string {
