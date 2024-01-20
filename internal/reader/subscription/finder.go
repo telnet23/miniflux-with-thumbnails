@@ -14,6 +14,7 @@ import (
 	"miniflux.app/v2/internal/integration/rssbridge"
 	"miniflux.app/v2/internal/locale"
 	"miniflux.app/v2/internal/model"
+	"miniflux.app/v2/internal/reader/encoding"
 	"miniflux.app/v2/internal/reader/fetcher"
 	"miniflux.app/v2/internal/reader/parser"
 	"miniflux.app/v2/internal/urllib"
@@ -98,8 +99,11 @@ func (f *SubscriptionFinder) FindSubscriptions(websiteURL, rssBridgeURL string) 
 	}
 
 	// Step 4) Parse web page to find feeds from HTML meta tags.
-	slog.Debug("Try to detect feeds from HTML meta tags", slog.String("website_url", websiteURL))
-	subscriptions, localizedError = f.FindSubscriptionsFromWebPage(websiteURL, bytes.NewReader(responseBody))
+	slog.Debug("Try to detect feeds from HTML meta tags",
+		slog.String("website_url", websiteURL),
+		slog.String("content_type", responseHandler.ContentType()),
+	)
+	subscriptions, localizedError = f.FindSubscriptionsFromWebPage(websiteURL, responseHandler.ContentType(), bytes.NewReader(responseBody))
 	if localizedError != nil {
 		return nil, localizedError
 	}
@@ -138,7 +142,7 @@ func (f *SubscriptionFinder) FindSubscriptions(websiteURL, rssBridgeURL string) 
 	return nil, nil
 }
 
-func (f *SubscriptionFinder) FindSubscriptionsFromWebPage(websiteURL string, body io.Reader) (Subscriptions, *locale.LocalizedErrorWrapper) {
+func (f *SubscriptionFinder) FindSubscriptionsFromWebPage(websiteURL, contentType string, body io.Reader) (Subscriptions, *locale.LocalizedErrorWrapper) {
 	queries := map[string]string{
 		"link[type='application/rss+xml']":   parser.FormatRSS,
 		"link[type='application/atom+xml']":  parser.FormatAtom,
@@ -146,12 +150,18 @@ func (f *SubscriptionFinder) FindSubscriptionsFromWebPage(websiteURL string, bod
 		"link[type='application/feed+json']": parser.FormatJSON,
 	}
 
-	doc, err := goquery.NewDocumentFromReader(body)
+	htmlDocumentReader, err := encoding.CharsetReaderFromContentType(contentType, body)
+	if err != nil {
+		return nil, locale.NewLocalizedErrorWrapper(err, "error.unable_to_parse_html_document", err)
+	}
+
+	doc, err := goquery.NewDocumentFromReader(htmlDocumentReader)
 	if err != nil {
 		return nil, locale.NewLocalizedErrorWrapper(err, "error.unable_to_parse_html_document", err)
 	}
 
 	var subscriptions Subscriptions
+	subscriptionURLs := make(map[string]bool)
 	for query, kind := range queries {
 		doc.Find(query).Each(func(i int, s *goquery.Selection) {
 			subscription := new(Subscription)
@@ -163,7 +173,10 @@ func (f *SubscriptionFinder) FindSubscriptionsFromWebPage(websiteURL string, bod
 
 			if feedURL, exists := s.Attr("href"); exists {
 				if feedURL != "" {
-					subscription.URL, _ = urllib.AbsoluteURL(websiteURL, feedURL)
+					subscription.URL, err = urllib.AbsoluteURL(websiteURL, feedURL)
+					if err != nil {
+						return
+					}
 				}
 			}
 
@@ -171,7 +184,8 @@ func (f *SubscriptionFinder) FindSubscriptionsFromWebPage(websiteURL string, bod
 				subscription.Title = subscription.URL
 			}
 
-			if subscription.URL != "" {
+			if subscription.URL != "" && !subscriptionURLs[subscription.URL] {
+				subscriptionURLs[subscription.URL] = true
 				subscriptions = append(subscriptions, subscription)
 			}
 		})
