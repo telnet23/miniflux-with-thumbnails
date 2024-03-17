@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
         keyboardHandler.on("l", () => goToPage("next"));
         keyboardHandler.on("z t", () => scrollToCurrentItem());
         keyboardHandler.on("o", () => openSelectedItem());
+        keyboardHandler.on("Enter", () => openSelectedItem());
         keyboardHandler.on("v", () => openOriginalLink());
         keyboardHandler.on("V", () => openOriginalLink(true));
         keyboardHandler.on("c", () => openCommentLink());
@@ -34,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
         keyboardHandler.on("?", () => showKeyboardShortcuts());
         keyboardHandler.on("+", () => goToAddSubscription());
         keyboardHandler.on("#", () => unsubscribeFromFeed());
-        keyboardHandler.on("/", (e) => setFocusToSearchInput(e));
+        keyboardHandler.on("/", () => goToPage("search"));
         keyboardHandler.on("a", () => {
             let enclosureElement = document.querySelector('.entry-enclosures');
             if (enclosureElement) {

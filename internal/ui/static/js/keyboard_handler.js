@@ -17,7 +17,10 @@ class KeyboardHandler {
                 return;
             }
 
-            event.preventDefault();
+            if (key != "Enter") {
+                event.preventDefault();
+            }
+
             this.queue.push(key);
 
             for (let combination in this.shortcuts) {
