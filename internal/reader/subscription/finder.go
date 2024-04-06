@@ -14,12 +14,12 @@ import (
 	"miniflux.app/v2/internal/integration/rssbridge"
 	"miniflux.app/v2/internal/locale"
 	"miniflux.app/v2/internal/model"
-	"miniflux.app/v2/internal/reader/encoding"
 	"miniflux.app/v2/internal/reader/fetcher"
 	"miniflux.app/v2/internal/reader/parser"
 	"miniflux.app/v2/internal/urllib"
 
 	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/net/html/charset"
 )
 
 var (
@@ -69,7 +69,7 @@ func (f *SubscriptionFinder) FindSubscriptions(websiteURL, rssBridgeURL string) 
 	}
 
 	// Step 1) Check if the website URL is a feed.
-	if feedFormat := parser.DetectFeedFormat(f.feedResponseInfo.Content); feedFormat != parser.FormatUnknown {
+	if feedFormat, _ := parser.DetectFeedFormat(f.feedResponseInfo.Content); feedFormat != parser.FormatUnknown {
 		f.feedDownloaded = true
 		return Subscriptions{NewSubscription(responseHandler.EffectiveURL(), responseHandler.EffectiveURL(), feedFormat)}, nil
 	}
@@ -150,7 +150,7 @@ func (f *SubscriptionFinder) FindSubscriptionsFromWebPage(websiteURL, contentTyp
 		"link[type='application/feed+json']": parser.FormatJSON,
 	}
 
-	htmlDocumentReader, err := encoding.CharsetReaderFromContentType(contentType, body)
+	htmlDocumentReader, err := charset.NewReader(body, contentType)
 	if err != nil {
 		return nil, locale.NewLocalizedErrorWrapper(err, "error.unable_to_parse_html_document", err)
 	}
