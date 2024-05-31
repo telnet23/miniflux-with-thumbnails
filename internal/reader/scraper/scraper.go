@@ -10,12 +10,12 @@ import (
 	"strings"
 
 	"miniflux.app/v2/internal/config"
-	"miniflux.app/v2/internal/reader/encoding"
 	"miniflux.app/v2/internal/reader/fetcher"
 	"miniflux.app/v2/internal/reader/readability"
 	"miniflux.app/v2/internal/urllib"
 
 	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/net/html/charset"
 )
 
 func ScrapeWebsite(requestBuilder *fetcher.RequestBuilder, websiteURL, rules string) (string, error) {
@@ -42,9 +42,9 @@ func ScrapeWebsite(requestBuilder *fetcher.RequestBuilder, websiteURL, rules str
 	var content string
 	var err error
 
-	htmlDocumentReader, err := encoding.CharsetReaderFromContentType(
-		responseHandler.ContentType(),
+	htmlDocumentReader, err := charset.NewReader(
 		responseHandler.Body(config.Opts.HTTPClientMaxBodySize()),
+		responseHandler.ContentType(),
 	)
 	if err != nil {
 		return "", fmt.Errorf("scraper: unable to read HTML document: %v", err)
@@ -78,10 +78,9 @@ func findContentUsingCustomRules(page io.Reader, rules string) (string, error) {
 
 	contents := ""
 	document.Find(rules).Each(func(i int, s *goquery.Selection) {
-		var content string
-
-		content, _ = goquery.OuterHtml(s)
-		contents += content
+		if content, err := goquery.OuterHtml(s); err == nil {
+			contents += content
+		}
 	})
 
 	return contents, nil
@@ -89,13 +88,11 @@ func findContentUsingCustomRules(page io.Reader, rules string) (string, error) {
 
 func getPredefinedScraperRules(websiteURL string) string {
 	urlDomain := urllib.Domain(websiteURL)
+	urlDomain = strings.TrimPrefix(urlDomain, "www.")
 
-	for domain, rules := range predefinedRules {
-		if strings.Contains(urlDomain, domain) {
-			return rules
-		}
+	if rules, ok := predefinedRules[urlDomain]; ok {
+		return rules
 	}
-
 	return ""
 }
 

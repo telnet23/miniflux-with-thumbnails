@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
+	"strings"
 	"time"
 
 	"miniflux.app/v2/internal/crypto"
@@ -138,7 +140,7 @@ func (s *Storage) createEntry(tx *sql.Tx, entry *model.Entry) error {
 		entry.UserID,
 		entry.FeedID,
 		entry.ReadingTime,
-		pq.Array(removeDuplicates(entry.Tags)),
+		pq.Array(removeEmpty(removeDuplicates(entry.Tags))),
 	).Scan(
 		&entry.ID,
 		&entry.Status,
@@ -150,10 +152,10 @@ func (s *Storage) createEntry(tx *sql.Tx, entry *model.Entry) error {
 		return fmt.Errorf(`store: unable to create entry %q (feed #%d): %v`, entry.URL, entry.FeedID, err)
 	}
 
-	for i := 0; i < len(entry.Enclosures); i++ {
-		entry.Enclosures[i].EntryID = entry.ID
-		entry.Enclosures[i].UserID = entry.UserID
-		err := s.createEnclosure(tx, entry.Enclosures[i])
+	for _, enclosure := range entry.Enclosures {
+		enclosure.EntryID = entry.ID
+		enclosure.UserID = entry.UserID
+		err := s.createEnclosure(tx, enclosure)
 		if err != nil {
 			return err
 		}
@@ -194,7 +196,7 @@ func (s *Storage) updateEntry(tx *sql.Tx, entry *model.Entry) error {
 		entry.UserID,
 		entry.FeedID,
 		entry.Hash,
-		pq.Array(removeDuplicates(entry.Tags)),
+		pq.Array(removeEmpty(removeDuplicates(entry.Tags))),
 	).Scan(&entry.ID)
 
 	if err != nil {
@@ -223,16 +225,27 @@ func (s *Storage) entryExists(tx *sql.Tx, entry *model.Entry) (bool, error) {
 	return result, nil
 }
 
-// GetReadTime fetches the read time of an entry based on its hash, and the feed id and user id from the feed.
-// It's intended to be used on entries objects created by parsing a feed as they don't contain much information.
-// The feed param helps to scope the search to a specific user and feed in order to avoid hash clashes.
-func (s *Storage) GetReadTime(entry *model.Entry, feed *model.Feed) int {
+func (s *Storage) IsNewEntry(feedID int64, entryHash string) bool {
+	var result bool
+	s.db.QueryRow(`SELECT true FROM entries WHERE feed_id=$1 AND hash=$2`, feedID, entryHash).Scan(&result)
+	return !result
+}
+
+func (s *Storage) GetReadTime(feedID int64, entryHash string) int {
 	var result int
+
+	// Note: This query uses entries_feed_id_hash_key index
 	s.db.QueryRow(
-		`SELECT reading_time FROM entries WHERE user_id=$1 AND feed_id=$2 AND hash=$3`,
-		feed.UserID,
-		feed.ID,
-		entry.Hash,
+		`SELECT
+			reading_time
+		FROM
+			entries
+		WHERE
+			feed_id=$1 AND
+			hash=$2
+		`,
+		feedID,
+		entryHash,
 	).Scan(&result)
 	return result
 }
@@ -243,11 +256,11 @@ func (s *Storage) cleanupEntries(feedID int64, entryHashes []string) error {
 		DELETE FROM
 			entries
 		WHERE
-			feed_id=$1
-		AND
-			id IN (SELECT id FROM entries WHERE feed_id=$2 AND status=$3 AND NOT (hash=ANY($4)))
+			feed_id=$1 AND
+			status=$2 AND
+			NOT (hash=ANY($3))
 	`
-	if _, err := s.db.Exec(query, feedID, feedID, model.EntryStatusRemoved, pq.Array(entryHashes)); err != nil {
+	if _, err := s.db.Exec(query, feedID, model.EntryStatusRemoved, pq.Array(entryHashes)); err != nil {
 		return fmt.Errorf(`store: unable to cleanup entries: %v`, err)
 	}
 
@@ -325,10 +338,22 @@ func (s *Storage) ArchiveEntries(status string, days, limit int) (int64, error) 
 		SET
 			status=$1
 		WHERE
-			id=ANY(SELECT id FROM entries WHERE status=$2 AND starred is false AND share_code='' AND created_at < now () - '%d days'::interval ORDER BY created_at ASC LIMIT %d)
+			id IN (
+				SELECT
+					id
+				FROM
+					entries
+				WHERE
+					status=$2 AND
+					starred is false AND
+					share_code='' AND
+					created_at < now () - $3::interval
+				ORDER BY
+					created_at ASC LIMIT $4
+				)
 	`
 
-	result, err := s.db.Exec(fmt.Sprintf(query, days, limit), model.EntryStatusRemoved, status)
+	result, err := s.db.Exec(query, model.EntryStatusRemoved, status, fmt.Sprintf("%d days", days), limit)
 	if err != nil {
 		return 0, fmt.Errorf(`store: unable to archive %s entries: %v`, status, err)
 	}
@@ -525,14 +550,18 @@ func (s *Storage) MarkCategoryAsRead(userID, categoryID int64, before time.Time)
 		SET
 			status=$1,
 			changed_at=now()
+		FROM
+			feeds
 		WHERE
-			user_id=$2
+			feed_id=feeds.id
+		AND
+			feeds.user_id=$2
 		AND
 			status=$3
 		AND
 			published_at < $4
 		AND
-			feed_id IN (SELECT id FROM feeds WHERE user_id=$2 AND category_id=$5)
+			feeds.category_id=$5
 	`
 	result, err := s.db.Exec(query, model.EntryStatusRead, userID, model.EntryStatusUnread, before, categoryID)
 	if err != nil {
@@ -547,14 +576,6 @@ func (s *Storage) MarkCategoryAsRead(userID, categoryID int64, before time.Time)
 	)
 
 	return nil
-}
-
-// EntryURLExists returns true if an entry with this URL already exists.
-func (s *Storage) EntryURLExists(feedID int64, entryURL string) bool {
-	var result bool
-	query := `SELECT true FROM entries WHERE feed_id=$1 AND url=$2`
-	s.db.QueryRow(query, feedID, entryURL).Scan(&result)
-	return result
 }
 
 // EntryShareCode returns the share code of the provided entry.
@@ -591,15 +612,17 @@ func (s *Storage) UnshareEntry(userID int64, entryID int64) (err error) {
 	return
 }
 
-// removeDuplicate removes duplicate entries from a slice
-func removeDuplicates[T string | int](sliceList []T) []T {
-	allKeys := make(map[T]bool)
-	list := []T{}
-	for _, item := range sliceList {
-		if _, value := allKeys[item]; !value {
-			allKeys[item] = true
-			list = append(list, item)
+func removeDuplicates(l []string) []string {
+	slices.Sort(l)
+	return slices.Compact(l)
+}
+
+func removeEmpty(l []string) []string {
+	var finalSlice []string
+	for _, item := range l {
+		if strings.TrimSpace(item) != "" {
+			finalSlice = append(finalSlice, item)
 		}
 	}
-	return list
+	return finalSlice
 }

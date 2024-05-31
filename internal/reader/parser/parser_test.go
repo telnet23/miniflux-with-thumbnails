@@ -4,11 +4,116 @@
 package parser // import "miniflux.app/v2/internal/reader/parser"
 
 import (
+	"os"
 	"strings"
 	"testing"
 )
 
-func TestParseAtom(t *testing.T) {
+func BenchmarkParse(b *testing.B) {
+	var testCases = map[string][]string{
+		"large_atom.xml": {"https://dustri.org/b", ""},
+		"large_rss.xml":  {"https://dustri.org/b", ""},
+		"small_atom.xml": {"https://github.com/miniflux/v2/commits/main", ""},
+	}
+	for filename := range testCases {
+		data, err := os.ReadFile("./testdata/" + filename)
+		if err != nil {
+			b.Fatalf(`Unable to read file %q: %v`, filename, err)
+		}
+		testCases[filename][1] = string(data)
+	}
+	for range b.N {
+		for _, v := range testCases {
+			ParseFeed(v[0], strings.NewReader(v[1]))
+		}
+	}
+}
+
+func FuzzParse(f *testing.F) {
+	f.Add("https://z.org", `<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>Example Feed</title>
+<link href="http://z.org/"/>
+<link href="/k"/>
+<updated>2003-12-13T18:30:02Z</updated>
+<author><name>John Doe</name></author>
+<id>urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6</id>
+<entry>
+<title>a</title>
+<link href="http://example.org/b"/>
+<id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a</id>
+<updated>2003-12-13T18:30:02Z</updated>
+<summary>c</summary>
+</entry>
+</feed>`)
+	f.Add("https://z.org", `<?xml version="1.0"?>
+<rss version="2.0">
+<channel>
+<title>a</title>
+<link>http://z.org</link>
+<item>
+<title>a</title>
+<link>http://z.org</link>
+<description>d</description>
+<pubDate>Tue, 03 Jun 2003 09:39:21 GMT</pubDate>
+<guid>l</guid>
+</item>
+</channel>
+</rss>`)
+	f.Add("https://z.org", `<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://purl.org/rss/1.0/">
+<channel>
+<title>a</title>
+<link>http://z.org/</link>
+</channel>
+<item>
+<title>a</title>
+<link>/</link>
+<description>c</description>
+</item>
+</rdf:RDF>`)
+	f.Add("http://z.org", `{
+"version": "http://jsonfeed.org/version/1",
+"title": "a",
+"home_page_url": "http://z.org/",
+"feed_url": "http://z.org/a.json",
+"items": [
+{"id": "2","content_text": "a","url": "https://z.org/2"},
+{"id": "1","content_html": "<a","url":"http://z.org/1"}]}`)
+	f.Fuzz(func(t *testing.T, url string, data string) {
+		ParseFeed(url, strings.NewReader(data))
+	})
+}
+
+func TestParseAtom03Feed(t *testing.T) {
+	data := `<?xml version="1.0" encoding="utf-8"?>
+	<feed version="0.3" xmlns="http://purl.org/atom/ns#">
+		<title>dive into mark</title>
+		<link rel="alternate" type="text/html" href="http://diveintomark.org/"/>
+		<modified>2003-12-13T18:30:02Z</modified>
+		<author><name>Mark Pilgrim</name></author>
+		<entry>
+			<title>Atom 0.3 snapshot</title>
+			<link rel="alternate" type="text/html" href="http://diveintomark.org/2003/12/13/atom03"/>
+			<id>tag:diveintomark.org,2003:3.2397</id>
+			<issued>2003-12-13T08:29:29-04:00</issued>
+			<modified>2003-12-13T18:30:02Z</modified>
+			<summary type="text/plain">It&apos;s a test</summary>
+			<content type="text/html" mode="escaped"><![CDATA[<p>HTML content</p>]]></content>
+		</entry>
+	</feed>`
+
+	feed, err := ParseFeed("https://example.org/", strings.NewReader(data))
+	if err != nil {
+		t.Error(err)
+	}
+
+	if feed.Title != "dive into mark" {
+		t.Errorf("Incorrect title, got: %s", feed.Title)
+	}
+}
+
+func TestParseAtom10Feed(t *testing.T) {
 	data := `<?xml version="1.0" encoding="utf-8"?>
 	<feed xmlns="http://www.w3.org/2005/Atom">
 

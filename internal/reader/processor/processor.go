@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
+	"slices"
 	"strconv"
 	"time"
 
@@ -22,10 +23,12 @@ import (
 	"miniflux.app/v2/internal/storage"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/html"
 )
 
 var (
-	youtubeRegex           = regexp.MustCompile(`youtube\.com/watch\?v=(.*)`)
+	youtubeRegex           = regexp.MustCompile(`youtube\.com/watch\?v=(.*)$`)
 	odyseeRegex            = regexp.MustCompile(`^https://odysee\.com`)
 	iso8601Regex           = regexp.MustCompile(`^P((?P<year>\d+)Y)?((?P<month>\d+)M)?((?P<week>\d+)W)?((?P<day>\d+)D)?(T((?P<hour>\d+)H)?((?P<minute>\d+)M)?((?P<second>\d+)S)?)?$`)
 	customReplaceRuleRegex = regexp.MustCompile(`rewrite\("(.*)"\|"(.*)"\)`)
@@ -41,25 +44,29 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, user *model.Us
 
 		slog.Debug("Processing entry",
 			slog.Int64("user_id", user.ID),
-			slog.Int64("entry_id", entry.ID),
 			slog.String("entry_url", entry.URL),
+			slog.String("entry_hash", entry.Hash),
+			slog.String("entry_title", entry.Title),
 			slog.Int64("feed_id", feed.ID),
 			slog.String("feed_url", feed.FeedURL),
 		)
-
-		if isBlockedEntry(feed, entry) || !isAllowedEntry(feed, entry) {
+		if isBlockedEntry(feed, entry) || !isAllowedEntry(feed, entry) || !isRecentEntry(entry) {
 			continue
 		}
 
 		websiteURL := getUrlFromEntry(feed, entry)
-		entryIsNew := !store.EntryURLExists(feed.ID, entry.URL)
+		entryIsNew := store.IsNewEntry(feed.ID, entry.Hash)
 		if feed.Crawler && (entryIsNew || forceRefresh) {
 			slog.Debug("Scraping entry",
 				slog.Int64("user_id", user.ID),
-				slog.Int64("entry_id", entry.ID),
 				slog.String("entry_url", entry.URL),
+				slog.String("entry_hash", entry.Hash),
+				slog.String("entry_title", entry.Title),
 				slog.Int64("feed_id", feed.ID),
 				slog.String("feed_url", feed.FeedURL),
+				slog.Bool("entry_is_new", entryIsNew),
+				slog.Bool("force_refresh", forceRefresh),
+				slog.String("website_url", websiteURL),
 			)
 
 			startTime := time.Now()
@@ -71,6 +78,7 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, user *model.Us
 			requestBuilder.WithProxy(config.Opts.HTTPClientProxy())
 			requestBuilder.UseProxy(feed.FetchViaProxy)
 			requestBuilder.IgnoreTLSErrors(feed.AllowSelfSignedCertificates)
+			requestBuilder.DisableHTTP2(feed.DisableHTTP2)
 
 			content, scraperErr := scraper.ScrapeWebsite(
 				requestBuilder,
@@ -89,7 +97,6 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, user *model.Us
 			if scraperErr != nil {
 				slog.Warn("Unable to scrape entry",
 					slog.Int64("user_id", user.ID),
-					slog.Int64("entry_id", entry.ID),
 					slog.String("entry_url", entry.URL),
 					slog.Int64("feed_id", feed.ID),
 					slog.String("feed_url", feed.FeedURL),
@@ -97,7 +104,7 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, user *model.Us
 				)
 			} else if content != "" {
 				// We replace the entry content only if the scraper doesn't return any error.
-				entry.Content = content
+				entry.Content = minifyEntryContent(content)
 			}
 		}
 
@@ -114,66 +121,63 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, user *model.Us
 }
 
 func isBlockedEntry(feed *model.Feed, entry *model.Entry) bool {
-	if feed.BlocklistRules != "" {
-		var containsBlockedTag bool = false
-		for _, tag := range entry.Tags {
-			if matchField(feed.BlocklistRules, tag) {
-				containsBlockedTag = true
-				break
-			}
-		}
+	if feed.BlocklistRules == "" {
+		return false
+	}
 
-		if matchField(feed.BlocklistRules, entry.URL) || matchField(feed.BlocklistRules, entry.Title) || matchField(feed.BlocklistRules, entry.Author) || containsBlockedTag {
-			slog.Debug("Blocking entry based on rule",
-				slog.Int64("entry_id", entry.ID),
-				slog.String("entry_url", entry.URL),
-				slog.Int64("feed_id", feed.ID),
-				slog.String("feed_url", feed.FeedURL),
-				slog.String("rule", feed.BlocklistRules),
-			)
-			return true
-		}
+	compiledBlocklist, err := regexp.Compile(feed.BlocklistRules)
+	if err != nil {
+		slog.Debug("Failed on regexp compilation",
+			slog.String("pattern", feed.BlocklistRules),
+			slog.Any("error", err),
+		)
+		return false
+	}
+
+	containsBlockedTag := slices.ContainsFunc(entry.Tags, func(tag string) bool {
+		return compiledBlocklist.MatchString(tag)
+	})
+
+	if compiledBlocklist.MatchString(entry.URL) || compiledBlocklist.MatchString(entry.Title) || compiledBlocklist.MatchString(entry.Author) || containsBlockedTag {
+		slog.Debug("Blocking entry based on rule",
+			slog.String("entry_url", entry.URL),
+			slog.Int64("feed_id", feed.ID),
+			slog.String("feed_url", feed.FeedURL),
+			slog.String("rule", feed.BlocklistRules),
+		)
+		return true
 	}
 
 	return false
 }
 
 func isAllowedEntry(feed *model.Feed, entry *model.Entry) bool {
-	if feed.KeeplistRules != "" {
-		var containsAllowedTag bool = false
-		for _, tag := range entry.Tags {
-			if matchField(feed.KeeplistRules, tag) {
-				containsAllowedTag = true
-				break
-			}
-		}
-
-		if matchField(feed.KeeplistRules, entry.URL) || matchField(feed.KeeplistRules, entry.Title) || matchField(feed.KeeplistRules, entry.Author) || containsAllowedTag {
-			slog.Debug("Allow entry based on rule",
-				slog.Int64("entry_id", entry.ID),
-				slog.String("entry_url", entry.URL),
-				slog.Int64("feed_id", feed.ID),
-				slog.String("feed_url", feed.FeedURL),
-				slog.String("rule", feed.KeeplistRules),
-			)
-			return true
-		}
-		return false
+	if feed.KeeplistRules == "" {
+		return true
 	}
-	return true
-}
 
-func matchField(pattern, value string) bool {
-	match, err := regexp.MatchString(pattern, value)
+	compiledKeeplist, err := regexp.Compile(feed.KeeplistRules)
 	if err != nil {
-		slog.Debug("Failed on regexp match",
-			slog.String("pattern", pattern),
-			slog.String("value", value),
-			slog.Bool("match", match),
+		slog.Debug("Failed on regexp compilation",
+			slog.String("pattern", feed.KeeplistRules),
 			slog.Any("error", err),
 		)
+		return false
 	}
-	return match
+	containsAllowedTag := slices.ContainsFunc(entry.Tags, func(tag string) bool {
+		return compiledKeeplist.MatchString(tag)
+	})
+
+	if compiledKeeplist.MatchString(entry.URL) || compiledKeeplist.MatchString(entry.Title) || compiledKeeplist.MatchString(entry.Author) || containsAllowedTag {
+		slog.Debug("Allow entry based on rule",
+			slog.String("entry_url", entry.URL),
+			slog.Int64("feed_id", feed.ID),
+			slog.String("feed_url", feed.FeedURL),
+			slog.String("rule", feed.KeeplistRules),
+		)
+		return true
+	}
+	return false
 }
 
 // ProcessEntryWebPage downloads the entry web page and apply rewrite rules.
@@ -188,6 +192,7 @@ func ProcessEntryWebPage(feed *model.Feed, entry *model.Entry, user *model.User)
 	requestBuilder.WithProxy(config.Opts.HTTPClientProxy())
 	requestBuilder.UseProxy(feed.FetchViaProxy)
 	requestBuilder.IgnoreTLSErrors(feed.AllowSelfSignedCertificates)
+	requestBuilder.DisableHTTP2(feed.DisableHTTP2)
 
 	content, scraperErr := scraper.ScrapeWebsite(
 		requestBuilder,
@@ -208,8 +213,10 @@ func ProcessEntryWebPage(feed *model.Feed, entry *model.Entry, user *model.User)
 	}
 
 	if content != "" {
-		entry.Content = content
-		entry.ReadingTime = readingtime.EstimateReadingTime(entry.Content, user.DefaultReadingSpeed, user.CJKReadingSpeed)
+		entry.Content = minifyEntryContent(content)
+		if user.ShowReadingTime {
+			entry.ReadingTime = readingtime.EstimateReadingTime(entry.Content, user.DefaultReadingSpeed, user.CJKReadingSpeed)
+		}
 	}
 
 	rewrite.Rewriter(websiteURL, entry, entry.Feed.RewriteRules)
@@ -227,7 +234,6 @@ func getUrlFromEntry(feed *model.Feed, entry *model.Entry) string {
 			re := regexp.MustCompile(parts[1])
 			url = re.ReplaceAllString(entry.URL, parts[2])
 			slog.Debug("Rewriting entry URL",
-				slog.Int64("entry_id", entry.ID),
 				slog.String("original_entry_url", entry.URL),
 				slog.String("rewritten_entry_url", url),
 				slog.Int64("feed_id", feed.ID),
@@ -235,7 +241,6 @@ func getUrlFromEntry(feed *model.Feed, entry *model.Entry) string {
 			)
 		} else {
 			slog.Debug("Cannot find search and replace terms for replace rule",
-				slog.Int64("entry_id", entry.ID),
 				slog.String("original_entry_url", entry.URL),
 				slog.String("rewritten_entry_url", url),
 				slog.Int64("feed_id", feed.ID),
@@ -248,6 +253,11 @@ func getUrlFromEntry(feed *model.Feed, entry *model.Entry) string {
 }
 
 func updateEntryReadingTime(store *storage.Storage, feed *model.Feed, entry *model.Entry, entryIsNew bool, user *model.User) {
+	if !user.ShowReadingTime {
+		slog.Debug("Skip reading time estimation for this user", slog.Int64("user_id", user.ID))
+		return
+	}
+
 	if shouldFetchYouTubeWatchTime(entry) {
 		if entryIsNew {
 			watchTime, err := fetchYouTubeWatchTime(entry.URL)
@@ -263,7 +273,7 @@ func updateEntryReadingTime(store *storage.Storage, feed *model.Feed, entry *mod
 			}
 			entry.ReadingTime = watchTime
 		} else {
-			entry.ReadingTime = store.GetReadTime(entry, feed)
+			entry.ReadingTime = store.GetReadTime(feed.ID, entry.Hash)
 		}
 	}
 
@@ -282,9 +292,10 @@ func updateEntryReadingTime(store *storage.Storage, feed *model.Feed, entry *mod
 			}
 			entry.ReadingTime = watchTime
 		} else {
-			entry.ReadingTime = store.GetReadTime(entry, feed)
+			entry.ReadingTime = store.GetReadTime(feed.ID, entry.Hash)
 		}
 	}
+
 	// Handle YT error case and non-YT entries.
 	if entry.ReadingTime == 0 {
 		entry.ReadingTime = readingtime.EstimateReadingTime(entry.Content, user.DefaultReadingSpeed, user.CJKReadingSpeed)
@@ -395,15 +406,38 @@ func parseISO8601(from string) (time.Duration, error) {
 
 		switch name {
 		case "hour":
-			d = d + (time.Duration(val) * time.Hour)
+			d += (time.Duration(val) * time.Hour)
 		case "minute":
-			d = d + (time.Duration(val) * time.Minute)
+			d += (time.Duration(val) * time.Minute)
 		case "second":
-			d = d + (time.Duration(val) * time.Second)
+			d += (time.Duration(val) * time.Second)
 		default:
 			return 0, fmt.Errorf("unknown field %s", name)
 		}
 	}
 
 	return d, nil
+}
+
+func isRecentEntry(entry *model.Entry) bool {
+	if config.Opts.FilterEntryMaxAgeDays() == 0 || entry.Date.After(time.Now().AddDate(0, 0, -config.Opts.FilterEntryMaxAgeDays())) {
+		return true
+	}
+	return false
+}
+
+func minifyEntryContent(entryContent string) string {
+	m := minify.New()
+
+	// Options required to avoid breaking the HTML content.
+	m.Add("text/html", &html.Minifier{
+		KeepEndTags: true,
+		KeepQuotes:  true,
+	})
+
+	if minifiedHTML, err := m.String("text/html", entryContent); err == nil {
+		entryContent = minifiedHTML
+	}
+
+	return entryContent
 }

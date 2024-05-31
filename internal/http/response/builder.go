@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/andybalholm/brotli"
 )
 
 const compressionThreshold = 1024
@@ -96,7 +98,6 @@ func (b *Builder) Write() {
 }
 
 func (b *Builder) writeHeaders() {
-	b.headers["X-XSS-Protection"] = "1; mode=block"
 	b.headers["X-Content-Type-Options"] = "nosniff"
 	b.headers["X-Frame-Options"] = "DENY"
 	b.headers["Referrer-Policy"] = "no-referrer"
@@ -111,8 +112,15 @@ func (b *Builder) writeHeaders() {
 func (b *Builder) compress(data []byte) {
 	if b.enableCompression && len(data) > compressionThreshold {
 		acceptEncoding := b.r.Header.Get("Accept-Encoding")
-
 		switch {
+		case strings.Contains(acceptEncoding, "br"):
+			b.headers["Content-Encoding"] = "br"
+			b.writeHeaders()
+
+			brotliWriter := brotli.NewWriterV2(b.w, brotli.DefaultCompression)
+			defer brotliWriter.Close()
+			brotliWriter.Write(data)
+			return
 		case strings.Contains(acceptEncoding, "gzip"):
 			b.headers["Content-Encoding"] = "gzip"
 			b.writeHeaders()

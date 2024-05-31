@@ -35,6 +35,7 @@
     "menu.about": "O stronie",
     "menu.export": "Eksportuj",
     "menu.import": "Importuj",
+    "menu.search": "Szukaj",
     "menu.create_category": "Utwórz kategorię",
     "menu.mark_page_as_read": "Oznacz jako przeczytane",
     "menu.mark_all_as_read": "Oznacz wszystko jako przeczytane",
@@ -84,25 +85,30 @@
     "entry.shared_entry.label": "Udostępnianie",
     "entry.estimated_reading_time": [
         "%d minuta czytania",
+        "%d minuty czytania",
         "%d minut czytania"
     ],
     "entry.tags.label": "Tagi:",
     "page.shared_entries.title": "Udostępnione wpisy",
     "page.shared_entries_count": [
         "%d shared entry",
+        "%d shared entry",
         "%d shared entries"
     ],
     "page.unread.title": "Nieprzeczytane",
     "page.unread_entry_count": [
         "%d unread entry",
+        "%d unread entry",
         "%d unread entries"
     ],
     "page.total_entry_count": [
+        "%d entry in total",
         "%d entry in total",
         "%d entries in total"
     ],
     "page.starred.title": "Oznaczone gwiazdką",
     "page.starred_entry_count": [
+        "%d starred entry",
         "%d starred entry",
         "%d starred entries"
     ],
@@ -116,6 +122,7 @@
         "Jest %d kanałów."
     ],
     "page.categories_count": [
+        "%d category",
         "%d category",
         "%d categories"
     ],
@@ -135,6 +142,7 @@
     ],
     "page.history.title": "Historia",
     "page.read_entry_count": [
+        "%d read entry",
         "%d read entry",
         "%d read entries"
     ],
@@ -179,6 +187,8 @@
     "page.keyboard_shortcuts.go_to_feed": "Przejdź do subskrypcji",
     "page.keyboard_shortcuts.go_to_previous_page": "Przejdź do poprzedniej strony",
     "page.keyboard_shortcuts.go_to_next_page": "Przejdź do następnej strony",
+    "page.keyboard_shortcuts.go_to_bottom_item": "Przejdź do dolnego elementu",
+    "page.keyboard_shortcuts.go_to_top_item": "Przejdź do najwyższego elementu",
     "page.keyboard_shortcuts.open_item": "Otwórz zaznaczony artykuł",
     "page.keyboard_shortcuts.open_original": "Otwórz oryginalny artykuł",
     "page.keyboard_shortcuts.open_original_same_window": "Otwórz oryginalny link w bieżącej karcie",
@@ -258,6 +268,7 @@
     "alert.no_bookmark": "Obecnie nie ma żadnych zakładek.",
     "alert.no_category": "Nie ma żadnej kategorii!",
     "alert.no_category_entry": "W tej kategorii nie ma żadnych artykułów",
+    "alert.no_tag_entry": "Nie ma wpisów pasujących do tego tagu.",
     "alert.no_feed_entry": "Nie ma artykułu dla tego kanału.",
     "alert.no_feed": "Nie masz żadnej subskrypcji.",
     "alert.no_feed_in_category": "Nie ma subskrypcji dla tej kategorii.",
@@ -330,6 +341,7 @@
     "form.feed.label.apprise_service_urls": "Comma separated list of Apprise service URLs",
     "form.feed.label.ignore_http_cache": "Zignoruj ​​pamięć podręczną HTTP",
     "form.feed.label.allow_self_signed_certificates": "Zezwalaj na certyfikaty z podpisem własnym lub nieprawidłowe certyfikaty",
+    "form.feed.label.disable_http2": "Disable HTTP/2 to avoid fingerprinting",
     "form.feed.label.fetch_via_proxy": "Pobierz przez proxy",
     "form.feed.label.disabled": "Nie odświeżaj tego kanału",
     "form.feed.label.no_media_player": "No media player (audio/video)",
@@ -450,6 +462,11 @@
     "form.integration.matrix_bot_password": "Hasło dla użytkownika Matrix",
     "form.integration.matrix_bot_url": "URL serwera Matrix",
     "form.integration.matrix_bot_chat_id": "Identyfikator pokoju Matrix",
+    "form.integration.readeck_activate": "Zapisz artykuły do Readeck",
+    "form.integration.readeck_endpoint": "Readeck URL",
+    "form.integration.readeck_api_key": "Readeck API key",
+    "form.integration.readeck_labels": "Readeck Labels",
+    "form.integration.readeck_only_url": "Wyślij tylko adres URL (zamiast pełnej treści)",
     "form.integration.shiori_activate": "Zapisz artykuły do Shiori",
     "form.integration.shiori_endpoint": "Shiori URL",
     "form.integration.shiori_username": "Login do Shiori",
@@ -500,6 +517,7 @@
     ],
     "alert.too_many_feeds_refresh": [
         "You have triggered too many feed refreshes. Please wait %d minute before trying again.",
+        "You have triggered too many feed refreshes. Please wait %d minutes before trying again.",
         "You have triggered too many feed refreshes. Please wait %d minutes before trying again."
     ],
     "alert.background_feed_refresh": "All feeds are being refreshed in the background. You can continue to use Miniflux while this process is running.",
@@ -507,7 +525,7 @@
     "error.http_body_read": "Unable to read the HTTP body: %v.",
     "error.http_empty_response_body": "The HTTP response body is empty.",
     "error.http_empty_response": "The HTTP response is empty. Perhaps, this website is using a bot protection mechanism?",
-    "error.tls_error": "TLS error: %v. You could disable TLS verification in the feed settings if you would like.",
+    "error.tls_error": "TLS error: %q. You could disable TLS verification in the feed settings if you would like.",
     "error.network_operation": "Miniflux is not able to reach this website due to a network error: %v.",
     "error.network_timeout": "This website is too slow and the request timed out: %v",
     "error.http_client_error": "HTTP client error: %v.",
@@ -526,5 +544,16 @@
     "error.unable_to_parse_feed": "Unable to parse this feed: %v.",
     "error.feed_not_found": "This feed does not exist or does not belong to this user.",
     "error.unable_to_detect_rssbridge": "Unable to detect feed using RSS-Bridge: %v.",
-    "error.feed_format_not_detected": "Unable to detect feed format: %v."
+    "error.feed_format_not_detected": "Unable to detect feed format: %v.",
+    "form.prefs.label.media_playback_rate": "Prędkość odtwarzania audio/wideo",
+    "error.settings_media_playback_rate_range": "Prędkość odtwarzania jest poza zakresem",
+    "enclosure_media_controls.seek" : "Seek:",
+    "enclosure_media_controls.seek.title" : "Seek %s seconds",
+    "enclosure_media_controls.speed" : "Speed:",
+    "enclosure_media_controls.speed.faster" : "Faster",
+    "enclosure_media_controls.speed.faster.title" : "Faster by %sx",
+    "enclosure_media_controls.speed.slower" : "Slower",
+    "enclosure_media_controls.speed.slower.title" : "Slower by %sx",
+    "enclosure_media_controls.speed.reset" : "Reset",
+    "enclosure_media_controls.speed.reset.title" : "Reset speed to 1x"
 }

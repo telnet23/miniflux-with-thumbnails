@@ -45,11 +45,12 @@ func (c *candidate) String() string {
 	id, _ := c.selection.Attr("id")
 	class, _ := c.selection.Attr("class")
 
-	if id != "" && class != "" {
+	switch {
+	case id != "" && class != "":
 		return fmt.Sprintf("%s#%s.%s => %f", c.Node().DataAtom, id, class, c.score)
-	} else if id != "" {
+	case id != "":
 		return fmt.Sprintf("%s#%s => %f", c.Node().DataAtom, id, c.score)
-	} else if class != "" {
+	case class != "":
 		return fmt.Sprintf("%s.%s => %f", c.Node().DataAtom, class, c.score)
 	}
 
@@ -132,12 +133,15 @@ func getArticle(topCandidate *candidate, candidates candidateList) string {
 		}
 	})
 
-	output.Write([]byte("</div>"))
+	output.WriteString("</div>")
 	return output.String()
 }
 
 func removeUnlikelyCandidates(document *goquery.Document) {
-	document.Find("*").Not("html,body").Each(func(i int, s *goquery.Selection) {
+	document.Find("*").Each(func(i int, s *goquery.Selection) {
+		if s.Length() == 0 || s.Get(0).Data == "html" || s.Get(0).Data == "body" {
+			return
+		}
 		class, _ := s.Attr("class")
 		id, _ := s.Attr("id")
 		str := class + id
@@ -219,7 +223,7 @@ func getCandidates(document *goquery.Document) candidateList {
 	// should have a relatively small link density (5% or less) and be mostly
 	// unaffected by this operation
 	for _, candidate := range candidates {
-		candidate.score = candidate.score * (1 - getLinkDensity(candidate.selection))
+		candidate.score *= (1 - getLinkDensity(candidate.selection))
 	}
 
 	return candidates

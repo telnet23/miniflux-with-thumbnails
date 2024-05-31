@@ -1,14 +1,18 @@
-{{ define "title"}}{{ t "page.search.title" }} ({{ .total }}){{ end }}
+{{ define "title"}}{{ .tagName }} ({{ .total }}){{ end }}
 
 {{ define "page_header"}}
-<section class="page-header" aria-labelledby="page-header-title">
-    <h1 id="page-header-title">{{ t "page.search.title" }} ({{ .total }})</h1>
+<section class="page-header" aria-labelledby="page-header-title page-header-title-count">
+    <h1 id="page-header-title" dir="auto">
+        {{ .tagName }}
+        <span aria-hidden="true"> ({{ .total }})</span>
+    </h1>
+    <span id="page-header-title-count" class="sr-only">{{ plural "page.tag_entry_count" .total .total }}</span>
 </section>
 {{ end }}
 
 {{ define "content"}}
 {{ if not .entries }}
-    <p role="alert" class="alert alert-info">{{ t "alert.no_search_result" }}</p>
+    <p role="alert" class="alert alert-info">{{ t "alert.no_tag_entry" }}</p>
 {{ else }}
     <div class="pagination-top">
         {{ template "pagination" .pagination }}
@@ -19,16 +23,15 @@
             class="item entry-item {{ if $.user.EntrySwipe }}entry-swipe{{ end }} item-status-{{ .Status }}"
             data-id="{{ .ID }}"
             aria-labelledby="entry-title-{{ .ID }}"
+            tabindex="-1"
         >
             <div class="item-container">
                 <div class="item-container-left">
                     <header class="item-header" dir="auto">
                         <h2 id="entry-title-{{ .ID }}" class="item-title">
-                            <a href="{{ route "searchEntry" "entryID" .ID }}?q={{ $.searchQuery }}">
+                            <a href="{{ route "tagEntry" "entryID" .ID "tagName" (urlEncode $.tagName) }}">
                                 {{ if ne .Feed.Icon.IconID 0 }}
-                                <img src="{{ route "icon" "iconID" .Feed.Icon.IconID }}" width="16" height="16" loading="lazy" alt="{{ .Feed.Title }}">
-                                {{ else }}
-                                <span class="sr-only">{{ .Feed.Title }}</span>
+                                <img src="{{ route "icon" "iconID" .Feed.Icon.IconID }}" width="16" height="16" loading="lazy" alt="">
                                 {{ end }}
                                 {{ .Title }}
                             </a>
@@ -39,7 +42,7 @@
                             </a>
                         </span>
                     </header>
-                    {{ template "item_meta" dict "user" $.user "entry" . "hasSaveEntry" $.hasSaveEntry  }}
+                    {{ template "item_meta" dict "user" $.user "entry" . "hasSaveEntry" $.hasSaveEntry }}
                 </div>
                 <div class="item-container-right">
                     {{ template "item_thumbnail" . }}

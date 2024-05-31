@@ -35,6 +35,7 @@
     "menu.about": "關於",
     "menu.export": "匯出",
     "menu.import": "匯入",
+    "menu.search": "搜尋",
     "menu.create_category": "新建分類",
     "menu.mark_page_as_read": "將此頁面標記為已讀",
     "menu.mark_all_as_read": "全部標為已讀",
@@ -83,40 +84,33 @@
     "entry.shared_entry.title": "開啟公共連結",
     "entry.shared_entry.label": "分享",
     "entry.estimated_reading_time": [
-        "需要 %d 分鐘閱讀",
         "需要 %d 分鐘閱讀"
     ],
     "entry.tags.label": "標籤：",
     "page.shared_entries.title": "已分享的文章",
     "page.shared_entries_count": [
-        "%d shared entry",
-        "%d shared entries"
+        "%d shared entry"
     ],
     "page.unread.title": "未讀",
     "page.unread_entry_count": [
-        "%d unread entry",
-        "%d unread entries"
+        "%d unread entry"
     ],
     "page.total_entry_count": [
-        "%d entry in total",
-        "%d entries in total"
+        "%d entry in total"
     ],
     "page.starred.title": "收藏",
     "page.starred_entry_count": [
-        "%d starred entry",
-        "%d starred entries"
+        "%d starred entry"
     ],
     "page.categories.title": "分類",
     "page.categories.no_feed": "沒有Feed",
     "page.categories.entries": "檢視內容",
     "page.categories.feeds": "檢視Feeds",
     "page.categories.feed_count": [
-        "有 %d 個Feed",
-        "有 %d 個Feeds"
+        "有 %d 個Feed"
     ],
     "page.categories_count": [
-        "%d category",
-        "%d categories"
+        "%d category"
     ],
     "page.new_category.title": "新分類",
     "page.new_user.title": "新使用者",
@@ -128,13 +122,11 @@
     "page.feeds.next_check": "下次檢查時間:",
     "page.feeds.read_counter": "已讀文章數",
     "page.feeds.error_count": [
-        "%d 錯誤",
         "%d 錯誤"
     ],
     "page.history.title": "歷史",
     "page.read_entry_count": [
-        "%d read entry",
-        "%d read entries"
+        "%d read entry"
     ],
     "page.import.title": "匯入",
     "page.search.title": "搜尋結果",
@@ -177,6 +169,8 @@
     "page.keyboard_shortcuts.go_to_feed": "轉到Feed頁面",
     "page.keyboard_shortcuts.go_to_previous_page": "上一頁",
     "page.keyboard_shortcuts.go_to_next_page": "下一頁",
+    "page.keyboard_shortcuts.go_to_bottom_item": "转到底部项目",
+    "page.keyboard_shortcuts.go_to_top_item": "转到顶部项目",
     "page.keyboard_shortcuts.open_item": "開啟選定的文章",
     "page.keyboard_shortcuts.open_original": "開啟原始連結",
     "page.keyboard_shortcuts.open_original_same_window": "在當前標籤頁中開啟原始連結",
@@ -215,7 +209,6 @@
     "page.settings.webauthn.register": "註冊 Passkey",
     "page.settings.webauthn.register.error": "無法註冊 Passkey",
     "page.settings.webauthn.delete": [
-        "刪除 %d 個 Passkey",
         "刪除 %d 個 Passkey"
     ],
     "page.login.title": "登入",
@@ -255,6 +248,7 @@
     "alert.no_bookmark": "目前沒有收藏",
     "alert.no_category": "目前沒有分類",
     "alert.no_category_entry": "該分類下沒有文章",
+    "alert.no_tag_entry": "沒有與此標籤相符的條目。",
     "alert.no_feed_entry": "該Feed中沒有文章",
     "alert.no_feed": "目前沒有Feed",
     "alert.no_history": "目前沒有歷史",
@@ -327,6 +321,7 @@
     "form.feed.label.apprise_service_urls": "使用逗號分隔的 Apprise 服務 URL 列表",
     "form.feed.label.ignore_http_cache": "忽略 HTTP 快取",
     "form.feed.label.allow_self_signed_certificates": "允許自簽章憑證或無效憑證",
+    "form.feed.label.disable_http2": "Disable HTTP/2 to avoid fingerprinting",
     "form.feed.label.fetch_via_proxy": "透過代理獲取",
     "form.feed.label.disabled": "請勿更新此 Feed",
     "form.feed.label.no_media_player": "沒有媒體播放器(音訊/視訊)",
@@ -447,6 +442,11 @@
     "form.integration.matrix_bot_password": "Matrix 的密碼",
     "form.integration.matrix_bot_url": "Matrix 伺服器的 URL",
     "form.integration.matrix_bot_chat_id": "Matrix 房間 ID",
+    "form.integration.readeck_activate": "儲存文章到 Readeck",
+    "form.integration.readeck_endpoint": "Readeck API 端點",
+    "form.integration.readeck_api_key": "Readeck API 金鑰",
+    "form.integration.readeck_labels": "Readeck Labels",
+    "form.integration.readeck_only_url": "仅发送 URL（而不是完整内容）",
     "form.integration.shiori_activate": "儲存文章到 Shiori",
     "form.integration.shiori_endpoint": "Shiori API 端點",
     "form.integration.shiori_username": "Shiori 使用者名稱",
@@ -466,39 +466,32 @@
     "time_elapsed.yesterday": "昨天",
     "time_elapsed.now": "剛剛",
     "time_elapsed.minutes": [
-        "%d 分鐘前",
         "%d 分鐘前"
     ],
     "time_elapsed.hours": [
-        "%d 小時前",
         "%d 小時前"
     ],
     "time_elapsed.days": [
-        "%d 天前",
         "%d 天前"
     ],
     "time_elapsed.weeks": [
-        "%d 周前",
         "%d 周前"
     ],
     "time_elapsed.months": [
-        "%d 月前",
         "%d 月前"
     ],
     "time_elapsed.years": [
-        "%d 年前",
         "%d 年前"
     ],
     "alert.too_many_feeds_refresh": [
-        "You have triggered too many feed refreshes. Please wait %d minute before trying again.",
-        "You have triggered too many feed refreshes. Please wait %d minutes before trying again."
+        "You have triggered too many feed refreshes. Please wait %d minute before trying again."
     ],
     "alert.background_feed_refresh": "All feeds are being refreshed in the background. You can continue to use Miniflux while this process is running.",
     "error.http_response_too_large": "The HTTP response is too large. You could increase the HTTP response size limit in the global settings (requires a server restart).",
     "error.http_body_read": "Unable to read the HTTP body: %v.",
     "error.http_empty_response_body": "The HTTP response body is empty.",
     "error.http_empty_response": "The HTTP response is empty. Perhaps, this website is using a bot protection mechanism?",
-    "error.tls_error": "TLS error: %v. You could disable TLS verification in the feed settings if you would like.",
+    "error.tls_error": "TLS error: %q. You could disable TLS verification in the feed settings if you would like.",
     "error.network_operation": "Miniflux is not able to reach this website due to a network error: %v.",
     "error.network_timeout": "This website is too slow and the request timed out: %v",
     "error.http_client_error": "HTTP client error: %v.",
@@ -517,5 +510,16 @@
     "error.unable_to_parse_feed": "Unable to parse this feed: %v.",
     "error.feed_not_found": "This feed does not exist or does not belong to this user.",
     "error.unable_to_detect_rssbridge": "Unable to detect feed using RSS-Bridge: %v.",
-    "error.feed_format_not_detected": "Unable to detect feed format: %v."
+    "error.feed_format_not_detected": "Unable to detect feed format: %v.",
+    "form.prefs.label.media_playback_rate": "音訊/視訊的播放速度",
+    "error.settings_media_playback_rate_range": "播放速度超出範圍",
+    "enclosure_media_controls.seek" : "Seek:",
+    "enclosure_media_controls.seek.title" : "Seek %s seconds",
+    "enclosure_media_controls.speed" : "Speed:",
+    "enclosure_media_controls.speed.faster" : "Faster",
+    "enclosure_media_controls.speed.faster.title" : "Faster by %sx",
+    "enclosure_media_controls.speed.slower" : "Slower",
+    "enclosure_media_controls.speed.slower.title" : "Slower by %sx",
+    "enclosure_media_controls.speed.reset" : "Reset",
+    "enclosure_media_controls.speed.reset.title" : "Reset speed to 1x"
 }

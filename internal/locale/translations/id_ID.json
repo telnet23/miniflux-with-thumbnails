@@ -35,6 +35,7 @@
     "menu.about": "Tentang",
     "menu.export": "Ekspor",
     "menu.import": "Impor",
+    "menu.search": "Cari",
     "menu.create_category": "Buat kategori",
     "menu.mark_page_as_read": "Tandai halaman ini sebagai telah dibaca",
     "menu.mark_all_as_read": "Tandai semua sebagai telah dibaca",
@@ -83,38 +84,33 @@
     "entry.shared_entry.title": "Buka tautan publik",
     "entry.shared_entry.label": "Bagikan",
     "entry.estimated_reading_time": [
-    "%d menit untuk dibaca"
+        "%d menit untuk dibaca"
     ],
     "entry.tags.label": "Tanda:",
     "page.shared_entries.title": "Entri yang Dibagikan",
     "page.shared_entries_count": [
-        "%d shared entry",
-        "%d shared entries"
+        "%d shared entry"
     ],
     "page.unread.title": "Belum Dibaca",
     "page.unread_entry_count": [
-        "%d unread entry",
-        "%d unread entries"
+        "%d unread entry"
     ],
     "page.total_entry_count": [
-        "%d entry in total",
-        "%d entries in total"
+        "%d entry in total"
     ],
     "page.starred.title": "Markah",
     "page.starred_entry_count": [
-        "%d starred entry",
-        "%d starred entries"
+        "%d starred entry"
     ],
     "page.categories.title": "Kategori",
     "page.categories.no_feed": "Tidak ada umpan.",
     "page.categories.entries": "Artikel",
     "page.categories.feeds": "Langganan",
     "page.categories.feed_count": [
-    "Ada %d umpan."
+        "Ada %d umpan."
     ],
     "page.categories_count": [
-        "%d category",
-        "%d categories"
+        "%d category"
     ],
     "page.new_category.title": "Kategori Baru",
     "page.new_user.title": "Pengguna Baru",
@@ -126,12 +122,11 @@
     "page.feeds.next_check": "Next check:",
     "page.feeds.read_counter": "Jumlah entri yang telah dibaca",
     "page.feeds.error_count": [
-    "%d galat"
+        "%d galat"
     ],
     "page.history.title": "Riwayat",
     "page.read_entry_count": [
-        "%d read entry",
-        "%d read entries"
+        "%d read entry"
     ],
     "page.import.title": "Impor",
     "page.search.title": "Hasil Pencarian",
@@ -174,6 +169,8 @@
     "page.keyboard_shortcuts.go_to_feed": "Ke umpan",
     "page.keyboard_shortcuts.go_to_previous_page": "Ke halaman sebelumnya",
     "page.keyboard_shortcuts.go_to_next_page": "Ke halaman berikutnya",
+    "page.keyboard_shortcuts.go_to_bottom_item": "Pergi ke item paling bawah",
+    "page.keyboard_shortcuts.go_to_top_item": "Pergi ke item teratas",
     "page.keyboard_shortcuts.open_item": "Buka entri yang dipilih",
     "page.keyboard_shortcuts.open_original": "Buka tautan asli",
     "page.keyboard_shortcuts.open_original_same_window": "Buka tautan asli di bilah saat ini",
@@ -212,8 +209,7 @@
     "page.settings.webauthn.register": "Register passkey",
     "page.settings.webauthn.register.error": "Unable to register passkey",
     "page.settings.webauthn.delete": [
-        "Remove %d passkey",
-        "Remove %d passkeys"
+        "Remove %d passkey"
     ],
     "page.login.title": "Masuk",
     "page.login.google_signin": "Masuk dengan Google",
@@ -252,6 +248,7 @@
     "alert.no_bookmark": "Tidak ada markah.",
     "alert.no_category": "Tidak ada kategori.",
     "alert.no_category_entry": "Tidak ada artikel di kategori ini.",
+    "alert.no_tag_entry": "Tidak ada entri yang cocok dengan tag ini.",
     "alert.no_feed_entry": "Tidak ada artikel di umpan ini.",
     "alert.no_feed": "Anda tidak memiliki langganan.",
     "alert.no_feed_in_category": "Tidak ada langganan untuk kategori ini.",
@@ -324,6 +321,7 @@
     "form.feed.label.urlrewrite_rules": "Aturan Tulis Ulang URL",
     "form.feed.label.ignore_http_cache": "Abaikan Tembolok HTTP",
     "form.feed.label.allow_self_signed_certificates": "Perbolehkan sertifikat web tidak valid atau sertifikasi sendiri",
+    "form.feed.label.disable_http2": "Disable HTTP/2 to avoid fingerprinting",
     "form.feed.label.fetch_via_proxy": "Ambil via Proksi",
     "form.feed.label.disabled": "Jangan perbarui umpan ini",
     "form.feed.label.no_media_player": "No media player (audio/video)",
@@ -444,6 +442,11 @@
     "form.integration.matrix_bot_password": "Kata Sandi Matrix",
     "form.integration.matrix_bot_url": "URL Peladen Matrix",
     "form.integration.matrix_bot_chat_id": "ID Ruang Matrix",
+    "form.integration.readeck_activate": "Simpan artikel ke Readeck",
+    "form.integration.readeck_endpoint": "Titik URL API Readeck",
+    "form.integration.readeck_api_key": "Kunci API Readeck",
+    "form.integration.readeck_labels": "Readeck Labels",
+    "form.integration.readeck_only_url": "Kirim hanya URL (alih-alih konten penuh)",
     "form.integration.shiori_activate": "Save articles to Shiori",
     "form.integration.shiori_endpoint": "Shiori API Endpoint",
     "form.integration.shiori_username": "Shiori Username",
@@ -463,33 +466,32 @@
     "time_elapsed.yesterday": "kemarin",
     "time_elapsed.now": "baru saja",
     "time_elapsed.minutes": [
-    "%d menit yang lalu"
+        "%d menit yang lalu"
     ],
     "time_elapsed.hours": [
-    "%d jam yang lalu"
+        "%d jam yang lalu"
     ],
     "time_elapsed.days": [
-    "%d hari yang lalu"
+        "%d hari yang lalu"
     ],
     "time_elapsed.weeks": [
-    "%d pekan yang lalu"
+        "%d pekan yang lalu"
     ],
     "time_elapsed.months": [
-    "%d bulan yang lalu"
+        "%d bulan yang lalu"
     ],
     "time_elapsed.years": [
-    "%d tahun yang lalu"
+        "%d tahun yang lalu"
     ],
     "alert.too_many_feeds_refresh": [
-        "You have triggered too many feed refreshes. Please wait %d minute before trying again.",
-        "You have triggered too many feed refreshes. Please wait %d minutes before trying again."
+        "You have triggered too many feed refreshes. Please wait %d minute before trying again."
     ],
     "alert.background_feed_refresh": "All feeds are being refreshed in the background. You can continue to use Miniflux while this process is running.",
     "error.http_response_too_large": "The HTTP response is too large. You could increase the HTTP response size limit in the global settings (requires a server restart).",
     "error.http_body_read": "Unable to read the HTTP body: %v.",
     "error.http_empty_response_body": "The HTTP response body is empty.",
     "error.http_empty_response": "The HTTP response is empty. Perhaps, this website is using a bot protection mechanism?",
-    "error.tls_error": "TLS error: %v. You could disable TLS verification in the feed settings if you would like.",
+    "error.tls_error": "TLS error: %q. You could disable TLS verification in the feed settings if you would like.",
     "error.network_operation": "Miniflux is not able to reach this website due to a network error: %v.",
     "error.network_timeout": "This website is too slow and the request timed out: %v",
     "error.http_client_error": "HTTP client error: %v.",
@@ -508,5 +510,16 @@
     "error.unable_to_parse_feed": "Unable to parse this feed: %v.",
     "error.feed_not_found": "This feed does not exist or does not belong to this user.",
     "error.unable_to_detect_rssbridge": "Unable to detect feed using RSS-Bridge: %v.",
-    "error.feed_format_not_detected": "Unable to detect feed format: %v."
+    "error.feed_format_not_detected": "Unable to detect feed format: %v.",
+    "form.prefs.label.media_playback_rate": "Kecepatan pemutaran audio/video",
+    "error.settings_media_playback_rate_range": "Kecepatan pemutaran di luar jangkauan",
+    "enclosure_media_controls.seek" : "Seek:",
+    "enclosure_media_controls.seek.title" : "Seek %s seconds",
+    "enclosure_media_controls.speed" : "Speed:",
+    "enclosure_media_controls.speed.faster" : "Faster",
+    "enclosure_media_controls.speed.faster.title" : "Faster by %sx",
+    "enclosure_media_controls.speed.slower" : "Slower",
+    "enclosure_media_controls.speed.slower.title" : "Slower by %sx",
+    "enclosure_media_controls.speed.reset" : "Reset",
+    "enclosure_media_controls.speed.reset.title" : "Reset speed to 1x"
 }

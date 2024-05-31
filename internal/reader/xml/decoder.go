@@ -14,13 +14,14 @@ import (
 )
 
 // NewXMLDecoder returns a XML decoder that filters illegal characters.
-func NewXMLDecoder(data io.Reader) *xml.Decoder {
+func NewXMLDecoder(data io.ReadSeeker) *xml.Decoder {
 	var decoder *xml.Decoder
 	buffer, _ := io.ReadAll(data)
 	enc := procInst("encoding", string(buffer))
 	if enc != "" && enc != "utf-8" && enc != "UTF-8" && !strings.EqualFold(enc, "utf-8") {
 		// filter invalid chars later within decoder.CharsetReader
-		decoder = xml.NewDecoder(bytes.NewReader(buffer))
+		data.Seek(0, io.SeekStart)
+		decoder = xml.NewDecoder(data)
 	} else {
 		// filter invalid chars now, since decoder.CharsetReader not called for utf-8 content
 		filteredBytes := bytes.Map(filterValidXMLChar, buffer)
@@ -65,7 +66,7 @@ func filterValidXMLChar(r rune) rune {
 func procInst(param, s string) string {
 	// TODO: this parsing is somewhat lame and not exact.
 	// It works for all actual cases, though.
-	param = param + "="
+	param += "="
 	idx := strings.Index(s, param)
 	if idx == -1 {
 		return ""

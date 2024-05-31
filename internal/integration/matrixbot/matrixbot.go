@@ -10,7 +10,7 @@ import (
 	"miniflux.app/v2/internal/model"
 )
 
-// PushEntry pushes entries to matrix chat using integration settings provided
+// PushEntries pushes entries to matrix chat using integration settings provided
 func PushEntries(feed *model.Feed, entries model.Entries, matrixBaseURL, matrixUsername, matrixPassword, matrixRoomID string) error {
 	client := NewClient(matrixBaseURL)
 	discovery, err := client.DiscoverEndpoints()
@@ -28,7 +28,7 @@ func PushEntries(feed *model.Feed, entries model.Entries, matrixBaseURL, matrixU
 
 	for _, entry := range entries {
 		textMessages = append(textMessages, fmt.Sprintf(`[%s] %s - %s`, feed.Title, entry.Title, entry.URL))
-		formattedTextMessages = append(formattedTextMessages, fmt.Sprintf(`<li><strong>%s</strong>: <a href="%s">%s</a></li>`, feed.Title, entry.URL, entry.Title))
+		formattedTextMessages = append(formattedTextMessages, fmt.Sprintf(`<li><strong>%s</strong>: <a href=%q>%s</a></li>`, feed.Title, entry.URL, entry.Title))
 	}
 
 	_, err = client.SendFormattedTextMessage(

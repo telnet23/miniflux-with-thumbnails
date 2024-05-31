@@ -5,6 +5,7 @@ package ui // import "miniflux.app/v2/internal/ui"
 
 import (
 	"net/http"
+	"net/url"
 
 	"miniflux.app/v2/internal/http/request"
 	"miniflux.app/v2/internal/http/response/html"
@@ -14,18 +15,25 @@ import (
 	"miniflux.app/v2/internal/ui/view"
 )
 
-func (h *handler) showSearchEntriesPage(w http.ResponseWriter, r *http.Request) {
+func (h *handler) showTagEntriesAllPage(w http.ResponseWriter, r *http.Request) {
 	user, err := h.store.UserByID(request.UserID(r))
 	if err != nil {
 		html.ServerError(w, r, err)
 		return
 	}
 
-	searchQuery := request.QueryStringParam(r, "q", "")
+	tagName, err := url.PathUnescape(request.RouteStringParam(r, "tagName"))
+	if err != nil {
+		html.ServerError(w, r, err)
+		return
+	}
+
 	offset := request.QueryIntParam(r, "offset", 0)
 	builder := h.store.NewEntryQueryBuilder(user.ID)
-	builder.WithSearchQuery(searchQuery)
 	builder.WithoutStatus(model.EntryStatusRemoved)
+	builder.WithTags([]string{tagName})
+	builder.WithSorting("status", "asc")
+	builder.WithSorting(user.EntryOrder, user.EntryDirection)
 	builder.WithOffset(offset)
 	builder.WithLimit(user.EntriesPerPage)
 	builder.WithEnclosures()
@@ -44,18 +52,15 @@ func (h *handler) showSearchEntriesPage(w http.ResponseWriter, r *http.Request) 
 
 	sess := session.New(h.store, request.SessionID(r))
 	view := view.New(h.tpl, r, sess)
-	pagination := getPagination(route.Path(h.router, "searchEntries"), count, offset, user.EntriesPerPage)
-	pagination.SearchQuery = searchQuery
-
-	view.Set("searchQuery", searchQuery)
-	view.Set("entries", entries)
+	view.Set("tagName", tagName)
 	view.Set("total", count)
-	view.Set("pagination", pagination)
-	view.Set("menu", "search")
+	view.Set("entries", entries)
+	view.Set("pagination", getPagination(route.Path(h.router, "tagEntriesAll", "tagName", url.PathEscape(tagName)), count, offset, user.EntriesPerPage))
 	view.Set("user", user)
 	view.Set("countUnread", h.store.CountUnreadEntries(user.ID))
 	view.Set("countErrorFeeds", h.store.CountUserFeedsWithErrors(user.ID))
 	view.Set("hasSaveEntry", h.store.HasSaveEntry(user.ID))
+	view.Set("showOnlyUnreadEntries", false)
 
-	html.OK(w, r, view.Render("search_entries"))
+	html.OK(w, r, view.Render("tag_entries"))
 }

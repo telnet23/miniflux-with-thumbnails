@@ -18,9 +18,6 @@ import (
 )
 
 func (h *handler) updateSettings(w http.ResponseWriter, r *http.Request) {
-	sess := session.New(h.store, request.SessionID(r))
-	view := view.New(h.tpl, r, sess)
-
 	loggedUser, err := h.store.UserByID(request.UserID(r))
 	if err != nil {
 		html.ServerError(w, r, err)
@@ -35,6 +32,8 @@ func (h *handler) updateSettings(w http.ResponseWriter, r *http.Request) {
 
 	settingsForm := form.NewSettingsForm(r)
 
+	sess := session.New(h.store, request.SessionID(r))
+	view := view.New(h.tpl, r, sess)
 	view.Set("form", settingsForm)
 	view.Set("themes", model.Themes())
 	view.Set("languages", locale.AvailableLanguages())
@@ -57,12 +56,13 @@ func (h *handler) updateSettings(w http.ResponseWriter, r *http.Request) {
 		Language:            model.OptionalString(settingsForm.Language),
 		Timezone:            model.OptionalString(settingsForm.Timezone),
 		EntryDirection:      model.OptionalString(settingsForm.EntryDirection),
-		EntriesPerPage:      model.OptionalInt(settingsForm.EntriesPerPage),
+		EntriesPerPage:      model.OptionalNumber(settingsForm.EntriesPerPage),
 		DisplayMode:         model.OptionalString(settingsForm.DisplayMode),
 		GestureNav:          model.OptionalString(settingsForm.GestureNav),
-		DefaultReadingSpeed: model.OptionalInt(settingsForm.DefaultReadingSpeed),
-		CJKReadingSpeed:     model.OptionalInt(settingsForm.CJKReadingSpeed),
+		DefaultReadingSpeed: model.OptionalNumber(settingsForm.DefaultReadingSpeed),
+		CJKReadingSpeed:     model.OptionalNumber(settingsForm.CJKReadingSpeed),
 		DefaultHomePage:     model.OptionalString(settingsForm.DefaultHomePage),
+		MediaPlaybackRate:   model.OptionalNumber(settingsForm.MediaPlaybackRate),
 	}
 
 	if validationErr := validator.ValidateUserModification(h.store, loggedUser.ID, userModificationRequest); validationErr != nil {
