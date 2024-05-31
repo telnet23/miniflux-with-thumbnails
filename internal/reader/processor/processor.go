@@ -23,6 +23,8 @@ import (
 	"miniflux.app/v2/internal/storage"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/html"
 )
 
 var (
@@ -42,8 +44,9 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, user *model.Us
 
 		slog.Debug("Processing entry",
 			slog.Int64("user_id", user.ID),
-			slog.Int64("entry_id", entry.ID),
 			slog.String("entry_url", entry.URL),
+			slog.String("entry_hash", entry.Hash),
+			slog.String("entry_title", entry.Title),
 			slog.Int64("feed_id", feed.ID),
 			slog.String("feed_url", feed.FeedURL),
 		)
@@ -52,14 +55,18 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, user *model.Us
 		}
 
 		websiteURL := getUrlFromEntry(feed, entry)
-		entryIsNew := !store.EntryURLExists(feed.ID, entry.URL)
+		entryIsNew := store.IsNewEntry(feed.ID, entry.Hash)
 		if feed.Crawler && (entryIsNew || forceRefresh) {
 			slog.Debug("Scraping entry",
 				slog.Int64("user_id", user.ID),
-				slog.Int64("entry_id", entry.ID),
 				slog.String("entry_url", entry.URL),
+				slog.String("entry_hash", entry.Hash),
+				slog.String("entry_title", entry.Title),
 				slog.Int64("feed_id", feed.ID),
 				slog.String("feed_url", feed.FeedURL),
+				slog.Bool("entry_is_new", entryIsNew),
+				slog.Bool("force_refresh", forceRefresh),
+				slog.String("website_url", websiteURL),
 			)
 
 			startTime := time.Now()
@@ -90,7 +97,6 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, user *model.Us
 			if scraperErr != nil {
 				slog.Warn("Unable to scrape entry",
 					slog.Int64("user_id", user.ID),
-					slog.Int64("entry_id", entry.ID),
 					slog.String("entry_url", entry.URL),
 					slog.Int64("feed_id", feed.ID),
 					slog.String("feed_url", feed.FeedURL),
@@ -98,7 +104,7 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, user *model.Us
 				)
 			} else if content != "" {
 				// We replace the entry content only if the scraper doesn't return any error.
-				entry.Content = content
+				entry.Content = minifyEntryContent(content)
 			}
 		}
 
@@ -134,7 +140,6 @@ func isBlockedEntry(feed *model.Feed, entry *model.Entry) bool {
 
 	if compiledBlocklist.MatchString(entry.URL) || compiledBlocklist.MatchString(entry.Title) || compiledBlocklist.MatchString(entry.Author) || containsBlockedTag {
 		slog.Debug("Blocking entry based on rule",
-			slog.Int64("entry_id", entry.ID),
 			slog.String("entry_url", entry.URL),
 			slog.Int64("feed_id", feed.ID),
 			slog.String("feed_url", feed.FeedURL),
@@ -165,7 +170,6 @@ func isAllowedEntry(feed *model.Feed, entry *model.Entry) bool {
 
 	if compiledKeeplist.MatchString(entry.URL) || compiledKeeplist.MatchString(entry.Title) || compiledKeeplist.MatchString(entry.Author) || containsAllowedTag {
 		slog.Debug("Allow entry based on rule",
-			slog.Int64("entry_id", entry.ID),
 			slog.String("entry_url", entry.URL),
 			slog.Int64("feed_id", feed.ID),
 			slog.String("feed_url", feed.FeedURL),
@@ -209,7 +213,7 @@ func ProcessEntryWebPage(feed *model.Feed, entry *model.Entry, user *model.User)
 	}
 
 	if content != "" {
-		entry.Content = content
+		entry.Content = minifyEntryContent(content)
 		if user.ShowReadingTime {
 			entry.ReadingTime = readingtime.EstimateReadingTime(entry.Content, user.DefaultReadingSpeed, user.CJKReadingSpeed)
 		}
@@ -230,7 +234,6 @@ func getUrlFromEntry(feed *model.Feed, entry *model.Entry) string {
 			re := regexp.MustCompile(parts[1])
 			url = re.ReplaceAllString(entry.URL, parts[2])
 			slog.Debug("Rewriting entry URL",
-				slog.Int64("entry_id", entry.ID),
 				slog.String("original_entry_url", entry.URL),
 				slog.String("rewritten_entry_url", url),
 				slog.Int64("feed_id", feed.ID),
@@ -238,7 +241,6 @@ func getUrlFromEntry(feed *model.Feed, entry *model.Entry) string {
 			)
 		} else {
 			slog.Debug("Cannot find search and replace terms for replace rule",
-				slog.Int64("entry_id", entry.ID),
 				slog.String("original_entry_url", entry.URL),
 				slog.String("rewritten_entry_url", url),
 				slog.Int64("feed_id", feed.ID),
@@ -251,6 +253,11 @@ func getUrlFromEntry(feed *model.Feed, entry *model.Entry) string {
 }
 
 func updateEntryReadingTime(store *storage.Storage, feed *model.Feed, entry *model.Entry, entryIsNew bool, user *model.User) {
+	if !user.ShowReadingTime {
+		slog.Debug("Skip reading time estimation for this user", slog.Int64("user_id", user.ID))
+		return
+	}
+
 	if shouldFetchYouTubeWatchTime(entry) {
 		if entryIsNew {
 			watchTime, err := fetchYouTubeWatchTime(entry.URL)
@@ -266,7 +273,7 @@ func updateEntryReadingTime(store *storage.Storage, feed *model.Feed, entry *mod
 			}
 			entry.ReadingTime = watchTime
 		} else {
-			entry.ReadingTime = store.GetReadTime(entry, feed)
+			entry.ReadingTime = store.GetReadTime(feed.ID, entry.Hash)
 		}
 	}
 
@@ -285,14 +292,13 @@ func updateEntryReadingTime(store *storage.Storage, feed *model.Feed, entry *mod
 			}
 			entry.ReadingTime = watchTime
 		} else {
-			entry.ReadingTime = store.GetReadTime(entry, feed)
+			entry.ReadingTime = store.GetReadTime(feed.ID, entry.Hash)
 		}
 	}
+
 	// Handle YT error case and non-YT entries.
 	if entry.ReadingTime == 0 {
-		if user.ShowReadingTime {
-			entry.ReadingTime = readingtime.EstimateReadingTime(entry.Content, user.DefaultReadingSpeed, user.CJKReadingSpeed)
-		}
+		entry.ReadingTime = readingtime.EstimateReadingTime(entry.Content, user.DefaultReadingSpeed, user.CJKReadingSpeed)
 	}
 }
 
@@ -418,4 +424,20 @@ func isRecentEntry(entry *model.Entry) bool {
 		return true
 	}
 	return false
+}
+
+func minifyEntryContent(entryContent string) string {
+	m := minify.New()
+
+	// Options required to avoid breaking the HTML content.
+	m.Add("text/html", &html.Minifier{
+		KeepEndTags: true,
+		KeepQuotes:  true,
+	})
+
+	if minifiedHTML, err := m.String("text/html", entryContent); err == nil {
+		entryContent = minifiedHTML
+	}
+
+	return entryContent
 }

@@ -18,6 +18,7 @@
   "alert.no_bookmark": "Yıldızlanmış makale yok.",
   "alert.no_category": "Hiç kategori yok.",
   "alert.no_category_entry": "Bu kategoride hiç makele yok.",
+  "alert.no_tag_entry": "Bu etiketle eşleşen hiçbir giriş yok.",
   "alert.no_feed": "Hiç beslemeniz yok.",
   "alert.no_feed_entry": "Bu besleme için makele yok.",
   "alert.no_feed_in_category": "Bu kategori için besleme yok.",
@@ -495,5 +496,14 @@
   "time_elapsed.years": ["%d yıl önce", "%d yıl önce"],
   "time_elapsed.yesterday": "dün",
   "tooltip.keyboard_shortcuts": "Klavye Kısayolu: %s",
-  "tooltip.logged_user": "%s olarak giriş yapıldı"
+  "tooltip.logged_user": "%s olarak giriş yapıldı",
+  "enclosure_media_controls.seek" : "Seek:",
+  "enclosure_media_controls.seek.title" : "Seek %s seconds",
+  "enclosure_media_controls.speed" : "Speed:",
+  "enclosure_media_controls.speed.faster" : "Faster",
+  "enclosure_media_controls.speed.faster.title" : "Faster by %sx",
+  "enclosure_media_controls.speed.slower" : "Slower",
+  "enclosure_media_controls.speed.slower.title" : "Slower by %sx",
+  "enclosure_media_controls.speed.reset" : "Reset",
+  "enclosure_media_controls.speed.reset.title" : "Reset speed to 1x"
 }

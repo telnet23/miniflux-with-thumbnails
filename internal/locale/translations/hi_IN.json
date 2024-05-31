@@ -258,6 +258,7 @@
     "alert.no_bookmark": "इस समय कोई बुकमार्क नहीं है",
     "alert.no_category": "कोई श्रेणी नहीं है।",
     "alert.no_category_entry": "इस श्रेणी में कोई विषय-वस्तु नहीं है।",
+    "alert.no_tag_entry": "इस टैग से मेल खाती कोई प्रविष्टियाँ नहीं हैं।",
     "alert.no_feed_entry": "इस फ़ीड के लिए कोई विषय-वस्तु नहीं है।",
     "alert.no_feed": "आपके पास कोई सदस्यता नहीं है।",
     "alert.no_feed_in_category": "इस श्रेणी के लिए कोई सदस्यता नहीं है।",
@@ -528,5 +529,14 @@
     "error.unable_to_detect_rssbridge": "Unable to detect feed using RSS-Bridge: %v.",
     "error.feed_format_not_detected": "Unable to detect feed format: %v.",
     "form.prefs.label.media_playback_rate": "ऑडियो/वीडियो की प्लेबैक गति",
-    "error.settings_media_playback_rate_range": "प्लेबैक गति सीमा से बाहर है"
+    "error.settings_media_playback_rate_range": "प्लेबैक गति सीमा से बाहर है",
+    "enclosure_media_controls.seek" : "Seek:",
+    "enclosure_media_controls.seek.title" : "Seek %s seconds",
+    "enclosure_media_controls.speed" : "Speed:",
+    "enclosure_media_controls.speed.faster" : "Faster",
+    "enclosure_media_controls.speed.faster.title" : "Faster by %sx",
+    "enclosure_media_controls.speed.slower" : "Slower",
+    "enclosure_media_controls.speed.slower.title" : "Slower by %sx",
+    "enclosure_media_controls.speed.reset" : "Reset",
+    "enclosure_media_controls.speed.reset.title" : "Reset speed to 1x"
 }
