@@ -36,6 +36,7 @@ func (h *handler) showTagEntriesAllPage(w http.ResponseWriter, r *http.Request) 
 	builder.WithSorting(user.EntryOrder, user.EntryDirection)
 	builder.WithOffset(offset)
 	builder.WithLimit(user.EntriesPerPage)
+	builder.WithEnclosures()
 
 	entries, err := builder.GetEntries()
 	if err != nil {

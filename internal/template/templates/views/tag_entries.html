@@ -25,6 +25,7 @@
             aria-labelledby="entry-title-{{ .ID }}"
             tabindex="-1"
         >
+            {{ template "item_thumbnail" . }}
             <header class="item-header" dir="auto">
                 <h2 id="entry-title-{{ .ID }}" class="item-title">
                     <a href="{{ route "tagEntry" "entryID" .ID "tagName" (urlEncode $.tagName) }}">

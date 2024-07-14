@@ -6,6 +6,9 @@ package model // import "miniflux.app/v2/internal/model"
 // Integration represents user integration settings.
 type Integration struct {
 	UserID                           int64
+	BetulaEnabled                    bool
+	BetulaURL                        string
+	BetulaToken                      string
 	PinboardEnabled                  bool
 	PinboardToken                    string
 	PinboardTags                     string
@@ -90,4 +93,8 @@ type Integration struct {
 	OmnivoreEnabled                  bool
 	OmnivoreAPIKey                   string
 	OmnivoreURL                      string
+	RaindropEnabled                  bool
+	RaindropToken                    string
+	RaindropCollectionID             string
+	RaindropTags                     string
 }

@@ -888,4 +888,37 @@ var migrations = []func(tx *sql.Tx) error{
 		_, err = tx.Exec(`DROP INDEX entries_feed_url_idx`)
 		return err
 	},
+	func(tx *sql.Tx) (err error) {
+		sql := `
+			ALTER TABLE integrations ADD COLUMN raindrop_enabled bool default 'f';
+			ALTER TABLE integrations ADD COLUMN raindrop_token text default '';
+			ALTER TABLE integrations ADD COLUMN raindrop_collection_id text default '';
+			ALTER TABLE integrations ADD COLUMN raindrop_tags text default '';
+		`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `ALTER TABLE feeds ADD COLUMN description text default ''`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `
+			ALTER TABLE users
+				ADD COLUMN block_filter_entry_rules text not null default '',
+				ADD COLUMN keep_filter_entry_rules text not null default ''
+		`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `
+			ALTER TABLE integrations ADD COLUMN betula_url text default '';
+			ALTER TABLE integrations ADD COLUMN betula_token text default '';
+			ALTER TABLE integrations ADD COLUMN betula_enabled bool default 'f';
+		`
+		_, err = tx.Exec(sql)
+		return err
+	},
 }
