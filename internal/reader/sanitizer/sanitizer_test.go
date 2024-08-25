@@ -490,6 +490,26 @@ func TestBlacklistedLink(t *testing.T) {
 	}
 }
 
+func TestLinkWithTrackers(t *testing.T) {
+	input := `<p>This link has trackers <a href="https://example.com/page?utm_source=newsletter">Test</a></p>`
+	expected := `<p>This link has trackers <a href="https://example.com/page" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer">Test</a></p>`
+	output := Sanitize("http://example.org/", input)
+
+	if expected != output {
+		t.Errorf(`Wrong output: "%s" != "%s"`, expected, output)
+	}
+}
+
+func TestImageSrcWithTrackers(t *testing.T) {
+	input := `<p>This image has trackers <img src="https://example.org/?id=123&utm_source=newsletter&utm_medium=email&fbclid=abc123"></p>`
+	expected := `<p>This image has trackers <img src="https://example.org/?id=123" loading="lazy"></p>`
+	output := Sanitize("http://example.org/", input)
+
+	if expected != output {
+		t.Errorf(`Wrong output: "%s" != "%s"`, expected, output)
+	}
+}
+
 func TestPixelTracker(t *testing.T) {
 	input := `<p><img src="https://tracker1.example.org/" height="1" width="1"> and <img src="https://tracker2.example.org/" height="1" width="1"/></p>`
 	expected := `<p> and </p>`
@@ -623,6 +643,16 @@ func TestReplaceScript(t *testing.T) {
 
 func TestReplaceStyle(t *testing.T) {
 	input := `<p>Before paragraph.</p><style>body { background-color: #ff0000; }</style><p>After paragraph.</p>`
+	expected := `<p>Before paragraph.</p><p>After paragraph.</p>`
+	output := Sanitize("http://example.org/", input)
+
+	if expected != output {
+		t.Errorf(`Wrong output: "%s" != "%s"`, expected, output)
+	}
+}
+
+func TestHiddenParagraph(t *testing.T) {
+	input := `<p>Before paragraph.</p><p hidden>This should <em>not</em> appear in the <strong>output</strong></p><p>After paragraph.</p>`
 	expected := `<p>Before paragraph.</p><p>After paragraph.</p>`
 	output := Sanitize("http://example.org/", input)
 

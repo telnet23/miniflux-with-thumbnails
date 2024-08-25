@@ -28,6 +28,7 @@ type Feed struct {
 	FeedURL                     string    `json:"feed_url"`
 	SiteURL                     string    `json:"site_url"`
 	Title                       string    `json:"title"`
+	Description                 string    `json:"description"`
 	CheckedAt                   time.Time `json:"checked_at"`
 	NextCheckAt                 time.Time `json:"next_check_at"`
 	EtagHeader                  string    `json:"etag_header"`
@@ -50,8 +51,10 @@ type Feed struct {
 	AllowSelfSignedCertificates bool      `json:"allow_self_signed_certificates"`
 	FetchViaProxy               bool      `json:"fetch_via_proxy"`
 	HideGlobally                bool      `json:"hide_globally"`
-	AppriseServiceURLs          string    `json:"apprise_service_urls"`
 	DisableHTTP2                bool      `json:"disable_http2"`
+	AppriseServiceURLs          string    `json:"apprise_service_urls"`
+	NtfyEnabled                 bool      `json:"ntfy_enabled"`
+	NtfyPriority                int       `json:"ntfy_priority"`
 
 	// Non persisted attributes
 	Category *Category `json:"category,omitempty"`
@@ -167,6 +170,7 @@ type FeedModificationRequest struct {
 	FeedURL                     *string `json:"feed_url"`
 	SiteURL                     *string `json:"site_url"`
 	Title                       *string `json:"title"`
+	Description                 *string `json:"description"`
 	ScraperRules                *string `json:"scraper_rules"`
 	RewriteRules                *string `json:"rewrite_rules"`
 	BlocklistRules              *string `json:"blocklist_rules"`
@@ -199,6 +203,10 @@ func (f *FeedModificationRequest) Patch(feed *Feed) {
 
 	if f.Title != nil && *f.Title != "" {
 		feed.Title = *f.Title
+	}
+
+	if f.Description != nil && *f.Description != "" {
+		feed.Description = *f.Description
 	}
 
 	if f.ScraperRules != nil {

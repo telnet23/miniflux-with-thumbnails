@@ -888,4 +888,58 @@ var migrations = []func(tx *sql.Tx) error{
 		_, err = tx.Exec(`DROP INDEX entries_feed_url_idx`)
 		return err
 	},
+	func(tx *sql.Tx) (err error) {
+		sql := `
+			ALTER TABLE integrations ADD COLUMN raindrop_enabled bool default 'f';
+			ALTER TABLE integrations ADD COLUMN raindrop_token text default '';
+			ALTER TABLE integrations ADD COLUMN raindrop_collection_id text default '';
+			ALTER TABLE integrations ADD COLUMN raindrop_tags text default '';
+		`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `ALTER TABLE feeds ADD COLUMN description text default ''`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `
+			ALTER TABLE users
+				ADD COLUMN block_filter_entry_rules text not null default '',
+				ADD COLUMN keep_filter_entry_rules text not null default ''
+		`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `
+			ALTER TABLE integrations ADD COLUMN betula_url text default '';
+			ALTER TABLE integrations ADD COLUMN betula_token text default '';
+			ALTER TABLE integrations ADD COLUMN betula_enabled bool default 'f';
+		`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `
+			ALTER TABLE integrations ADD COLUMN ntfy_enabled bool default 'f';
+			ALTER TABLE integrations ADD COLUMN ntfy_url text default '';
+			ALTER TABLE integrations ADD COLUMN ntfy_topic text default '';
+			ALTER TABLE integrations ADD COLUMN ntfy_api_token text default '';
+			ALTER TABLE integrations ADD COLUMN ntfy_username text default '';
+			ALTER TABLE integrations ADD COLUMN ntfy_password text default '';
+			ALTER TABLE integrations ADD COLUMN ntfy_icon_url text default '';
+
+			ALTER TABLE feeds ADD COLUMN ntfy_enabled bool default 'f';
+			ALTER TABLE feeds ADD COLUMN ntfy_priority int default '3';
+		`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `ALTER TABLE users ADD COLUMN mark_read_on_media_player_completion bool default 'f';`
+		_, err = tx.Exec(sql)
+		return err
+	},
 }

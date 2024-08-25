@@ -1,12 +1,12 @@
-APP          := miniflux
-DOCKER_IMAGE := miniflux/miniflux
-VERSION      := $(shell git describe --tags --abbrev=0 2>/dev/null)
-COMMIT       := $(shell git rev-parse --short HEAD 2>/dev/null)
-BUILD_DATE   := `date +%FT%T%z`
-LD_FLAGS     := "-s -w -X 'miniflux.app/v2/internal/version.Version=$(VERSION)' -X 'miniflux.app/v2/internal/version.Commit=$(COMMIT)' -X 'miniflux.app/v2/internal/version.BuildDate=$(BUILD_DATE)'"
-PKG_LIST     := $(shell go list ./... | grep -v /vendor/)
-DB_URL       := postgres://postgres:postgres@localhost/miniflux_test?sslmode=disable
-DEB_IMG_ARCH := amd64
+APP             := miniflux
+DOCKER_IMAGE    := miniflux/miniflux
+VERSION         := $(shell git describe --tags --abbrev=0 2>/dev/null)
+COMMIT          := $(shell git rev-parse --short HEAD 2>/dev/null)
+BUILD_DATE      := `date +%FT%T%z`
+LD_FLAGS        := "-s -w -X 'miniflux.app/v2/internal/version.Version=$(VERSION)' -X 'miniflux.app/v2/internal/version.Commit=$(COMMIT)' -X 'miniflux.app/v2/internal/version.BuildDate=$(BUILD_DATE)'"
+PKG_LIST        := $(shell go list ./... | grep -v /vendor/)
+DB_URL          := postgres://postgres:postgres@localhost/miniflux_test?sslmode=disable
+DOCKER_PLATFORM := amd64
 
 export PGPASSWORD := postgres
 
@@ -51,33 +51,43 @@ miniflux-no-pie:
 
 linux-amd64:
 	@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags=$(LD_FLAGS) -o $(APP)-$@ main.go
+	@ sha256sum $(APP)-$@ > $(APP)-$@.sha256
 
 linux-arm64:
 	@ CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags=$(LD_FLAGS) -o $(APP)-$@ main.go
+	@ sha256sum $(APP)-$@ > $(APP)-$@.sha256
 
 linux-armv7:
 	@ CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -ldflags=$(LD_FLAGS) -o $(APP)-$@ main.go
+	@ sha256sum $(APP)-$@ > $(APP)-$@.sha256
 
 linux-armv6:
 	@ CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build -ldflags=$(LD_FLAGS) -o $(APP)-$@ main.go
+	@ sha256sum $(APP)-$@ > $(APP)-$@.sha256
 
 linux-armv5:
 	@ CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=5 go build -ldflags=$(LD_FLAGS) -o $(APP)-$@ main.go
+	@ sha256sum $(APP)-$@ > $(APP)-$@.sha256
 
 darwin-amd64:
 	@ GOOS=darwin GOARCH=amd64 go build -ldflags=$(LD_FLAGS) -o $(APP)-$@ main.go
+	@ sha256sum $(APP)-$@ > $(APP)-$@.sha256
 
 darwin-arm64:
 	@ GOOS=darwin GOARCH=arm64 go build -ldflags=$(LD_FLAGS) -o $(APP)-$@ main.go
+	@ sha256sum $(APP)-$@ > $(APP)-$@.sha256
 
 freebsd-amd64:
 	@ CGO_ENABLED=0 GOOS=freebsd GOARCH=amd64 go build -ldflags=$(LD_FLAGS) -o $(APP)-$@ main.go
+	@ sha256sum $(APP)-$@ > $(APP)-$@.sha256
 
 openbsd-amd64:
 	@ GOOS=openbsd GOARCH=amd64 go build -ldflags=$(LD_FLAGS) -o $(APP)-$@ main.go
+	@ sha256sum $(APP)-$@ > $(APP)-$@.sha256
 
 windows-amd64:
 	@ GOOS=windows GOARCH=amd64 go build -ldflags=$(LD_FLAGS) -o $(APP)-$@.exe main.go
+	@ sha256sum $(APP)-$@.exe > $(APP)-$@.exe.sha256
 
 build: linux-amd64 linux-arm64 linux-armv7 linux-armv6 linux-armv5 darwin-amd64 darwin-arm64 freebsd-amd64 openbsd-amd64 windows-amd64
 
@@ -104,7 +114,7 @@ run:
 	@ LOG_DATE_TIME=1 LOG_LEVEL=debug RUN_MIGRATIONS=1 CREATE_ADMIN=1 ADMIN_USERNAME=admin ADMIN_PASSWORD=test123 go run main.go
 
 clean:
-	@ rm -f $(APP)-* $(APP) $(APP)*.rpm $(APP)*.deb $(APP)*.exe
+	@ rm -f $(APP)-* $(APP) $(APP)*.rpm $(APP)*.deb $(APP)*.exe $(APP)*.sha256
 
 test:
 	go test -cover -race -count=1 ./...
@@ -163,15 +173,15 @@ rpm: clean
 		rpmbuild -bb --define "_miniflux_version $(VERSION)" /root/rpmbuild/SPECS/miniflux.spec
 
 debian:
-	@ docker build --load \
-		--build-arg BASE_IMAGE_ARCH=$(DEB_IMG_ARCH) \
-		-t $(DEB_IMG_ARCH)/miniflux-deb-builder \
+	@ docker buildx build --load \
+		--platform linux/$(DOCKER_PLATFORM) \
+		-t miniflux-deb-builder \
 		-f packaging/debian/Dockerfile \
 		.
-	@ docker run --rm \
-		-v ${PWD}:/pkg $(DEB_IMG_ARCH)/miniflux-deb-builder
+	@ docker run --rm --platform linux/$(DOCKER_PLATFORM) \
+		-v ${PWD}:/pkg miniflux-deb-builder
 
 debian-packages: clean
-	$(MAKE) debian DEB_IMG_ARCH=amd64
-	$(MAKE) debian DEB_IMG_ARCH=arm64v8
-	$(MAKE) debian DEB_IMG_ARCH=arm32v7
+	$(MAKE) debian DOCKER_PLATFORM=amd64
+	$(MAKE) debian DOCKER_PLATFORM=arm64
+	$(MAKE) debian DOCKER_PLATFORM=arm/v7

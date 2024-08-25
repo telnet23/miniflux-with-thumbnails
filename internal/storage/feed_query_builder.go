@@ -135,6 +135,7 @@ func (f *FeedQueryBuilder) GetFeeds() (model.Feeds, error) {
 			f.feed_url,
 			f.site_url,
 			f.title,
+			f.description,
 			f.etag_header,
 			f.last_modified_header,
 			f.user_id,
@@ -164,7 +165,9 @@ func (f *FeedQueryBuilder) GetFeeds() (model.Feeds, error) {
 			fi.icon_id,
 			u.timezone,
 			f.apprise_service_urls,
-			f.disable_http2
+			f.disable_http2,
+			f.ntfy_enabled,
+			f.ntfy_priority
 		FROM
 			feeds f
 		LEFT JOIN
@@ -202,6 +205,7 @@ func (f *FeedQueryBuilder) GetFeeds() (model.Feeds, error) {
 			&feed.FeedURL,
 			&feed.SiteURL,
 			&feed.Title,
+			&feed.Description,
 			&feed.EtagHeader,
 			&feed.LastModifiedHeader,
 			&feed.UserID,
@@ -232,6 +236,8 @@ func (f *FeedQueryBuilder) GetFeeds() (model.Feeds, error) {
 			&tz,
 			&feed.AppriseServiceURLs,
 			&feed.DisableHTTP2,
+			&feed.NtfyEnabled,
+			&feed.NtfyPriority,
 		)
 
 		if err != nil {

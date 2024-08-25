@@ -56,6 +56,8 @@ const (
 	defaultMediaResourceTypes                 = "image"
 	defaultMediaProxyURL                      = ""
 	defaultFilterEntryMaxAgeDays              = 0
+	defaultFetchBilibiliWatchTime             = false
+	defaultFetchNebulaWatchTime               = false
 	defaultFetchOdyseeWatchTime               = false
 	defaultFetchYouTubeWatchTime              = false
 	defaultYouTubeEmbedUrlOverride            = "https://www.youtube-nocookie.com/embed/"
@@ -67,7 +69,9 @@ const (
 	defaultOAuth2ClientSecret                 = ""
 	defaultOAuth2RedirectURL                  = ""
 	defaultOAuth2OidcDiscoveryEndpoint        = ""
+	defaultOauth2OidcProviderName             = "OpenID Connect"
 	defaultOAuth2Provider                     = ""
+	defaultDisableLocalAuth                   = false
 	defaultPocketConsumerKey                  = ""
 	defaultHTTPClientTimeout                  = 20
 	defaultHTTPClientMaxBodySize              = 15
@@ -140,6 +144,8 @@ type Options struct {
 	mediaProxyMode                     string
 	mediaProxyResourceTypes            []string
 	mediaProxyCustomURL                string
+	fetchBilibiliWatchTime             bool
+	fetchNebulaWatchTime               bool
 	fetchOdyseeWatchTime               bool
 	fetchYouTubeWatchTime              bool
 	filterEntryMaxAgeDays              int
@@ -149,7 +155,9 @@ type Options struct {
 	oauth2ClientSecret                 string
 	oauth2RedirectURL                  string
 	oidcDiscoveryEndpoint              string
+	oidcProviderName                   string
 	oauth2Provider                     string
+	disableLocalAuth                   bool
 	pocketConsumerKey                  string
 	httpClientTimeout                  int
 	httpClientMaxBodySize              int64
@@ -216,6 +224,8 @@ func NewOptions() *Options {
 		mediaProxyResourceTypes:            []string{defaultMediaResourceTypes},
 		mediaProxyCustomURL:                defaultMediaProxyURL,
 		filterEntryMaxAgeDays:              defaultFilterEntryMaxAgeDays,
+		fetchBilibiliWatchTime:             defaultFetchBilibiliWatchTime,
+		fetchNebulaWatchTime:               defaultFetchNebulaWatchTime,
 		fetchOdyseeWatchTime:               defaultFetchOdyseeWatchTime,
 		fetchYouTubeWatchTime:              defaultFetchYouTubeWatchTime,
 		youTubeEmbedUrlOverride:            defaultYouTubeEmbedUrlOverride,
@@ -224,7 +234,9 @@ func NewOptions() *Options {
 		oauth2ClientSecret:                 defaultOAuth2ClientSecret,
 		oauth2RedirectURL:                  defaultOAuth2RedirectURL,
 		oidcDiscoveryEndpoint:              defaultOAuth2OidcDiscoveryEndpoint,
+		oidcProviderName:                   defaultOauth2OidcProviderName,
 		oauth2Provider:                     defaultOAuth2Provider,
+		disableLocalAuth:                   defaultDisableLocalAuth,
 		pocketConsumerKey:                  defaultPocketConsumerKey,
 		httpClientTimeout:                  defaultHTTPClientTimeout,
 		httpClientMaxBodySize:              defaultHTTPClientMaxBodySize * 1024 * 1024,
@@ -445,9 +457,19 @@ func (o *Options) OIDCDiscoveryEndpoint() string {
 	return o.oidcDiscoveryEndpoint
 }
 
+// OIDCProviderName returns the OAuth2 OIDC provider's display name
+func (o *Options) OIDCProviderName() string {
+	return o.oidcProviderName
+}
+
 // OAuth2Provider returns the name of the OAuth2 provider configured.
 func (o *Options) OAuth2Provider() string {
 	return o.oauth2Provider
+}
+
+// DisableLocalAUth returns true if the local user database should not be used to authenticate users
+func (o *Options) DisableLocalAuth() bool {
+	return o.disableLocalAuth
 }
 
 // HasHSTS returns true if HTTP Strict Transport Security is enabled.
@@ -486,10 +508,22 @@ func (o *Options) YouTubeEmbedUrlOverride() string {
 	return o.youTubeEmbedUrlOverride
 }
 
+// FetchNebulaWatchTime returns true if the Nebula video duration
+// should be fetched and used as a reading time.
+func (o *Options) FetchNebulaWatchTime() bool {
+	return o.fetchNebulaWatchTime
+}
+
 // FetchOdyseeWatchTime returns true if the Odysee video duration
 // should be fetched and used as a reading time.
 func (o *Options) FetchOdyseeWatchTime() bool {
 	return o.fetchOdyseeWatchTime
+}
+
+// FetchBilibiliWatchTime returns true if the Bilibili video duration
+// should be fetched and used as a reading time.
+func (o *Options) FetchBilibiliWatchTime() bool {
+	return o.fetchBilibiliWatchTime
 }
 
 // MediaProxyMode returns "none" to never proxy, "http-only" to proxy non-HTTPS, "all" to always proxy.
@@ -647,7 +681,9 @@ func (o *Options) SortedOptions(redactSecret bool) []*Option {
 		"DISABLE_SCHEDULER_SERVICE":              !o.schedulerService,
 		"FILTER_ENTRY_MAX_AGE_DAYS":              o.filterEntryMaxAgeDays,
 		"FETCH_YOUTUBE_WATCH_TIME":               o.fetchYouTubeWatchTime,
+		"FETCH_NEBULA_WATCH_TIME":                o.fetchNebulaWatchTime,
 		"FETCH_ODYSEE_WATCH_TIME":                o.fetchOdyseeWatchTime,
+		"FETCH_BILIBILI_WATCH_TIME":              o.fetchBilibiliWatchTime,
 		"HTTPS":                                  o.HTTPS,
 		"HTTP_CLIENT_MAX_BODY_SIZE":              o.httpClientMaxBodySize,
 		"HTTP_CLIENT_PROXY":                      o.httpClientProxy,
@@ -672,9 +708,11 @@ func (o *Options) SortedOptions(redactSecret bool) []*Option {
 		"OAUTH2_CLIENT_ID":                       o.oauth2ClientID,
 		"OAUTH2_CLIENT_SECRET":                   redactSecretValue(o.oauth2ClientSecret, redactSecret),
 		"OAUTH2_OIDC_DISCOVERY_ENDPOINT":         o.oidcDiscoveryEndpoint,
+		"OAUTH2_OIDC_PROVIDER_NAME":              o.oidcProviderName,
 		"OAUTH2_PROVIDER":                        o.oauth2Provider,
 		"OAUTH2_REDIRECT_URL":                    o.oauth2RedirectURL,
 		"OAUTH2_USER_CREATION":                   o.oauth2UserCreationAllowed,
+		"DISABLE_LOCAL_AUTH":                     o.disableLocalAuth,
 		"POCKET_CONSUMER_KEY":                    redactSecretValue(o.pocketConsumerKey, redactSecret),
 		"POLLING_FREQUENCY":                      o.pollingFrequency,
 		"FORCE_REFRESH_INTERVAL":                 o.forceRefreshInterval,

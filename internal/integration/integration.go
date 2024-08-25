@@ -8,6 +8,7 @@ import (
 
 	"miniflux.app/v2/internal/config"
 	"miniflux.app/v2/internal/integration/apprise"
+	"miniflux.app/v2/internal/integration/betula"
 	"miniflux.app/v2/internal/integration/espial"
 	"miniflux.app/v2/internal/integration/instapaper"
 	"miniflux.app/v2/internal/integration/linkace"
@@ -15,10 +16,12 @@ import (
 	"miniflux.app/v2/internal/integration/linkwarden"
 	"miniflux.app/v2/internal/integration/matrixbot"
 	"miniflux.app/v2/internal/integration/notion"
+	"miniflux.app/v2/internal/integration/ntfy"
 	"miniflux.app/v2/internal/integration/nunuxkeeper"
 	"miniflux.app/v2/internal/integration/omnivore"
 	"miniflux.app/v2/internal/integration/pinboard"
 	"miniflux.app/v2/internal/integration/pocket"
+	"miniflux.app/v2/internal/integration/raindrop"
 	"miniflux.app/v2/internal/integration/readeck"
 	"miniflux.app/v2/internal/integration/readwise"
 	"miniflux.app/v2/internal/integration/shaarli"
@@ -31,6 +34,30 @@ import (
 
 // SendEntry sends the entry to third-party providers when the user click on "Save".
 func SendEntry(entry *model.Entry, userIntegrations *model.Integration) {
+	if userIntegrations.BetulaEnabled {
+		slog.Debug("Sending entry to Betula",
+			slog.Int64("user_id", userIntegrations.UserID),
+			slog.Int64("entry_id", entry.ID),
+			slog.String("entry_url", entry.URL),
+		)
+
+		client := betula.NewClient(userIntegrations.BetulaURL, userIntegrations.BetulaToken)
+		err := client.CreateBookmark(
+			entry.URL,
+			entry.Title,
+			entry.Tags,
+		)
+
+		if err != nil {
+			slog.Error("Unable to send entry to Betula",
+				slog.Int64("user_id", userIntegrations.UserID),
+				slog.Int64("entry_id", entry.ID),
+				slog.String("entry_url", entry.URL),
+				slog.Any("error", err),
+			)
+		}
+	}
+
 	if userIntegrations.PinboardEnabled {
 		slog.Debug("Sending entry to Pinboard",
 			slog.Int64("user_id", userIntegrations.UserID),
@@ -359,6 +386,7 @@ func SendEntry(entry *model.Entry, userIntegrations *model.Integration) {
 			)
 		}
 	}
+
 	if userIntegrations.OmnivoreEnabled {
 		slog.Debug("Sending entry to Omnivore",
 			slog.Int64("user_id", userIntegrations.UserID),
@@ -369,6 +397,24 @@ func SendEntry(entry *model.Entry, userIntegrations *model.Integration) {
 		client := omnivore.NewClient(userIntegrations.OmnivoreAPIKey, userIntegrations.OmnivoreURL)
 		if err := client.SaveUrl(entry.URL); err != nil {
 			slog.Error("Unable to send entry to Omnivore",
+				slog.Int64("user_id", userIntegrations.UserID),
+				slog.Int64("entry_id", entry.ID),
+				slog.String("entry_url", entry.URL),
+				slog.Any("error", err),
+			)
+		}
+	}
+
+	if userIntegrations.RaindropEnabled {
+		slog.Debug("Sending entry to Raindrop",
+			slog.Int64("user_id", userIntegrations.UserID),
+			slog.Int64("entry_id", entry.ID),
+			slog.String("entry_url", entry.URL),
+		)
+
+		client := raindrop.NewClient(userIntegrations.RaindropToken, userIntegrations.RaindropCollectionID, userIntegrations.RaindropTags)
+		if err := client.CreateRaindrop(entry.URL, entry.Title); err != nil {
+			slog.Error("Unable to send entry to Raindrop",
 				slog.Int64("user_id", userIntegrations.UserID),
 				slog.Int64("entry_id", entry.ID),
 				slog.String("entry_url", entry.URL),
@@ -422,6 +468,28 @@ func PushEntries(feed *model.Feed, entries model.Entries, userIntegrations *mode
 				slog.String("webhook_url", userIntegrations.WebhookURL),
 				slog.Any("error", err),
 			)
+		}
+	}
+
+	if userIntegrations.NtfyEnabled && feed.NtfyEnabled {
+		slog.Debug("Sending new entries to Ntfy",
+			slog.Int64("user_id", userIntegrations.UserID),
+			slog.Int("nb_entries", len(entries)),
+			slog.Int64("feed_id", feed.ID),
+		)
+
+		client := ntfy.NewClient(
+			userIntegrations.NtfyURL,
+			userIntegrations.NtfyTopic,
+			userIntegrations.NtfyAPIToken,
+			userIntegrations.NtfyUsername,
+			userIntegrations.NtfyPassword,
+			userIntegrations.NtfyIconURL,
+			feed.NtfyPriority,
+		)
+
+		if err := client.SendMessages(feed, entries); err != nil {
+			slog.Warn("Unable to send new entries to Ntfy", slog.Any("error", err))
 		}
 	}
 

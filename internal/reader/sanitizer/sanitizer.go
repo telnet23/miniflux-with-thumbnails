@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"miniflux.app/v2/internal/config"
+	"miniflux.app/v2/internal/reader/urlcleaner"
 	"miniflux.app/v2/internal/urllib"
 
 	"golang.org/x/net/html"
@@ -23,6 +24,7 @@ var (
 		"a":          {"href", "title", "id"},
 		"abbr":       {"title"},
 		"acronym":    {"title"},
+		"aside":      {},
 		"audio":      {"src"},
 		"blockquote": {},
 		"br":         {},
@@ -82,7 +84,7 @@ func Sanitize(baseURL, input string) string {
 	var buffer strings.Builder
 	var tagStack []string
 	var parentTag string
-	blacklistedTagDepth := 0
+	var blockedStack []string
 
 	tokenizer := html.NewTokenizer(strings.NewReader(input))
 	for {
@@ -98,7 +100,7 @@ func Sanitize(baseURL, input string) string {
 		token := tokenizer.Token()
 		switch token.Type {
 		case html.TextToken:
-			if blacklistedTagDepth > 0 {
+			if len(blockedStack) > 0 {
 				continue
 			}
 
@@ -116,7 +118,10 @@ func Sanitize(baseURL, input string) string {
 			if isPixelTracker(tagName, token.Attr) {
 				continue
 			}
-			if isValidTag(tagName) {
+
+			if isBlockedTag(tagName) || slices.ContainsFunc(token.Attr, func(attr html.Attribute) bool { return attr.Key == "hidden" }) {
+				blockedStack = append(blockedStack, tagName)
+			} else if len(blockedStack) == 0 && isValidTag(tagName) {
 				attrNames, htmlAttributes := sanitizeAttributes(baseURL, tagName, token.Attr)
 
 				if hasRequiredAttributes(tagName, attrNames) {
@@ -128,22 +133,20 @@ func Sanitize(baseURL, input string) string {
 
 					tagStack = append(tagStack, tagName)
 				}
-			} else if isBlockedTag(tagName) {
-				blacklistedTagDepth++
 			}
 		case html.EndTagToken:
 			tagName := token.DataAtom.String()
-			if isValidTag(tagName) && slices.Contains(tagStack, tagName) {
+			if len(blockedStack) > 0 && blockedStack[len(blockedStack)-1] == tagName {
+				blockedStack = blockedStack[:len(blockedStack)-1]
+			} else if len(blockedStack) == 0 && isValidTag(tagName) && slices.Contains(tagStack, tagName) {
 				buffer.WriteString("</" + tagName + ">")
-			} else if isBlockedTag(tagName) {
-				blacklistedTagDepth--
 			}
 		case html.SelfClosingTagToken:
 			tagName := token.DataAtom.String()
 			if isPixelTracker(tagName, token.Attr) {
 				continue
 			}
-			if isValidTag(tagName) {
+			if isValidTag(tagName) && len(blockedStack) == 0 {
 				attrNames, htmlAttributes := sanitizeAttributes(baseURL, tagName, token.Attr)
 				if hasRequiredAttributes(tagName, attrNames) {
 					if len(attrNames) > 0 {
@@ -209,6 +212,10 @@ func sanitizeAttributes(baseURL, tagName string, attributes []html.Attribute) ([
 
 				if !hasValidURIScheme(value) || isBlockedResource(value) {
 					continue
+				}
+
+				if cleanedURL, err := urlcleaner.RemoveTrackingParameters(value); err == nil {
+					value = cleanedURL
 				}
 			}
 		}
