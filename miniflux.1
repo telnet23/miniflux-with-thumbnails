@@ -1,5 +1,5 @@
 .\" Manpage for miniflux.
-.TH "MINIFLUX" "1" "March 23, 2024" "\ \&" "\ \&"
+.TH "MINIFLUX" "1" "August 18, 2024" "\ \&" "\ \&"
 
 .SH NAME
 miniflux \- Minimalist and opinionated feed reader
@@ -239,10 +239,24 @@ Set the value to 1 to disable the HTTP service\&.
 .br
 Default is false (The HTTP service is enabled)\&.
 .TP
+.B DISABLE_LOCAL_AUTH
+Disable local authentication\&.
+.br
+When set to true, the username/password form is hidden from the login screen, and the
+options to change username/password or unlink OAuth2 account are hidden from the settings page.
+.br
+Default is false\&.
+.TP
 .B DISABLE_SCHEDULER_SERVICE
 Set the value to 1 to disable the internal scheduler service\&.
 .br
 Default is false (The internal scheduler service is enabled)\&.
+.TP
+.B FETCH_BILIBILI_WATCH_TIME
+Set the value to 1 to scrape video duration from Bilibili website and
+use it as a reading time\&.
+.br
+Disabled by default\&.
 .TP
 .B FETCH_NEBULA_WATCH_TIME
 Set the value to 1 to scrape video duration from Nebula website and
@@ -435,6 +449,11 @@ Default is empty\&.
 OpenID Connect discovery endpoint\&.
 .br
 Default is empty\&.
+.TP
+.B OAUTH2_OIDC_PROVIDER_NAME
+Name to display for the OIDC provider\&.
+.br
+Default is OpenID Connect\&.
 .TP
 .B OAUTH2_PROVIDER
 Possible values are "google" or "oidc"\&.

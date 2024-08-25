@@ -613,6 +613,28 @@ func (c *Client) Icon(iconID int64) (*FeedIcon, error) {
 	return feedIcon, nil
 }
 
+// Enclosure fetches a specific enclosure.
+func (c *Client) Enclosure(enclosureID int64) (*Enclosure, error) {
+	body, err := c.request.Get(fmt.Sprintf("/v1/enclosures/%d", enclosureID))
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+
+	var enclosure *Enclosure
+	if err := json.NewDecoder(body).Decode(&enclosure); err != nil {
+		return nil, fmt.Errorf("miniflux: response error(%v)", err)
+	}
+
+	return enclosure, nil
+}
+
+// UpdateEnclosure updates an enclosure.
+func (c *Client) UpdateEnclosure(enclosureID int64, enclosureUpdate *EnclosureUpdateRequest) error {
+	_, err := c.request.Put(fmt.Sprintf("/v1/enclosures/%d", enclosureID), enclosureUpdate)
+	return err
+}
+
 func buildFilterQueryString(path string, filter *Filter) string {
 	if filter != nil {
 		values := url.Values{}
@@ -683,6 +705,10 @@ func buildFilterQueryString(path string, filter *Filter) string {
 
 		if filter.FeedID > 0 {
 			values.Set("feed_id", strconv.FormatInt(filter.FeedID, 10))
+		}
+
+		if filter.GloballyVisible {
+			values.Set("globally_visible", "true")
 		}
 
 		for _, status := range filter.Statuses {

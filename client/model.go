@@ -242,12 +242,17 @@ type Entries []*Entry
 
 // Enclosure represents an attachment.
 type Enclosure struct {
-	ID       int64  `json:"id"`
-	UserID   int64  `json:"user_id"`
-	EntryID  int64  `json:"entry_id"`
-	URL      string `json:"url"`
-	MimeType string `json:"mime_type"`
-	Size     int    `json:"size"`
+	ID               int64  `json:"id"`
+	UserID           int64  `json:"user_id"`
+	EntryID          int64  `json:"entry_id"`
+	URL              string `json:"url"`
+	MimeType         string `json:"mime_type"`
+	Size             int    `json:"size"`
+	MediaProgression int64  `json:"media_progression"`
+}
+
+type EnclosureUpdateRequest struct {
+	MediaProgression int64 `json:"media_progression"`
 }
 
 // Enclosures represents a list of attachments.
@@ -278,6 +283,7 @@ type Filter struct {
 	CategoryID      int64
 	FeedID          int64
 	Statuses        []string
+	GloballyVisible bool
 }
 
 // EntryResultSet represents the response when fetching entries.

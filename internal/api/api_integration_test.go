@@ -67,9 +67,13 @@ func TestIncorrectEndpoint(t *testing.T) {
 	}
 
 	client := miniflux.NewClient("incorrect url")
-	_, err := client.Users()
-	if err == nil {
+	if _, err := client.Users(); err == nil {
 		t.Fatal(`Using an incorrect URL should raise an error`)
+	}
+
+	client = miniflux.NewClient("")
+	if _, err := client.Users(); err == nil {
+		t.Fatal(`Using an empty URL should raise an error`)
 	}
 }
 
@@ -1983,6 +1987,176 @@ func TestGetAllEntriesEndpointWithFilter(t *testing.T) {
 
 	if _, err = regularUserClient.Entries(&miniflux.Filter{Order: "invalid"}); err == nil {
 		t.Fatal(`Using invalid order should raise an error`)
+	}
+}
+
+func TestGetGlobalEntriesEndpoint(t *testing.T) {
+	testConfig := newIntegrationTestConfig()
+	if !testConfig.isConfigured() {
+		t.Skip(skipIntegrationTestsMessage)
+	}
+
+	adminClient := miniflux.NewClient(testConfig.testBaseURL, testConfig.testAdminUsername, testConfig.testAdminPassword)
+
+	regularTestUser, err := adminClient.CreateUser(testConfig.genRandomUsername(), testConfig.testRegularPassword, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer adminClient.DeleteUser(regularTestUser.ID)
+
+	regularUserClient := miniflux.NewClient(testConfig.testBaseURL, regularTestUser.Username, testConfig.testRegularPassword)
+
+	feedID, err := regularUserClient.CreateFeed(&miniflux.FeedCreationRequest{
+		FeedURL:      testConfig.testFeedURL,
+		HideGlobally: true,
+	})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	feedIDEntry, err := regularUserClient.Feed(feedID)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if feedIDEntry.HideGlobally != true {
+		t.Fatalf(`Expected feed to have globally_hidden set to true, was false.`)
+	}
+
+	/* Not filtering on GloballyVisible should return all entries */
+	feedEntries, err := regularUserClient.Entries(&miniflux.Filter{FeedID: feedID})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(feedEntries.Entries) == 0 {
+		t.Fatalf(`Expected entries but response contained none.`)
+	}
+
+	/* Feed is hidden globally, so this should be empty */
+	globallyVisibleEntries, err := regularUserClient.Entries(&miniflux.Filter{GloballyVisible: true})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(globallyVisibleEntries.Entries) != 0 {
+		t.Fatalf(`Expected no entries, got %d`, len(globallyVisibleEntries.Entries))
+	}
+}
+
+func TestUpdateEnclosureEndpoint(t *testing.T) {
+	testConfig := newIntegrationTestConfig()
+	if !testConfig.isConfigured() {
+		t.Skip(skipIntegrationTestsMessage)
+	}
+
+	adminClient := miniflux.NewClient(testConfig.testBaseURL, testConfig.testAdminUsername, testConfig.testAdminPassword)
+
+	regularTestUser, err := adminClient.CreateUser(testConfig.genRandomUsername(), testConfig.testRegularPassword, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer adminClient.DeleteUser(regularTestUser.ID)
+
+	regularUserClient := miniflux.NewClient(testConfig.testBaseURL, regularTestUser.Username, testConfig.testRegularPassword)
+
+	feedID, err := regularUserClient.CreateFeed(&miniflux.FeedCreationRequest{
+		FeedURL: testConfig.testFeedURL,
+	})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := regularUserClient.FeedEntries(feedID, nil)
+	if err != nil {
+		t.Fatalf(`Failed to get entries: %v`, err)
+	}
+
+	var enclosure *miniflux.Enclosure
+	for _, entry := range result.Entries {
+		if len(entry.Enclosures) > 0 {
+			enclosure = entry.Enclosures[0]
+			break
+		}
+	}
+
+	if enclosure == nil {
+		t.Skip(`Skipping test, missing enclosure in feed.`)
+	}
+
+	err = regularUserClient.UpdateEnclosure(enclosure.ID, &miniflux.EnclosureUpdateRequest{
+		MediaProgression: 20,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	updatedEnclosure, err := regularUserClient.Enclosure(enclosure.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if updatedEnclosure.MediaProgression != 20 {
+		t.Fatalf(`Failed to update media_progression, expected %d but got %d`, 20, updatedEnclosure.MediaProgression)
+	}
+}
+
+func TestGetEnclosureEndpoint(t *testing.T) {
+	testConfig := newIntegrationTestConfig()
+	if !testConfig.isConfigured() {
+		t.Skip(skipIntegrationTestsMessage)
+	}
+
+	adminClient := miniflux.NewClient(testConfig.testBaseURL, testConfig.testAdminUsername, testConfig.testAdminPassword)
+
+	regularTestUser, err := adminClient.CreateUser(testConfig.genRandomUsername(), testConfig.testRegularPassword, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer adminClient.DeleteUser(regularTestUser.ID)
+
+	regularUserClient := miniflux.NewClient(testConfig.testBaseURL, regularTestUser.Username, testConfig.testRegularPassword)
+
+	feedID, err := regularUserClient.CreateFeed(&miniflux.FeedCreationRequest{
+		FeedURL: testConfig.testFeedURL,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := regularUserClient.FeedEntries(feedID, nil)
+	if err != nil {
+		t.Fatalf(`Failed to get entries: %v`, err)
+	}
+
+	var expectedEnclosure *miniflux.Enclosure
+	for _, entry := range result.Entries {
+		if len(entry.Enclosures) > 0 {
+			expectedEnclosure = entry.Enclosures[0]
+			break
+		}
+	}
+
+	if expectedEnclosure == nil {
+		t.Skip(`Skipping test, missing enclosure in feed.`)
+	}
+
+	enclosure, err := regularUserClient.Enclosure(expectedEnclosure.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if enclosure.ID != expectedEnclosure.ID {
+		t.Fatalf(`Invalid enclosureID, got %d while expecting %d`, enclosure.ID, expectedEnclosure.ID)
+	}
+
+	if _, err = regularUserClient.Enclosure(99999); err == nil {
+		t.Fatalf(`Fetching an inexisting enclosure should raise an error`)
 	}
 }
 

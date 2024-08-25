@@ -225,8 +225,12 @@ func (p *Parser) parseLines(lines []string) (err error) {
 			p.opts.oauth2RedirectURL = parseString(value, defaultOAuth2RedirectURL)
 		case "OAUTH2_OIDC_DISCOVERY_ENDPOINT":
 			p.opts.oidcDiscoveryEndpoint = parseString(value, defaultOAuth2OidcDiscoveryEndpoint)
+		case "OAUTH2_OIDC_PROVIDER_NAME":
+			p.opts.oidcProviderName = parseString(value, defaultOauth2OidcProviderName)
 		case "OAUTH2_PROVIDER":
 			p.opts.oauth2Provider = parseString(value, defaultOAuth2Provider)
+		case "DISABLE_LOCAL_AUTH":
+			p.opts.disableLocalAuth = parseBool(value, defaultDisableLocalAuth)
 		case "HTTP_CLIENT_TIMEOUT":
 			p.opts.httpClientTimeout = parseInt(value, defaultHTTPClientTimeout)
 		case "HTTP_CLIENT_MAX_BODY_SIZE":
@@ -259,6 +263,8 @@ func (p *Parser) parseLines(lines []string) (err error) {
 			p.opts.metricsPassword = parseString(value, defaultMetricsPassword)
 		case "METRICS_PASSWORD_FILE":
 			p.opts.metricsPassword = readSecretFile(value, defaultMetricsPassword)
+		case "FETCH_BILIBILI_WATCH_TIME":
+			p.opts.fetchBilibiliWatchTime = parseBool(value, defaultFetchBilibiliWatchTime)
 		case "FETCH_NEBULA_WATCH_TIME":
 			p.opts.fetchNebulaWatchTime = parseBool(value, defaultFetchNebulaWatchTime)
 		case "FETCH_ODYSEE_WATCH_TIME":

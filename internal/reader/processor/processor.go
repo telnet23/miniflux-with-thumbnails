@@ -21,6 +21,7 @@ import (
 	"miniflux.app/v2/internal/reader/rewrite"
 	"miniflux.app/v2/internal/reader/sanitizer"
 	"miniflux.app/v2/internal/reader/scraper"
+	"miniflux.app/v2/internal/reader/urlcleaner"
 	"miniflux.app/v2/internal/storage"
 
 	"github.com/PuerkitoBio/goquery"
@@ -32,6 +33,8 @@ var (
 	youtubeRegex           = regexp.MustCompile(`youtube\.com/watch\?v=(.*)$`)
 	nebulaRegex            = regexp.MustCompile(`^https://nebula\.tv`)
 	odyseeRegex            = regexp.MustCompile(`^https://odysee\.com`)
+	bilibiliRegex          = regexp.MustCompile(`bilibili\.com/video/(.*)$`)
+	timelengthRegex        = regexp.MustCompile(`"timelength":\s*(\d+)`)
 	iso8601Regex           = regexp.MustCompile(`^P((?P<year>\d+)Y)?((?P<month>\d+)M)?((?P<week>\d+)W)?((?P<day>\d+)D)?(T((?P<hour>\d+)H)?((?P<minute>\d+)M)?((?P<second>\d+)S)?)?$`)
 	customReplaceRuleRegex = regexp.MustCompile(`rewrite\("(.*)"\|"(.*)"\)`)
 )
@@ -56,7 +59,12 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, user *model.Us
 			continue
 		}
 
-		websiteURL := getUrlFromEntry(feed, entry)
+		if cleanedURL, err := urlcleaner.RemoveTrackingParameters(entry.URL); err == nil {
+			entry.URL = cleanedURL
+		}
+
+		pageBaseURL := ""
+		rewrittenURL := rewriteEntryURL(feed, entry)
 		entryIsNew := store.IsNewEntry(feed.ID, entry.Hash)
 		if feed.Crawler && (entryIsNew || forceRefresh) {
 			slog.Debug("Scraping entry",
@@ -68,7 +76,7 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, user *model.Us
 				slog.String("feed_url", feed.FeedURL),
 				slog.Bool("entry_is_new", entryIsNew),
 				slog.Bool("force_refresh", forceRefresh),
-				slog.String("website_url", websiteURL),
+				slog.String("rewritten_url", rewrittenURL),
 			)
 
 			startTime := time.Now()
@@ -82,11 +90,15 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, user *model.Us
 			requestBuilder.IgnoreTLSErrors(feed.AllowSelfSignedCertificates)
 			requestBuilder.DisableHTTP2(feed.DisableHTTP2)
 
-			content, scraperErr := scraper.ScrapeWebsite(
+			scrapedPageBaseURL, extractedContent, scraperErr := scraper.ScrapeWebsite(
 				requestBuilder,
-				websiteURL,
+				rewrittenURL,
 				feed.ScraperRules,
 			)
+
+			if scrapedPageBaseURL != "" {
+				pageBaseURL = scrapedPageBaseURL
+			}
 
 			if config.Opts.HasMetricsCollector() {
 				status := "success"
@@ -104,16 +116,20 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, user *model.Us
 					slog.String("feed_url", feed.FeedURL),
 					slog.Any("error", scraperErr),
 				)
-			} else if content != "" {
+			} else if extractedContent != "" {
 				// We replace the entry content only if the scraper doesn't return any error.
-				entry.Content = minifyEntryContent(content)
+				entry.Content = minifyEntryContent(extractedContent)
 			}
 		}
 
-		rewrite.Rewriter(websiteURL, entry, feed.RewriteRules)
+		rewrite.Rewriter(rewrittenURL, entry, feed.RewriteRules)
 
-		// The sanitizer should always run at the end of the process to make sure unsafe HTML is filtered.
-		entry.Content = sanitizer.Sanitize(websiteURL, entry.Content)
+		if pageBaseURL == "" {
+			pageBaseURL = rewrittenURL
+		}
+
+		// The sanitizer should always run at the end of the process to make sure unsafe HTML is filtered out.
+		entry.Content = sanitizer.Sanitize(pageBaseURL, entry.Content)
 
 		updateEntryReadingTime(store, feed, entry, entryIsNew, user)
 		filteredEntries = append(filteredEntries, entry)
@@ -264,7 +280,7 @@ func isAllowedEntry(feed *model.Feed, entry *model.Entry, user *model.User) bool
 // ProcessEntryWebPage downloads the entry web page and apply rewrite rules.
 func ProcessEntryWebPage(feed *model.Feed, entry *model.Entry, user *model.User) error {
 	startTime := time.Now()
-	websiteURL := getUrlFromEntry(feed, entry)
+	rewrittenEntryURL := rewriteEntryURL(feed, entry)
 
 	requestBuilder := fetcher.NewRequestBuilder()
 	requestBuilder.WithUserAgent(feed.UserAgent, config.Opts.HTTPClientUserAgent())
@@ -275,9 +291,9 @@ func ProcessEntryWebPage(feed *model.Feed, entry *model.Entry, user *model.User)
 	requestBuilder.IgnoreTLSErrors(feed.AllowSelfSignedCertificates)
 	requestBuilder.DisableHTTP2(feed.DisableHTTP2)
 
-	content, scraperErr := scraper.ScrapeWebsite(
+	pageBaseURL, extractedContent, scraperErr := scraper.ScrapeWebsite(
 		requestBuilder,
-		websiteURL,
+		rewrittenEntryURL,
 		feed.ScraperRules,
 	)
 
@@ -293,21 +309,21 @@ func ProcessEntryWebPage(feed *model.Feed, entry *model.Entry, user *model.User)
 		return scraperErr
 	}
 
-	if content != "" {
-		entry.Content = minifyEntryContent(content)
+	if extractedContent != "" {
+		entry.Content = minifyEntryContent(extractedContent)
 		if user.ShowReadingTime {
 			entry.ReadingTime = readingtime.EstimateReadingTime(entry.Content, user.DefaultReadingSpeed, user.CJKReadingSpeed)
 		}
 	}
 
-	rewrite.Rewriter(websiteURL, entry, entry.Feed.RewriteRules)
-	entry.Content = sanitizer.Sanitize(websiteURL, entry.Content)
+	rewrite.Rewriter(rewrittenEntryURL, entry, entry.Feed.RewriteRules)
+	entry.Content = sanitizer.Sanitize(pageBaseURL, entry.Content)
 
 	return nil
 }
 
-func getUrlFromEntry(feed *model.Feed, entry *model.Entry) string {
-	var url = entry.URL
+func rewriteEntryURL(feed *model.Feed, entry *model.Entry) string {
+	var rewrittenURL = entry.URL
 	if feed.UrlRewriteRules != "" {
 		parts := customReplaceRuleRegex.FindStringSubmatch(feed.UrlRewriteRules)
 
@@ -318,26 +334,27 @@ func getUrlFromEntry(feed *model.Feed, entry *model.Entry) string {
 					slog.String("url_rewrite_rules", feed.UrlRewriteRules),
 					slog.Any("error", err),
 				)
-				return url
+				return rewrittenURL
 			}
-			url = re.ReplaceAllString(entry.URL, parts[2])
+			rewrittenURL = re.ReplaceAllString(entry.URL, parts[2])
 			slog.Debug("Rewriting entry URL",
 				slog.String("original_entry_url", entry.URL),
-				slog.String("rewritten_entry_url", url),
+				slog.String("rewritten_entry_url", rewrittenURL),
 				slog.Int64("feed_id", feed.ID),
 				slog.String("feed_url", feed.FeedURL),
 			)
 		} else {
 			slog.Debug("Cannot find search and replace terms for replace rule",
 				slog.String("original_entry_url", entry.URL),
-				slog.String("rewritten_entry_url", url),
+				slog.String("rewritten_entry_url", rewrittenURL),
 				slog.Int64("feed_id", feed.ID),
 				slog.String("feed_url", feed.FeedURL),
 				slog.String("url_rewrite_rules", feed.UrlRewriteRules),
 			)
 		}
 	}
-	return url
+
+	return rewrittenURL
 }
 
 func updateEntryReadingTime(store *storage.Storage, feed *model.Feed, entry *model.Entry, entryIsNew bool, user *model.User) {
@@ -403,6 +420,25 @@ func updateEntryReadingTime(store *storage.Storage, feed *model.Feed, entry *mod
 		}
 	}
 
+	if shouldFetchBilibiliWatchTime(entry) {
+		if entryIsNew {
+			watchTime, err := fetchBilibiliWatchTime(entry.URL)
+			if err != nil {
+				slog.Warn("Unable to fetch Bilibili watch time",
+					slog.Int64("user_id", user.ID),
+					slog.Int64("entry_id", entry.ID),
+					slog.String("entry_url", entry.URL),
+					slog.Int64("feed_id", feed.ID),
+					slog.String("feed_url", feed.FeedURL),
+					slog.Any("error", err),
+				)
+			}
+			entry.ReadingTime = watchTime
+		} else {
+			entry.ReadingTime = store.GetReadTime(feed.ID, entry.Hash)
+		}
+	}
+
 	// Handle YT error case and non-YT entries.
 	if entry.ReadingTime == 0 {
 		entry.ReadingTime = readingtime.EstimateReadingTime(entry.Content, user.DefaultReadingSpeed, user.CJKReadingSpeed)
@@ -432,6 +468,15 @@ func shouldFetchOdyseeWatchTime(entry *model.Entry) bool {
 	}
 	matches := odyseeRegex.FindStringSubmatch(entry.URL)
 	return matches != nil
+}
+
+func shouldFetchBilibiliWatchTime(entry *model.Entry) bool {
+	if !config.Opts.FetchBilibiliWatchTime() {
+		return false
+	}
+	matches := bilibiliRegex.FindStringSubmatch(entry.URL)
+	urlMatchesBilibiliPattern := len(matches) == 2
+	return urlMatchesBilibiliPattern
 }
 
 func fetchYouTubeWatchTime(websiteURL string) (int, error) {
@@ -527,6 +572,43 @@ func fetchOdyseeWatchTime(websiteURL string) (int, error) {
 	}
 
 	return int(dur / 60), nil
+}
+
+func fetchBilibiliWatchTime(websiteURL string) (int, error) {
+	requestBuilder := fetcher.NewRequestBuilder()
+	requestBuilder.WithTimeout(config.Opts.HTTPClientTimeout())
+	requestBuilder.WithProxy(config.Opts.HTTPClientProxy())
+
+	responseHandler := fetcher.NewResponseHandler(requestBuilder.ExecuteRequest(websiteURL))
+	defer responseHandler.Close()
+
+	if localizedError := responseHandler.LocalizedError(); localizedError != nil {
+		slog.Warn("Unable to fetch Bilibili page", slog.String("website_url", websiteURL), slog.Any("error", localizedError.Error()))
+		return 0, localizedError.Error()
+	}
+
+	doc, docErr := goquery.NewDocumentFromReader(responseHandler.Body(config.Opts.HTTPClientMaxBodySize()))
+	if docErr != nil {
+		return 0, docErr
+	}
+
+	timelengthMatches := timelengthRegex.FindStringSubmatch(doc.Text())
+	if len(timelengthMatches) < 2 {
+		return 0, errors.New("duration has not found")
+	}
+
+	durationMs, err := strconv.ParseInt(timelengthMatches[1], 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("unable to parse duration %s: %v", timelengthMatches[1], err)
+	}
+
+	durationSec := durationMs / 1000
+	durationMin := durationSec / 60
+	if durationSec%60 != 0 {
+		durationMin++
+	}
+
+	return int(durationMin), nil
 }
 
 // parseISO8601 parses an ISO 8601 duration string.

@@ -15,6 +15,7 @@
         <div role="alert" class="alert alert-error">{{ .errorMessage }}</div>
     {{ end }}
 
+    {{ if not disableLocalAuth }}
     <fieldset>
         <legend>{{ t "form.prefs.fieldset.authentication_settings" }}</legend>
 
@@ -38,9 +39,9 @@
         {{ else if hasOAuth2Provider "oidc" }}
         <div class="panel">
             {{ if .user.OpenIDConnectID }}
-                <a href="{{ route "oauth2Unlink" "provider" "oidc" }}">{{ t "page.settings.unlink_oidc_account" }}</a>
+                <a href="{{ route "oauth2Unlink" "provider" "oidc" }}">{{ t "page.settings.unlink_oidc_account" oidcProviderName }}</a>
             {{ else }}
-                <a href="{{ route "oauth2Redirect" "provider" "oidc" }}">{{ t "page.settings.link_oidc_account" }}</a>
+                <a href="{{ route "oauth2Redirect" "provider" "oidc" }}">{{ t "page.settings.link_oidc_account" oidcProviderName }}</a>
             {{ end }}
         </div>
         {{ end }}
@@ -49,6 +50,7 @@
             <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>
         </div>
     </fieldset>
+    {{ end }}
 
     {{ if .webAuthnEnabled }}
     <fieldset>
@@ -113,7 +115,14 @@
 
         <label><input type="checkbox" name="show_reading_time" value="1" {{ if .form.ShowReadingTime }}checked{{ end }}> {{ t "form.prefs.label.show_reading_time" }}</label>
 
-        <label><input type="checkbox" name="mark_read_on_view" value="1" {{ if .form.MarkReadOnView }}checked{{ end }}> {{ t "form.prefs.label.mark_read_on_view" }}</label>
+        <label><input type="radio" name="mark_read_behavior" value="{{ .const.NoAutoMarkAsRead }}"
+                      {{ if eq .form.MarkReadBehavior .const.NoAutoMarkAsRead }}checked{{end}}                          > {{ t "form.prefs.label.mark_read_manually" }}</label>
+        <label><input type="radio" name="mark_read_behavior" value="{{ .const.MarkAsReadOnView }}"
+                      {{ if eq .form.MarkReadBehavior .const.MarkAsReadOnView }}checked{{end}}                          > {{ t "form.prefs.label.mark_read_on_view" }}</label>
+        <label><input type="radio" name="mark_read_behavior" value="{{ .const.MarkAsReadOnViewButWaitForPlayerCompletion }}"
+                      {{ if eq .form.MarkReadBehavior .const.MarkAsReadOnViewButWaitForPlayerCompletion }}checked{{end}}> {{ t "form.prefs.label.mark_read_on_view_or_media_completion" }}</label>
+        <label><input type="radio" name="mark_read_behavior" value="{{ .const.MarkAsReadOnlyOnPlayerCompletion }}"
+                      {{ if eq .form.MarkReadBehavior .const.MarkAsReadOnlyOnPlayerCompletion }}checked{{end}}          > {{ t "form.prefs.label.mark_read_on_media_completion" }}</label>
 
         <div class="buttons">
             <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>
@@ -212,15 +221,22 @@
             <label for="form-blocklist-rules">
                 {{ t "form.feed.label.blocklist_rules" }}
             </label>
+            &nbsp;
+            <a href=" https://miniflux.app/docs/rules.html#global-filtering-rules" target="_blank">
+                {{ icon "external-link" }}
+            </a>
         </div>
         <textarea id="form-blocklist-rules" name="block_filter_entry_rules" cols="40" rows="10" spellcheck="false">{{ .form.BlockFilterEntryRules }}</textarea>
-        
+
         <div class="form-label-row">
             <label for="form-keeplist-rules">
                 {{ t "form.feed.label.keeplist_rules" }}
             </label>
+            <a href=" https://miniflux.app/docs/rules.html#global-filtering-rules" target="_blank">
+                {{ icon "external-link" }}
+            </a>
         </div>
-        <textarea id="form-keeplist-rules" name="keep_filter_entry_rules" cols="40" rows="10" spellcheck="false">{{ .form.KeepFilterEntryRules }}</textarea>        
+        <textarea id="form-keeplist-rules" name="keep_filter_entry_rules" cols="40" rows="10" spellcheck="false">{{ .form.KeepFilterEntryRules }}</textarea>
 
         <div class="buttons">
             <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>
