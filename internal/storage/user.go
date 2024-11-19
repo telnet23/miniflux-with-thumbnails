@@ -83,6 +83,8 @@ func (s *Storage) CreateUser(userCreationRequest *model.UserCreationRequest) (*m
 			entry_swipe,
 			gesture_nav,
 			stylesheet,
+			custom_js,
+			external_font_hosts,
 			google_id,
 			openid_connect_id,
 			display_mode,
@@ -124,6 +126,8 @@ func (s *Storage) CreateUser(userCreationRequest *model.UserCreationRequest) (*m
 		&user.EntrySwipe,
 		&user.GestureNav,
 		&user.Stylesheet,
+		&user.CustomJS,
+		&user.ExternalFontHosts,
 		&user.GoogleID,
 		&user.OpenIDConnectID,
 		&user.DisplayMode,
@@ -163,6 +167,8 @@ func (s *Storage) CreateUser(userCreationRequest *model.UserCreationRequest) (*m
 
 // UpdateUser updates a user.
 func (s *Storage) UpdateUser(user *model.User) error {
+	user.ExternalFontHosts = strings.TrimSpace(user.ExternalFontHosts)
+
 	if user.Password != "" {
 		hashedPassword, err := crypto.HashPassword(user.Password)
 		if err != nil {
@@ -184,21 +190,23 @@ func (s *Storage) UpdateUser(user *model.User) error {
 				entry_swipe=$11,
 				gesture_nav=$12,
 				stylesheet=$13,
-				google_id=$14,
-				openid_connect_id=$15,
-				display_mode=$16,
-				entry_order=$17,
-				default_reading_speed=$18,
-				cjk_reading_speed=$19,
-				default_home_page=$20,
-				categories_sorting_order=$21,
-				mark_read_on_view=$22,
-				mark_read_on_media_player_completion=$23,
-				media_playback_rate=$24,
-				block_filter_entry_rules=$25,
-				keep_filter_entry_rules=$26
+				custom_js=$14,
+				external_font_hosts=$15,
+				google_id=$16,
+				openid_connect_id=$17,
+				display_mode=$18,
+				entry_order=$19,
+				default_reading_speed=$20,
+				cjk_reading_speed=$21,
+				default_home_page=$22,
+				categories_sorting_order=$23,
+				mark_read_on_view=$24,
+				mark_read_on_media_player_completion=$25,
+				media_playback_rate=$26,
+				block_filter_entry_rules=$27,
+				keep_filter_entry_rules=$28
 			WHERE
-				id=$27
+				id=$29
 		`
 
 		_, err = s.db.Exec(
@@ -216,6 +224,8 @@ func (s *Storage) UpdateUser(user *model.User) error {
 			user.EntrySwipe,
 			user.GestureNav,
 			user.Stylesheet,
+			user.CustomJS,
+			user.ExternalFontHosts,
 			user.GoogleID,
 			user.OpenIDConnectID,
 			user.DisplayMode,
@@ -249,21 +259,23 @@ func (s *Storage) UpdateUser(user *model.User) error {
 				entry_swipe=$10,
 				gesture_nav=$11,
 				stylesheet=$12,
-				google_id=$13,
-				openid_connect_id=$14,
-				display_mode=$15,
-				entry_order=$16,
-				default_reading_speed=$17,
-				cjk_reading_speed=$18,
-				default_home_page=$19,
-				categories_sorting_order=$20,
-				mark_read_on_view=$21,
-				mark_read_on_media_player_completion=$22,
-				media_playback_rate=$23,
-				block_filter_entry_rules=$24,
-				keep_filter_entry_rules=$25
+				custom_js=$13,
+				external_font_hosts=$14,
+				google_id=$15,
+				openid_connect_id=$16,
+				display_mode=$17,
+				entry_order=$18,
+				default_reading_speed=$19,
+				cjk_reading_speed=$20,
+				default_home_page=$21,
+				categories_sorting_order=$22,
+				mark_read_on_view=$23,
+				mark_read_on_media_player_completion=$24,
+				media_playback_rate=$25,
+				block_filter_entry_rules=$26,
+				keep_filter_entry_rules=$27
 			WHERE
-				id=$26
+				id=$28
 		`
 
 		_, err := s.db.Exec(
@@ -280,6 +292,8 @@ func (s *Storage) UpdateUser(user *model.User) error {
 			user.EntrySwipe,
 			user.GestureNav,
 			user.Stylesheet,
+			user.CustomJS,
+			user.ExternalFontHosts,
 			user.GoogleID,
 			user.OpenIDConnectID,
 			user.DisplayMode,
@@ -332,6 +346,8 @@ func (s *Storage) UserByID(userID int64) (*model.User, error) {
 			gesture_nav,
 			last_login_at,
 			stylesheet,
+			custom_js,
+			external_font_hosts,
 			google_id,
 			openid_connect_id,
 			display_mode,
@@ -371,6 +387,8 @@ func (s *Storage) UserByUsername(username string) (*model.User, error) {
 			gesture_nav,
 			last_login_at,
 			stylesheet,
+			custom_js,
+			external_font_hosts,
 			google_id,
 			openid_connect_id,
 			display_mode,
@@ -410,6 +428,8 @@ func (s *Storage) UserByField(field, value string) (*model.User, error) {
 			gesture_nav,
 			last_login_at,
 			stylesheet,
+			custom_js,
+			external_font_hosts,
 			google_id,
 			openid_connect_id,
 			display_mode,
@@ -456,6 +476,8 @@ func (s *Storage) UserByAPIKey(token string) (*model.User, error) {
 			u.gesture_nav,
 			u.last_login_at,
 			u.stylesheet,
+			u.custom_js,
+			u.external_font_hosts,
 			u.google_id,
 			u.openid_connect_id,
 			u.display_mode,
@@ -496,6 +518,8 @@ func (s *Storage) fetchUser(query string, args ...interface{}) (*model.User, err
 		&user.GestureNav,
 		&user.LastLoginAt,
 		&user.Stylesheet,
+		&user.CustomJS,
+		&user.ExternalFontHosts,
 		&user.GoogleID,
 		&user.OpenIDConnectID,
 		&user.DisplayMode,
@@ -608,6 +632,8 @@ func (s *Storage) Users() (model.Users, error) {
 			gesture_nav,
 			last_login_at,
 			stylesheet,
+			custom_js,
+			external_font_hosts,
 			google_id,
 			openid_connect_id,
 			display_mode,
@@ -649,6 +675,8 @@ func (s *Storage) Users() (model.Users, error) {
 			&user.GestureNav,
 			&user.LastLoginAt,
 			&user.Stylesheet,
+			&user.CustomJS,
+			&user.ExternalFontHosts,
 			&user.GoogleID,
 			&user.OpenIDConnectID,
 			&user.DisplayMode,

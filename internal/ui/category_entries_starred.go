@@ -9,21 +9,36 @@ import (
 	"miniflux.app/v2/internal/http/request"
 	"miniflux.app/v2/internal/http/response/html"
 	"miniflux.app/v2/internal/http/route"
+	"miniflux.app/v2/internal/model"
 	"miniflux.app/v2/internal/ui/session"
 	"miniflux.app/v2/internal/ui/view"
 )
 
-func (h *handler) sharedEntries(w http.ResponseWriter, r *http.Request) {
+func (h *handler) showCategoryEntriesStarredPage(w http.ResponseWriter, r *http.Request) {
 	user, err := h.store.UserByID(request.UserID(r))
 	if err != nil {
 		html.ServerError(w, r, err)
 		return
 	}
 
+	categoryID := request.RouteInt64Param(r, "categoryID")
+	category, err := h.store.Category(request.UserID(r), categoryID)
+	if err != nil {
+		html.ServerError(w, r, err)
+		return
+	}
+
+	if category == nil {
+		html.NotFound(w, r)
+		return
+	}
+
 	offset := request.QueryIntParam(r, "offset", 0)
 	builder := h.store.NewEntryQueryBuilder(user.ID)
-	builder.WithShareCodeNotEmpty()
+	builder.WithCategoryID(category.ID)
 	builder.WithSorting(user.EntryOrder, user.EntryDirection)
+	builder.WithoutStatus(model.EntryStatusRemoved)
+	builder.WithStarred(true)
 	builder.WithOffset(offset)
 	builder.WithLimit(user.EntriesPerPage)
 
@@ -41,14 +56,16 @@ func (h *handler) sharedEntries(w http.ResponseWriter, r *http.Request) {
 
 	sess := session.New(h.store, request.SessionID(r))
 	view := view.New(h.tpl, r, sess)
-	view.Set("entries", entries)
+	view.Set("category", category)
 	view.Set("total", count)
-	view.Set("pagination", getPagination(route.Path(h.router, "sharedEntries"), count, offset, user.EntriesPerPage))
-	view.Set("menu", "history")
+	view.Set("entries", entries)
+	view.Set("pagination", getPagination(route.Path(h.router, "categoryEntriesStarred", "categoryID", category.ID), count, offset, user.EntriesPerPage))
+	view.Set("menu", "categories")
 	view.Set("user", user)
 	view.Set("countUnread", h.store.CountUnreadEntries(user.ID))
 	view.Set("countErrorFeeds", h.store.CountUserFeedsWithErrors(user.ID))
 	view.Set("hasSaveEntry", h.store.HasSaveEntry(user.ID))
+	view.Set("showOnlyStarredEntries", true)
 
-	html.OK(w, r, view.Render("shared_entries"))
+	html.OK(w, r, view.Render("category_entries"))
 }

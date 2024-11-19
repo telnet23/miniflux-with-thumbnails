@@ -27,6 +27,7 @@ type User struct {
 	EntryDirection         string     `json:"entry_sorting_direction"`
 	EntryOrder             string     `json:"entry_sorting_order"`
 	Stylesheet             string     `json:"stylesheet"`
+	CustomJS               string     `json:"custom_js"`
 	GoogleID               string     `json:"google_id"`
 	OpenIDConnectID        string     `json:"openid_connect_id"`
 	EntriesPerPage         int        `json:"entries_per_page"`
@@ -44,6 +45,7 @@ type User struct {
 	MediaPlaybackRate      float64    `json:"media_playback_rate"`
 	BlockFilterEntryRules  string     `json:"block_filter_entry_rules"`
 	KeepFilterEntryRules   string     `json:"keep_filter_entry_rules"`
+	ExternalFontHosts      string     `json:"external_font_hosts"`
 }
 
 func (u User) String() string {
@@ -70,6 +72,7 @@ type UserModificationRequest struct {
 	EntryDirection         *string  `json:"entry_sorting_direction"`
 	EntryOrder             *string  `json:"entry_sorting_order"`
 	Stylesheet             *string  `json:"stylesheet"`
+	CustomJS               *string  `json:"custom_js"`
 	GoogleID               *string  `json:"google_id"`
 	OpenIDConnectID        *string  `json:"openid_connect_id"`
 	EntriesPerPage         *int     `json:"entries_per_page"`
@@ -86,6 +89,7 @@ type UserModificationRequest struct {
 	MediaPlaybackRate      *float64 `json:"media_playback_rate"`
 	BlockFilterEntryRules  *string  `json:"block_filter_entry_rules"`
 	KeepFilterEntryRules   *string  `json:"keep_filter_entry_rules"`
+	ExternalFontHosts      *string  `json:"external_font_hosts"`
 }
 
 // Users represents a list of users.
