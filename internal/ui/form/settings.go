@@ -10,6 +10,7 @@ import (
 	"miniflux.app/v2/internal/config"
 	"miniflux.app/v2/internal/locale"
 	"miniflux.app/v2/internal/model"
+	"miniflux.app/v2/internal/validator"
 )
 
 // MarkReadBehavior list all possible behaviors for automatically marking an entry as read
@@ -36,6 +37,8 @@ type SettingsForm struct {
 	KeyboardShortcuts      bool
 	ShowReadingTime        bool
 	CustomCSS              string
+	CustomJS               string
+	ExternalFontHosts      string
 	EntrySwipe             bool
 	GestureNav             string
 	DisplayMode            string
@@ -99,6 +102,8 @@ func (s *SettingsForm) Merge(user *model.User) *model.User {
 	user.KeyboardShortcuts = s.KeyboardShortcuts
 	user.ShowReadingTime = s.ShowReadingTime
 	user.Stylesheet = s.CustomCSS
+	user.CustomJS = s.CustomJS
+	user.ExternalFontHosts = s.ExternalFontHosts
 	user.EntrySwipe = s.EntrySwipe
 	user.GestureNav = s.GestureNav
 	user.DisplayMode = s.DisplayMode
@@ -146,6 +151,12 @@ func (s *SettingsForm) Validate() *locale.LocalizedError {
 		return locale.NewLocalizedError("error.settings_media_playback_rate_range")
 	}
 
+	if s.ExternalFontHosts != "" {
+		if !validator.IsValidDomainList(s.ExternalFontHosts) {
+			return locale.NewLocalizedError("error.settings_invalid_domain_list")
+		}
+	}
+
 	return nil
 }
 
@@ -180,6 +191,8 @@ func NewSettingsForm(r *http.Request) *SettingsForm {
 		KeyboardShortcuts:      r.FormValue("keyboard_shortcuts") == "1",
 		ShowReadingTime:        r.FormValue("show_reading_time") == "1",
 		CustomCSS:              r.FormValue("custom_css"),
+		CustomJS:               r.FormValue("custom_js"),
+		ExternalFontHosts:      r.FormValue("external_font_hosts"),
 		EntrySwipe:             r.FormValue("entry_swipe") == "1",
 		GestureNav:             r.FormValue("gesture_nav"),
 		DisplayMode:            r.FormValue("display_mode"),

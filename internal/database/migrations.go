@@ -942,4 +942,22 @@ var migrations = []func(tx *sql.Tx) error{
 		_, err = tx.Exec(sql)
 		return err
 	},
+	func(tx *sql.Tx) (err error) {
+		sql := `ALTER TABLE users ADD COLUMN custom_js text not null default '';`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `ALTER TABLE users ADD COLUMN external_font_hosts text not null default '';`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `
+			ALTER TABLE integrations ADD COLUMN cubox_enabled bool default 'f';
+			ALTER TABLE integrations ADD COLUMN cubox_api_link text default '';
+		`
+		_, err = tx.Exec(sql)
+		return err
+	},
 }
