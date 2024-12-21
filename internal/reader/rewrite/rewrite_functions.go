@@ -17,19 +17,16 @@ import (
 	nethtml "golang.org/x/net/html"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/yuin/goldmark"
-	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
 )
 
 var (
 	youtubeRegex   = regexp.MustCompile(`youtube\.com/watch\?v=(.*)$`)
 	youtubeIdRegex = regexp.MustCompile(`youtube_id"?\s*[:=]\s*"([a-zA-Z0-9_-]{11})"`)
 	invidioRegex   = regexp.MustCompile(`https?://(.*)/watch\?v=(.*)`)
-	imgRegex       = regexp.MustCompile(`<img [^>]+>`)
 	textLinkRegex  = regexp.MustCompile(`(?mi)(\bhttps?:\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])`)
 )
 
-func addImageTitle(entryURL, entryContent string) string {
+func addImageTitle(entryContent string) string {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(entryContent))
 	if err != nil {
 		return entryContent
@@ -46,14 +43,14 @@ func addImageTitle(entryURL, entryContent string) string {
 			img.ReplaceWithHtml(`<figure><img src="` + srcAttr + `" alt="` + altAttr + `"/><figcaption><p>` + html.EscapeString(titleAttr) + `</p></figcaption></figure>`)
 		})
 
-		output, _ := doc.Find("body").First().Html()
+		output, _ := doc.FindMatcher(goquery.Single("body")).Html()
 		return output
 	}
 
 	return entryContent
 }
 
-func addMailtoSubject(entryURL, entryContent string) string {
+func addMailtoSubject(entryContent string) string {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(entryContent))
 	if err != nil {
 		return entryContent
@@ -78,18 +75,19 @@ func addMailtoSubject(entryURL, entryContent string) string {
 			a.AppendHtml(" [" + html.EscapeString(subject) + "]")
 		})
 
-		output, _ := doc.Find("body").First().Html()
+		output, _ := doc.FindMatcher(goquery.Single("body")).Html()
 		return output
 	}
 
 	return entryContent
 }
 
-func addDynamicImage(entryURL, entryContent string) string {
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(entryContent))
+func addDynamicImage(entryContent string) string {
+	parserHtml, err := nethtml.ParseWithOptions(strings.NewReader(entryContent), nethtml.ParseOptionEnableScripting(false))
 	if err != nil {
 		return entryContent
 	}
+	doc := goquery.NewDocumentFromNode(parserHtml)
 
 	// Ordered most preferred to least preferred.
 	candidateAttrs := []string{
@@ -151,25 +149,22 @@ func addDynamicImage(entryURL, entryContent string) string {
 
 	if !changed {
 		doc.Find("noscript").Each(func(i int, noscript *goquery.Selection) {
-			matches := imgRegex.FindAllString(noscript.Text(), 2)
-
-			if len(matches) == 1 {
+			if img := noscript.Find("img"); img.Length() == 1 {
+				img.Unwrap()
 				changed = true
-
-				noscript.ReplaceWithHtml(matches[0])
 			}
 		})
 	}
 
 	if changed {
-		output, _ := doc.Find("body").First().Html()
+		output, _ := doc.FindMatcher(goquery.Single("body")).Html()
 		return output
 	}
 
 	return entryContent
 }
 
-func addDynamicIframe(entryURL, entryContent string) string {
+func addDynamicIframe(entryContent string) string {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(entryContent))
 	if err != nil {
 		return entryContent
@@ -199,14 +194,14 @@ func addDynamicIframe(entryURL, entryContent string) string {
 	})
 
 	if changed {
-		output, _ := doc.Find("body").First().Html()
+		output, _ := doc.FindMatcher(goquery.Single("body")).Html()
 		return output
 	}
 
 	return entryContent
 }
 
-func fixMediumImages(entryURL, entryContent string) string {
+func fixMediumImages(entryContent string) string {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(entryContent))
 	if err != nil {
 		return entryContent
@@ -219,11 +214,11 @@ func fixMediumImages(entryURL, entryContent string) string {
 		}
 	})
 
-	output, _ := doc.Find("body").First().Html()
+	output, _ := doc.FindMatcher(goquery.Single("body")).Html()
 	return output
 }
 
-func useNoScriptImages(entryURL, entryContent string) string {
+func useNoScriptImages(entryContent string) string {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(entryContent))
 	if err != nil {
 		return entryContent
@@ -241,7 +236,7 @@ func useNoScriptImages(entryURL, entryContent string) string {
 		}
 	})
 
-	output, _ := doc.Find("body").First().Html()
+	output, _ := doc.FindMatcher(goquery.Single("body")).Html()
 	return output
 }
 
@@ -319,7 +314,7 @@ func removeCustom(entryContent string, selector string) string {
 
 	doc.Find(selector).Remove()
 
-	output, _ := doc.Find("body").First().Html()
+	output, _ := doc.FindMatcher(goquery.Single("body")).Html()
 	return output
 }
 
@@ -346,7 +341,7 @@ func applyFuncOnTextContent(entryContent string, selector string, repl func(stri
 
 	doc.Find(selector).Each(treatChildren)
 
-	output, _ := doc.Find("body").First().Html()
+	output, _ := doc.FindMatcher(goquery.Single("body")).Html()
 	return output
 }
 
@@ -403,26 +398,11 @@ func addHackerNewsLinksUsing(entryContent, app string) string {
 			}
 		})
 
-		output, _ := doc.Find("body").First().Html()
+		output, _ := doc.FindMatcher(goquery.Single("body")).Html()
 		return output
 	}
 
 	return entryContent
-}
-
-func parseMarkdown(entryContent string) string {
-	var sb strings.Builder
-	md := goldmark.New(
-		goldmark.WithRendererOptions(
-			goldmarkhtml.WithUnsafe(),
-		),
-	)
-
-	if err := md.Convert([]byte(entryContent), &sb); err != nil {
-		return entryContent
-	}
-
-	return sb.String()
 }
 
 func removeTables(entryContent string) string {
@@ -437,7 +417,7 @@ func removeTables(entryContent string) string {
 
 	for _, selector := range selectors {
 		for {
-			loopElement = doc.Find(selector).First()
+			loopElement = doc.FindMatcher(goquery.Single(selector))
 
 			if loopElement.Length() == 0 {
 				break
@@ -453,6 +433,6 @@ func removeTables(entryContent string) string {
 		}
 	}
 
-	output, _ := doc.Find("body").First().Html()
+	output, _ := doc.FindMatcher(goquery.Single("body")).Html()
 	return output
 }
