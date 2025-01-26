@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"unicode"
 
 	"miniflux.app/v2/internal/config"
 
@@ -25,6 +26,24 @@ var (
 	invidioRegex   = regexp.MustCompile(`https?://(.*)/watch\?v=(.*)`)
 	textLinkRegex  = regexp.MustCompile(`(?mi)(\bhttps?:\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])`)
 )
+
+// titlelize returns a copy of the string s with all Unicode letters that begin words
+// mapped to their Unicode title case.
+func titlelize(s string) string {
+	// A closure is used here to remember the previous character
+	// so that we can check if there is a space preceding the current
+	// character.
+	previous := ' '
+	return strings.Map(
+		func(current rune) rune {
+			if unicode.IsSpace(previous) {
+				previous = current
+				return unicode.ToTitle(current)
+			}
+			previous = current
+			return current
+		}, strings.ToLower(s))
+}
 
 func addImageTitle(entryContent string) string {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(entryContent))
@@ -435,4 +454,56 @@ func removeTables(entryContent string) string {
 
 	output, _ := doc.FindMatcher(goquery.Single("body")).Html()
 	return output
+}
+
+func fixGhostCards(entryContent string) string {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(entryContent))
+	if err != nil {
+		return entryContent
+	}
+
+	const cardSelector = "figure.kg-card"
+	var currentList *goquery.Selection
+
+	doc.Find(cardSelector).Each(func(i int, s *goquery.Selection) {
+		title := s.Find(".kg-bookmark-title").First().Text()
+		author := s.Find(".kg-bookmark-author").First().Text()
+		href := s.Find("a.kg-bookmark-container").First().AttrOr("href", "")
+
+		// if there is no link or title, skip processing
+		if href == "" || title == "" {
+			return
+		}
+
+		link := ""
+		if author == "" || strings.HasSuffix(title, author) {
+			link = fmt.Sprintf("<a href=\"%s\">%s</a>", href, title)
+		} else {
+			link = fmt.Sprintf("<a href=\"%s\">%s - %s</a>", href, title, author)
+		}
+
+		next := s.Next()
+
+		// if the next element is also a card, start a list
+		if next.Is(cardSelector) && currentList == nil {
+			currentList = s.BeforeHtml("<ul></ul>").Prev()
+		}
+
+		if currentList != nil {
+			// add this card to the list, then delete it
+			currentList.AppendHtml("<li>" + link + "</li>")
+			s.Remove()
+		} else {
+			// replace single card
+			s.ReplaceWithHtml(link)
+		}
+
+		// if the next element is not a card, start a new list
+		if !next.Is(cardSelector) && currentList != nil {
+			currentList = nil
+		}
+	})
+
+	output, _ := doc.FindMatcher(goquery.Single("body")).Html()
+	return strings.TrimSpace(output)
 }

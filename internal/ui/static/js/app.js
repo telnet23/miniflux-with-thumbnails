@@ -71,12 +71,11 @@ function toggleMainMenu(event) {
     const menu = document.querySelector(".header nav ul");
     const menuToggleButton = document.querySelector(".logo");
     if (menu.classList.contains("js-menu-show")) {
-        menu.classList.remove("js-menu-show");
         menuToggleButton.setAttribute("aria-expanded", false);
     } else {
-        menu.classList.add("js-menu-show");
         menuToggleButton.setAttribute("aria-expanded", true);
     }
+    menu.classList.toggle("js-menu-show");
 }
 
 // Handle click events for the main menu (<li> and <a>).
@@ -152,7 +151,7 @@ function handleEntryStatus(item, element, setToRead) {
     const toasting = !element;
     const currentEntry = findEntry(element);
     if (currentEntry) {
-        if (!setToRead || currentEntry.querySelector(":is(a, button)[data-toggle-status]").dataset.value == "unread") {
+        if (!setToRead || currentEntry.querySelector(":is(a, button)[data-toggle-status]").dataset.value === "unread") {
             toggleEntryStatus(currentEntry, toasting);
         }
         if (isListView() && currentEntry.classList.contains('current-item')) {
@@ -381,7 +380,7 @@ function openOriginalLink(openLinkInCurrentTab) {
 
         const currentItem = document.querySelector(".current-item");
         // If we are not on the list of starred items, move to the next item
-        if (document.location.href != document.querySelector(':is(a, button)[data-page=starred]').href) {
+        if (document.location.href !== document.querySelector(':is(a, button)[data-page=starred]').href) {
             goToListItem(1);
         }
         markEntryAsRead(currentItem);
@@ -523,9 +522,9 @@ function goToListItem(offset) {
             // By default adjust selection by offset
             let itemOffset = (i + offset + items.length) % items.length;
             // Allow jumping to top or bottom
-            if (offset == TOP) {
+            if (offset === TOP) {
                 itemOffset = 0;
-            } else if (offset == BOTTOM) {
+            } else if (offset === BOTTOM) {
                 itemOffset = items.length - 1;
             }
             const item = items[itemOffset];
@@ -596,7 +595,7 @@ function findEntry(element) {
 }
 
 function handleConfirmationMessage(linkElement, callback) {
-    if (linkElement.tagName != 'A' && linkElement.tagName != "BUTTON") {
+    if (linkElement.tagName !== 'A' && linkElement.tagName !== "BUTTON") {
         linkElement = linkElement.parentNode;
     }
 
@@ -662,7 +661,7 @@ function showToast(label, iconElement) {
         const toastElementWrapper = document.getElementById("toast-wrapper");
         if (toastElementWrapper) {
             toastElementWrapper.classList.remove('toast-animate');
-            setTimeout(function () {
+            setTimeout(() => {
                 toastElementWrapper.classList.add('toast-animate');
             }, 100);
         }
@@ -782,7 +781,7 @@ function handleMediaControl(button) {
     enclosures.forEach((enclosure) => {
         switch (action) {
         case "seek":
-            enclosure.currentTime = enclosure.currentTime + value > 0 ? enclosure.currentTime + value : 0;
+            enclosure.currentTime = Math.max(enclosure.currentTime + value, 0);
             break;
         case "speed":
             // I set a floor speed of 0.25 to avoid too slow speed where it gives the impression it stopped.
