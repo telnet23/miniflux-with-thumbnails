@@ -104,6 +104,16 @@ type Integration struct {
 	NtfyUsername                     string
 	NtfyPassword                     string
 	NtfyIconURL                      string
+	NtfyInternalLinks                bool
 	CuboxEnabled                     bool
 	CuboxAPILink                     string
+	DiscordEnabled                   bool
+	DiscordWebhookLink               string
+	SlackEnabled                     bool
+	SlackWebhookLink                 string
+	PushoverEnabled                  bool
+	PushoverUser                     string
+	PushoverToken                    string
+	PushoverDevice                   string
+	PushoverPrefix                   string
 }

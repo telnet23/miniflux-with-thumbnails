@@ -73,6 +73,22 @@
         </div>
     </details>
 
+    <details {{ if .form.DiscordEnabled }}open{{ end }}>
+        <summary>Discord</summary>
+        <div class="form-section">
+            <label>
+                <input type="checkbox" name="discord_enabled" value="1" {{ if .form.DiscordEnabled }}checked{{ end }}> {{ t "form.integration.discord_activate" }}
+            </label>
+
+            <label for="form-discord-webhook-link">{{ t "form.integration.discord_webhook_link" }}</label>
+            <input type="url" name="discord_webhook_link" id="form-discord-webhook-link" value="{{ .form.DiscordWebhookLink }}" placeholder="https://discord.com/api/webhooks/xxx/xxx" spellcheck="false">
+
+            <div class="buttons">
+                <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>
+            </div>
+        </div>
+    </details>
+
     <details {{ if .form.EspialEnabled }}open{{ end }}>
         <summary>Espial</summary>
         <div class="form-section">
@@ -300,6 +316,10 @@
             <label for="form-ntfy-icon-url">{{ t "form.integration.ntfy_icon_url" }}</label>
             <input type="url" name="ntfy_icon_url" id="form-ntfy-icon-url" value="{{ .form.NtfyIconURL }}" spellcheck="false">
 
+            <label>
+                <input type="checkbox" name="ntfy_internal_links" value="1" {{ if .form.NtfyInternalLinks }}checked{{ end }}> {{ t "form.integration.ntfy_internal_links" }}
+            </label>
+
             <div class="buttons">
                 <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>
             </div>
@@ -385,6 +405,31 @@
             {{ if not .form.PocketAccessToken }}
                 <p><a href="{{ route "pocketAuthorize" }}">{{ t "form.integration.pocket_connect_link" }}</a></p>
             {{ end }}
+
+            <div class="buttons">
+                <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>
+            </div>
+        </div>
+    </details>
+
+    <details {{ if .form.PushoverEnabled }}open{{ end }}>
+        <summary>Pushover</summary>
+        <div class="form-section">
+            <label>
+                <input type="checkbox" name="pushover_enabled" value="1" {{ if .form.PushoverEnabled }}checked{{ end }}> {{ t "form.integration.pushover_activate" }}
+            </label>
+
+            <label for="form-pushover-token">{{ t "form.integration.pushover_token" }}</label>
+            <input type="text" name="pushover_token" id="form-pushover-token" value="{{ .form.PushoverToken }}" spellcheck="false">
+
+            <label for="form-pushover-user">{{ t "form.integration.pushover_user" }}</label>
+            <input type="text" name="pushover_user" id="form-pushover-user" value="{{ .form.PushoverUser }}" spellcheck="false">
+
+            <label for="form-pushover-device">{{ t "form.integration.pushover_device" }}</label>
+            <input type="text" name="pushover_device" id="form-pushover-device" value="{{ .form.PushoverDevice }}" spellcheck="false">
+
+            <label for="form-pushover-prefix">{{ t "form.integration.pushover_prefix" }}</label>
+            <input type="text" name="pushover_prefix" id="form-pushover-prefix" value="{{ .form.PushoverPrefix }}" spellcheck="false" placeholder="https://api.pushover.net">
 
             <div class="buttons">
                 <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>
@@ -515,6 +560,22 @@
         </div>
     </details>
 
+    <details {{ if .form.SlackEnabled }}open{{ end }}>
+        <summary>Slack</summary>
+        <div class="form-section">
+            <label>
+                <input type="checkbox" name="slack_enabled" value="1" {{ if .form.SlackEnabled }}checked{{ end }}> {{ t "form.integration.slack_activate" }}
+            </label>
+
+            <label for="form-slack-webhook-link">{{ t "form.integration.slack_webhook_link" }}</label>
+            <input type="url" name="slack_webhook_link" id="form-slack-webhook-link" value="{{ .form.SlackWebhookLink }}" placeholder="https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX" spellcheck="false">
+
+            <div class="buttons">
+                <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>
+            </div>
+        </div>
+    </details>
+
     <details {{ if .form.TelegramBotEnabled }}open{{ end }}>
         <summary>Telegram Bot</summary>
         <div class="form-section">
@@ -561,7 +622,7 @@
             </label>
 
             <label for="form-wallabag-url">{{ t "form.integration.wallabag_endpoint" }}</label>
-            <input type="url" name="wallabag_url" id="form-wallabag-url" value="{{ .form.WallabagURL }}" placeholder="http://v2.wallabag.org/" spellcheck="false">
+            <input type="url" name="wallabag_url" id="form-wallabag-url" value="{{ .form.WallabagURL }}" spellcheck="false">
 
             <label for="form-wallabag-client-id">{{ t "form.integration.wallabag_client_id" }}</label>
             <input type="text" name="wallabag_client_id" id="form-wallabag-client-id" value="{{ .form.WallabagClientID }}" spellcheck="false">

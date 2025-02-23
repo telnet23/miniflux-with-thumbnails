@@ -110,8 +110,18 @@ type IntegrationForm struct {
 	NtfyUsername                     string
 	NtfyPassword                     string
 	NtfyIconURL                      string
+	NtfyInternalLinks                bool
 	CuboxEnabled                     bool
 	CuboxAPILink                     string
+	DiscordEnabled                   bool
+	DiscordWebhookLink               string
+	SlackEnabled                     bool
+	SlackWebhookLink                 string
+	PushoverEnabled                  bool
+	PushoverUser                     string
+	PushoverToken                    string
+	PushoverDevice                   string
+	PushoverPrefix                   string
 }
 
 // Merge copy form values to the model.
@@ -211,8 +221,18 @@ func (i IntegrationForm) Merge(integration *model.Integration) {
 	integration.NtfyUsername = i.NtfyUsername
 	integration.NtfyPassword = i.NtfyPassword
 	integration.NtfyIconURL = i.NtfyIconURL
+	integration.NtfyInternalLinks = i.NtfyInternalLinks
 	integration.CuboxEnabled = i.CuboxEnabled
 	integration.CuboxAPILink = i.CuboxAPILink
+	integration.DiscordEnabled = i.DiscordEnabled
+	integration.DiscordWebhookLink = i.DiscordWebhookLink
+	integration.SlackEnabled = i.SlackEnabled
+	integration.SlackWebhookLink = i.SlackWebhookLink
+	integration.PushoverEnabled = i.PushoverEnabled
+	integration.PushoverUser = i.PushoverUser
+	integration.PushoverToken = i.PushoverToken
+	integration.PushoverDevice = i.PushoverDevice
+	integration.PushoverPrefix = i.PushoverPrefix
 }
 
 // NewIntegrationForm returns a new IntegrationForm.
@@ -315,8 +335,18 @@ func NewIntegrationForm(r *http.Request) *IntegrationForm {
 		NtfyUsername:                     r.FormValue("ntfy_username"),
 		NtfyPassword:                     r.FormValue("ntfy_password"),
 		NtfyIconURL:                      r.FormValue("ntfy_icon_url"),
+		NtfyInternalLinks:                r.FormValue("ntfy_internal_links") == "1",
 		CuboxEnabled:                     r.FormValue("cubox_enabled") == "1",
 		CuboxAPILink:                     r.FormValue("cubox_api_link"),
+		DiscordEnabled:                   r.FormValue("discord_enabled") == "1",
+		DiscordWebhookLink:               r.FormValue("discord_webhook_link"),
+		SlackEnabled:                     r.FormValue("slack_enabled") == "1",
+		SlackWebhookLink:                 r.FormValue("slack_webhook_link"),
+		PushoverEnabled:                  r.FormValue("pushover_enabled") == "1",
+		PushoverUser:                     r.FormValue("pushover_user"),
+		PushoverToken:                    r.FormValue("pushover_token"),
+		PushoverDevice:                   r.FormValue("pushover_device"),
+		PushoverPrefix:                   r.FormValue("pushover_prefix"),
 	}
 }
 

@@ -5,11 +5,15 @@ on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
+  schedule:
+    - cron: '0 0 * * 1,4' # Runs at 00:00 UTC on Monday and Thursday
   pull_request:
     branches: [ main ]
+    paths:
+      - 'packaging/rpm/**' # Only run on changes to the rpm packaging files
 jobs:
   test-package:
-    if: github.event.pull_request
+    if: github.event_name == 'schedule' || github.event_name == 'pull_request'
     name: Test Packages
     runs-on: ubuntu-latest
     steps:
@@ -21,7 +25,7 @@ jobs:
     - name: List generated files
       run: ls -l *.rpm
   build-package-manually:
-    if: github.event_name != 'pull_request' && github.event_name != 'push'
+    if: github.event_name == 'workflow_dispatch'
     name: Build Packages Manually
     runs-on: ubuntu-latest
     steps:

@@ -40,6 +40,14 @@ func (s *Storage) FeedExists(userID, feedID int64) bool {
 	return result
 }
 
+// CategoryFeedExists returns true if the given feed exists that belongs to the given category.
+func (s *Storage) CategoryFeedExists(userID, categoryID, feedID int64) bool {
+	var result bool
+	query := `SELECT true FROM feeds WHERE user_id=$1 AND category_id=$2 AND id=$3`
+	s.db.QueryRow(query, userID, categoryID, feedID).Scan(&result)
+	return result
+}
+
 // FeedURLExists checks if feed URL already exists.
 func (s *Storage) FeedURLExists(userID int64, feedURL string) bool {
 	var result bool
@@ -238,11 +246,12 @@ func (s *Storage) CreateFeed(feed *model.Feed) error {
 			url_rewrite_rules,
 			no_media_player,
 			apprise_service_urls,
+			webhook_url,
 			disable_http2,
 			description
 		)
 		VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
+			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
 		RETURNING
 			id
 	`
@@ -272,6 +281,7 @@ func (s *Storage) CreateFeed(feed *model.Feed) error {
 		feed.UrlRewriteRules,
 		feed.NoMediaPlayer,
 		feed.AppriseServiceURLs,
+		feed.WebhookURL,
 		feed.DisableHTTP2,
 		feed.Description,
 	).Scan(&feed.ID)
@@ -346,12 +356,15 @@ func (s *Storage) UpdateFeed(feed *model.Feed) (err error) {
 			url_rewrite_rules=$25,
 			no_media_player=$26,
 			apprise_service_urls=$27,
-			disable_http2=$28,
-			description=$29,
-			ntfy_enabled=$30,
-			ntfy_priority=$31
+			webhook_url=$28,
+			disable_http2=$29,
+			description=$30,
+			ntfy_enabled=$31,
+			ntfy_priority=$32,
+			pushover_enabled=$33,
+			pushover_priority=$34
 		WHERE
-			id=$32 AND user_id=$33
+			id=$35 AND user_id=$36
 	`
 	_, err = s.db.Exec(query,
 		feed.FeedURL,
@@ -381,10 +394,13 @@ func (s *Storage) UpdateFeed(feed *model.Feed) (err error) {
 		feed.UrlRewriteRules,
 		feed.NoMediaPlayer,
 		feed.AppriseServiceURLs,
+		feed.WebhookURL,
 		feed.DisableHTTP2,
 		feed.Description,
 		feed.NtfyEnabled,
 		feed.NtfyPriority,
+		feed.PushoverEnabled,
+		feed.PushoverPriority,
 		feed.ID,
 		feed.UserID,
 	)

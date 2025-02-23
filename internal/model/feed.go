@@ -53,8 +53,11 @@ type Feed struct {
 	HideGlobally                bool      `json:"hide_globally"`
 	DisableHTTP2                bool      `json:"disable_http2"`
 	AppriseServiceURLs          string    `json:"apprise_service_urls"`
+	WebhookURL                  string    `json:"webhook_url"`
 	NtfyEnabled                 bool      `json:"ntfy_enabled"`
 	NtfyPriority                int       `json:"ntfy_priority"`
+	PushoverEnabled             bool      `json:"pushover_enabled,omitempty"`
+	PushoverPriority            int       `json:"pushover_priority,omitempty"`
 
 	// Non-persisted attributes
 	Category *Category `json:"category,omitempty"`
