@@ -3,7 +3,7 @@ module miniflux.app/v2
 // +heroku goVersion go1.23
 
 require (
-	github.com/PuerkitoBio/goquery v1.10.1
+	github.com/PuerkitoBio/goquery v1.10.2
 	github.com/andybalholm/brotli v1.1.1
 	github.com/coreos/go-oidc/v3 v3.12.0
 	github.com/go-webauthn/webauthn v0.11.2
@@ -12,11 +12,11 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/prometheus/client_golang v1.20.5
 	github.com/tdewolff/minify/v2 v2.21.3
-	golang.org/x/crypto v0.32.0
-	golang.org/x/image v0.23.0
-	golang.org/x/net v0.34.0
-	golang.org/x/oauth2 v0.25.0
-	golang.org/x/term v0.28.0
+	golang.org/x/crypto v0.33.0
+	golang.org/x/image v0.24.0
+	golang.org/x/net v0.35.0
+	golang.org/x/oauth2 v0.26.0
+	golang.org/x/term v0.29.0
 )
 
 require (
@@ -40,8 +40,8 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/tdewolff/parse/v2 v2.7.19 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 )
 

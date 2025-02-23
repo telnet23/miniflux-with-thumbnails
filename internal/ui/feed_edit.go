@@ -63,9 +63,12 @@ func (h *handler) showEditFeedPage(w http.ResponseWriter, r *http.Request) {
 		HideGlobally:                feed.HideGlobally,
 		CategoryHidden:              feed.Category.HideGlobally,
 		AppriseServiceURLs:          feed.AppriseServiceURLs,
+		WebhookURL:                  feed.WebhookURL,
 		DisableHTTP2:                feed.DisableHTTP2,
 		NtfyEnabled:                 feed.NtfyEnabled,
 		NtfyPriority:                feed.NtfyPriority,
+		PushoverEnabled:             feed.PushoverEnabled,
+		PushoverPriority:            feed.PushoverPriority,
 	}
 
 	sess := session.New(h.store, request.SessionID(r))

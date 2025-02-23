@@ -111,7 +111,7 @@ type RSSImage struct {
 
 type RSSItem struct {
 	// Title is the title of the item.
-	Title string `xml:"rss title"`
+	Title InnerContent `xml:"rss title"`
 
 	// Link is the URL of the item.
 	Link string `xml:"rss link"`
@@ -197,4 +197,29 @@ type RSSGUID struct {
 type RSSSource struct {
 	URL  string `xml:"url,attr"`
 	Name string `xml:",chardata"`
+}
+
+type InnerContent struct {
+	Content string
+}
+
+func (ic *InnerContent) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var content strings.Builder
+
+	for {
+		token, err := d.Token()
+		if err != nil {
+			return err
+		}
+
+		switch t := token.(type) {
+		case xml.CharData:
+			content.Write(t)
+		case xml.EndElement:
+			if t == start.End() {
+				ic.Content = strings.TrimSpace(content.String())
+				return nil
+			}
+		}
+	}
 }

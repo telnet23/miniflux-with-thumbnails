@@ -71,9 +71,9 @@ function toggleMainMenu(event) {
     const menu = document.querySelector(".header nav ul");
     const menuToggleButton = document.querySelector(".logo");
     if (menu.classList.contains("js-menu-show")) {
-        menuToggleButton.setAttribute("aria-expanded", false);
+        menuToggleButton.setAttribute("aria-expanded", "false");
     } else {
-        menuToggleButton.setAttribute("aria-expanded", true);
+        menuToggleButton.setAttribute("aria-expanded", "true");
     }
     menu.classList.toggle("js-menu-show");
 }
@@ -274,7 +274,7 @@ function saveEntry(element, toasting) {
     request.withCallback(() => {
         element.textContent = "";
         appendIconLabel(element, element.dataset.labelDone);
-        element.dataset.completed = true;
+        element.dataset.completed = "true";
         if (toasting) {
             const iconElement = document.querySelector("template#icon-save");
             showToast(element.dataset.toastDone, iconElement);
@@ -396,7 +396,6 @@ function openCommentLink(openLinkInCurrentTab) {
             } else {
                 DomHelper.openNewTab(entryLink.getAttribute("href"));
             }
-            return;
         }
     } else {
         const currentItemCommentsLink = document.querySelector(".current-item :is(a, button)[data-comments-link]");
@@ -434,7 +433,7 @@ function unsubscribeFromFeed() {
  * @param {string} page Page to redirect to.
  * @param {boolean} fallbackSelf Refresh actual page if the page is not found.
  */
-function goToPage(page, fallbackSelf) {
+function goToPage(page, fallbackSelf = false) {
     const element = document.querySelector(":is(a, button)[data-page=" + page + "]");
 
     if (element) {

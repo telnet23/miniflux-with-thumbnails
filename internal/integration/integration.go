@@ -23,11 +23,13 @@ import (
 	"miniflux.app/v2/internal/integration/omnivore"
 	"miniflux.app/v2/internal/integration/pinboard"
 	"miniflux.app/v2/internal/integration/pocket"
+	"miniflux.app/v2/internal/integration/pushover"
 	"miniflux.app/v2/internal/integration/raindrop"
 	"miniflux.app/v2/internal/integration/readeck"
 	"miniflux.app/v2/internal/integration/readwise"
 	"miniflux.app/v2/internal/integration/shaarli"
 	"miniflux.app/v2/internal/integration/shiori"
+	"miniflux.app/v2/internal/integration/slack"
 	"miniflux.app/v2/internal/integration/telegrambot"
 	"miniflux.app/v2/internal/integration/wallabag"
 	"miniflux.app/v2/internal/integration/webhook"
@@ -473,20 +475,27 @@ func PushEntries(feed *model.Feed, entries model.Entries, userIntegrations *mode
 	}
 
 	if userIntegrations.WebhookEnabled {
+		var webhookURL string
+		if feed.WebhookURL != "" {
+			webhookURL = feed.WebhookURL
+		} else {
+			webhookURL = userIntegrations.WebhookURL
+		}
+
 		slog.Debug("Sending new entries to Webhook",
 			slog.Int64("user_id", userIntegrations.UserID),
 			slog.Int("nb_entries", len(entries)),
 			slog.Int64("feed_id", feed.ID),
-			slog.String("webhook_url", userIntegrations.WebhookURL),
+			slog.String("webhook_url", webhookURL),
 		)
 
-		webhookClient := webhook.NewClient(userIntegrations.WebhookURL, userIntegrations.WebhookSecret)
+		webhookClient := webhook.NewClient(webhookURL, userIntegrations.WebhookSecret)
 		if err := webhookClient.SendNewEntriesWebhookEvent(feed, entries); err != nil {
 			slog.Debug("Unable to send new entries to Webhook",
 				slog.Int64("user_id", userIntegrations.UserID),
 				slog.Int("nb_entries", len(entries)),
 				slog.Int64("feed_id", feed.ID),
-				slog.String("webhook_url", userIntegrations.WebhookURL),
+				slog.String("webhook_url", webhookURL),
 				slog.Any("error", err),
 			)
 		}
@@ -550,6 +559,42 @@ func PushEntries(feed *model.Feed, entries model.Entries, userIntegrations *mode
 
 		if err := client.SendDiscordMsg(feed, entries); err != nil {
 			slog.Warn("Unable to send new entries to Discord", slog.Any("error", err))
+		}
+	}
+
+	if userIntegrations.SlackEnabled {
+		slog.Debug("Sending new entries to Slack",
+			slog.Int64("user_id", userIntegrations.UserID),
+			slog.Int("nb_entries", len(entries)),
+			slog.Int64("feed_id", feed.ID),
+		)
+
+		client := slack.NewClient(
+			userIntegrations.SlackWebhookLink,
+		)
+
+		if err := client.SendSlackMsg(feed, entries); err != nil {
+			slog.Warn("Unable to send new entries to Slack", slog.Any("error", err))
+		}
+	}
+
+	if userIntegrations.PushoverEnabled && feed.PushoverEnabled {
+		slog.Debug("Sending new entries to Pushover",
+			slog.Int64("user_id", userIntegrations.UserID),
+			slog.Int("nb_entries", len(entries)),
+			slog.Int64("feed_id", feed.ID),
+		)
+
+		client := pushover.New(
+			userIntegrations.PushoverUser,
+			userIntegrations.PushoverToken,
+			feed.PushoverPriority,
+			userIntegrations.PushoverDevice,
+			userIntegrations.PushoverPrefix,
+		)
+
+		if err := client.SendMessages(feed, entries); err != nil {
+			slog.Warn("Unable to send new entries to Pushover", slog.Any("error", err))
 		}
 	}
 
