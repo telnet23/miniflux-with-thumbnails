@@ -71,11 +71,11 @@
     "entry.shared_entry.title": "Herkese açık bağlantıyı aç",
     "entry.state.loading": "Yükleniyor...",
     "entry.state.saving": "Kaydediliyor...",
-    "entry.status.read": "Okundu",
+    "entry.status.mark_as_read": "Okundu olarak işaretle",
     "entry.status.title": "Makele okundu durumunu değiştir",
-    "entry.status.toast.read": "Okundu olarak işaretle",
-    "entry.status.toast.unread": "Okunmadı olarak işaretle",
-    "entry.status.unread": "Okunmadı",
+    "entry.status.toast.read": "Okundu olarak işaretlendi",
+    "entry.status.toast.unread": "Okunmamış olarak işaretlendi",
+    "entry.status.mark_as_unread": "Okunmadı olarak işaretle",
     "entry.tags.label": "Etiketler:",
     "entry.unshare.label": "Paylaşma",
     "error.api_key_already_exists": "Bu API anahtarı zaten mevcut.",
@@ -186,6 +186,7 @@
     "form.feed.label.ntfy_max_priority": "Ntfy max priority",
     "form.feed.label.ntfy_min_priority": "Ntfy min priority",
     "form.feed.label.ntfy_priority": "Ntfy priority",
+    "form.feed.label.ntfy_topic": "Ntfy topic (optional)",
     "form.feed.label.pushover_activate": "Push entries to pushover.net",
     "form.feed.label.pushover_default_priority": "Pushover default priority",
     "form.feed.label.pushover_high_priority": "Pushover high priority",
@@ -254,7 +255,7 @@
     "form.integration.ntfy_icon_url": "Ntfy Icon URL (optional)",
     "form.integration.ntfy_internal_links": "Use internal links on click (optional)",
     "form.integration.ntfy_password": "Ntfy Password (optional)",
-    "form.integration.ntfy_topic": "Ntfy topic",
+    "form.integration.ntfy_topic": "Ntfy topic (default if not set in feed)",
     "form.integration.ntfy_url": "Ntfy URL (optional, default is ntfy.sh)",
     "form.integration.ntfy_username": "Ntfy Username (optional)",
     "form.integration.nunux_keeper_activate": "Makaleleri Nunux Keeper'a kaydet",
@@ -400,6 +401,7 @@
     "page.about.author": "Yazar:",
     "page.about.build_date": "Oluşturulma Tarihi:",
     "page.about.credits": "Katkıda Bulunanlar",
+    "page.about.db_usage": "Database size:",
     "page.about.global_config_options": "Global yapılandırma seçenekleri",
     "page.about.go_version": "Go sürümü:",
     "page.about.license": "Lisans:",
@@ -419,10 +421,6 @@
     "page.api_keys.table.last_used_at": "Son Kullanılma",
     "page.api_keys.table.token": "Token",
     "page.api_keys.title": "API Anahtarları",
-    "page.categories_count": [
-        "%d kategori",
-        "%d kategori"
-    ],
     "page.categories.entries": "Makaleler",
     "page.categories.feed_count": [
         "%d besleme var.",
@@ -431,6 +429,10 @@
     "page.categories.feeds": "Beslemeler",
     "page.categories.no_feed": "Besleme yok.",
     "page.categories.title": "Kategoriler",
+    "page.categories_count": [
+        "%d kategori",
+        "%d kategori"
+    ],
     "page.category_label": "Kategori: %s",
     "page.edit_category.title": "Kategoriyi Düzenle: %s",
     "page.edit_feed.etag_header": "ETag başlığı:",
@@ -536,25 +538,25 @@
     "page.settings.webauthn.passkeys": "Passkeyler",
     "page.settings.webauthn.register": "Passkey'i kaydet",
     "page.settings.webauthn.register.error": "Passkey kaydedilemiyor",
+    "page.shared_entries.title": "Paylaşılan makaleler",
     "page.shared_entries_count": [
         "%d paylaşılan makaleler",
         "%d paylaşılan makaleler"
     ],
-    "page.shared_entries.title": "Paylaşılan makaleler",
+    "page.starred.title": "Yıldızlı",
     "page.starred_entry_count": [
         "%d yıldızlanmış makale",
         "%d yıldızlanmış makale"
     ],
-    "page.starred.title": "Yıldızlı",
     "page.total_entry_count": [
         "Toplamda %d makale",
         "Toplamda %d makale"
     ],
+    "page.unread.title": "Okunmadı",
     "page.unread_entry_count": [
         "Toplamda %d okunmamış makale",
         "Toplamda %d okunmamış makale"
     ],
-    "page.unread.title": "Okunmadı",
     "page.users.actions": "Eylemler",
     "page.users.admin.no": "Hayır",
     "page.users.admin.yes": "Evet",

@@ -71,11 +71,11 @@
     "entry.shared_entry.title": "Öffnen Sie den öffentlichen Link",
     "entry.state.loading": "Lade...",
     "entry.state.saving": "Speichern...",
-    "entry.status.read": "Gelesen",
+    "entry.status.mark_as_read": "Als gelesen markieren",
     "entry.status.title": "Status des Artikels ändern",
     "entry.status.toast.read": "Als gelesen markiert",
     "entry.status.toast.unread": "Als ungelesen markiert",
-    "entry.status.unread": "Ungelesen",
+    "entry.status.mark_as_unread": "Als ungelesen markieren",
     "entry.tags.label": "Stichworte:",
     "entry.unshare.label": "Nicht teilen",
     "error.api_key_already_exists": "Dieser API-Schlüssel ist bereits vorhanden.",
@@ -186,6 +186,7 @@
     "form.feed.label.ntfy_max_priority": "Höchste Ntfy-Priorität",
     "form.feed.label.ntfy_min_priority": "Niedrigste Ntfy-Priorität",
     "form.feed.label.ntfy_priority": "Ntfy-Priorität",
+    "form.feed.label.ntfy_topic": "Ntfy-Thema (optional)",
     "form.feed.label.pushover_activate": "Push entries to pushover.net",
     "form.feed.label.pushover_default_priority": "Pushover default priority",
     "form.feed.label.pushover_high_priority": "Pushover high priority",
@@ -254,7 +255,7 @@
     "form.integration.ntfy_icon_url": "Ntfy-Symbol-URL (optional)",
     "form.integration.ntfy_internal_links": "Interne Links beim Klicken verwenden (optional)",
     "form.integration.ntfy_password": "Ntfy-Passwort (optional)",
-    "form.integration.ntfy_topic": "Ntfy-Thema",
+    "form.integration.ntfy_topic": "Ntfy-Thema (Standard, wenn nicht im Feed eingestellt)",
     "form.integration.ntfy_url": "Ntfy-URL (optional, Standard ist ntfy.sh)",
     "form.integration.ntfy_username": "Ntfy-Benutzername (optional)",
     "form.integration.nunux_keeper_activate": "Artikel in Nunux Keeper speichern",
@@ -400,6 +401,7 @@
     "page.about.author": "Autor:",
     "page.about.build_date": "Datum der Kompilierung:",
     "page.about.credits": "Urheberrechte",
+    "page.about.db_usage": "Database size:",
     "page.about.global_config_options": "Globale Konfigurationsoptionen",
     "page.about.go_version": "Go-Version:",
     "page.about.license": "Lizenz:",
@@ -419,10 +421,6 @@
     "page.api_keys.table.last_used_at": "Zuletzt verwendeten",
     "page.api_keys.table.token": "Zeichen",
     "page.api_keys.title": "API-Schlüssel",
-    "page.categories_count": [
-        "%d Kategorie",
-        "%d Kategorien"
-    ],
     "page.categories.entries": "Artikel",
     "page.categories.feed_count": [
         "Es gibt %d Abonnement.",
@@ -431,6 +429,10 @@
     "page.categories.feeds": "Abonnements",
     "page.categories.no_feed": "Kein Abonnement.",
     "page.categories.title": "Kategorien",
+    "page.categories_count": [
+        "%d Kategorie",
+        "%d Kategorien"
+    ],
     "page.category_label": "Kategorie: %s",
     "page.edit_category.title": "Kategorie bearbeiten: %s",
     "page.edit_feed.etag_header": "ETag-Kopfzeile:",
@@ -536,25 +538,25 @@
     "page.settings.webauthn.passkeys": "Passkeys",
     "page.settings.webauthn.register": "Hauptschlüssel registrieren",
     "page.settings.webauthn.register.error": "Hauptschlüssel kann nicht registriert werden",
+    "page.shared_entries.title": "Geteilte Artikel",
     "page.shared_entries_count": [
         "%d geteilter Artikel",
         "%d geteilte Artikel"
     ],
-    "page.shared_entries.title": "Geteilte Artikel",
+    "page.starred.title": "Lesezeichen",
     "page.starred_entry_count": [
         "%d Lesezeichen",
         "%d Lesezeichen"
     ],
-    "page.starred.title": "Lesezeichen",
     "page.total_entry_count": [
         "%d Artikel insgesamt",
         "%d Artikel insgesamt"
     ],
+    "page.unread.title": "Ungelesen",
     "page.unread_entry_count": [
         "%d ungelesener Artikel",
         "%d ungelesene Artikel"
     ],
-    "page.unread.title": "Ungelesen",
     "page.users.actions": "Aktionen",
     "page.users.admin.no": "Nein",
     "page.users.admin.yes": "Ja",

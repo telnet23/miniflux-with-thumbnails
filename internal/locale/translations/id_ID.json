@@ -69,11 +69,11 @@
     "entry.shared_entry.title": "Buka tautan publik",
     "entry.state.loading": "Memuat...",
     "entry.state.saving": "Menyimpan...",
-    "entry.status.read": "Telah dibaca",
+    "entry.status.mark_as_read": "Telah dibaca",
     "entry.status.title": "Ubah status entri",
     "entry.status.toast.read": "Ditandai sebagai telah dibaca",
     "entry.status.toast.unread": "Ditandai sebagai belum dibaca",
-    "entry.status.unread": "Belum dibaca",
+    "entry.status.mark_as_unread": "Belum dibaca",
     "entry.tags.label": "Tanda:",
     "entry.unshare.label": "Batal bagikan",
     "error.api_key_already_exists": "Kunci API ini sudah ada.",
@@ -184,6 +184,7 @@
     "form.feed.label.ntfy_max_priority": "Ntfy max priority",
     "form.feed.label.ntfy_min_priority": "Ntfy min priority",
     "form.feed.label.ntfy_priority": "Ntfy priority",
+    "form.feed.label.ntfy_topic": "Ntfy topic (optional)",
     "form.feed.label.pushover_activate": "Push entries to pushover.net",
     "form.feed.label.pushover_default_priority": "Pushover default priority",
     "form.feed.label.pushover_high_priority": "Pushover high priority",
@@ -252,7 +253,7 @@
     "form.integration.ntfy_icon_url": "Ntfy Icon URL (optional)",
     "form.integration.ntfy_internal_links": "Use internal links on click (optional)",
     "form.integration.ntfy_password": "Ntfy Password (optional)",
-    "form.integration.ntfy_topic": "Ntfy topic",
+    "form.integration.ntfy_topic": "Ntfy topic (default used if not set in feed)",
     "form.integration.ntfy_url": "Ntfy URL (optional, default is ntfy.sh)",
     "form.integration.ntfy_username": "Ntfy Username (optional)",
     "form.integration.nunux_keeper_activate": "Simpan artikel ke Nunux Keeper",
@@ -398,6 +399,7 @@
     "page.about.author": "Pengembang:",
     "page.about.build_date": "Tanggal Penyusunan:",
     "page.about.credits": "Pengembang",
+    "page.about.db_usage": "Database size:",
     "page.about.global_config_options": "Pengaturan Konfigurasi Global",
     "page.about.go_version": "Versi Go:",
     "page.about.license": "Lisensi:",
@@ -417,9 +419,6 @@
     "page.api_keys.table.last_used_at": "Terakhir Digunakan",
     "page.api_keys.table.token": "Token",
     "page.api_keys.title": "Kunci API",
-    "page.categories_count": [
-        "%d category"
-    ],
     "page.categories.entries": "Artikel",
     "page.categories.feed_count": [
         "Ada %d umpan."
@@ -427,6 +426,9 @@
     "page.categories.feeds": "Langganan",
     "page.categories.no_feed": "Tidak ada umpan.",
     "page.categories.title": "Kategori",
+    "page.categories_count": [
+        "%d category"
+    ],
     "page.category_label": "Category: %s",
     "page.edit_category.title": "Sunting Kategori: %s",
     "page.edit_feed.etag_header": "Tajuk ETag:",
@@ -529,21 +531,21 @@
     "page.settings.webauthn.passkeys": "Passkeys",
     "page.settings.webauthn.register": "Register passkey",
     "page.settings.webauthn.register.error": "Unable to register passkey",
+    "page.shared_entries.title": "Entri yang Dibagikan",
     "page.shared_entries_count": [
         "%d shared entry"
     ],
-    "page.shared_entries.title": "Entri yang Dibagikan",
+    "page.starred.title": "Markah",
     "page.starred_entry_count": [
         "%d starred entry"
     ],
-    "page.starred.title": "Markah",
     "page.total_entry_count": [
         "%d entry in total"
     ],
+    "page.unread.title": "Belum Dibaca",
     "page.unread_entry_count": [
         "%d unread entry"
     ],
-    "page.unread.title": "Belum Dibaca",
     "page.users.actions": "Tindakan",
     "page.users.admin.no": "Tidak",
     "page.users.admin.yes": "Ya",

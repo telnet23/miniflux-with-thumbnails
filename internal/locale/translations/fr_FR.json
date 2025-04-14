@@ -71,11 +71,11 @@
     "entry.shared_entry.title": "Ouvrir le lien public",
     "entry.state.loading": "Chargement...",
     "entry.state.saving": "Sauvegarde en cours...",
-    "entry.status.read": "Lu",
+    "entry.status.mark_as_read": "Marquer comme lu",
     "entry.status.title": "Changer le statut de l'entrée",
     "entry.status.toast.read": "Marqué comme lu",
     "entry.status.toast.unread": "Marqué comme non lu",
-    "entry.status.unread": "Non lu",
+    "entry.status.mark_as_unread": "Marquer comme non lu",
     "entry.tags.label": "Libellés :",
     "entry.unshare.label": "Enlever le partage",
     "error.api_key_already_exists": "Cette clé d'API existe déjà.",
@@ -186,6 +186,7 @@
     "form.feed.label.ntfy_max_priority": "Priorité maximale de notification",
     "form.feed.label.ntfy_min_priority": "Priorité minimale de notification",
     "form.feed.label.ntfy_priority": "Priorité de notification",
+    "form.feed.label.ntfy_topic": "Sujet Ntfy (facultatif)",
     "form.feed.label.pushover_activate": "Activer les notifications vers Pushover",
     "form.feed.label.pushover_default_priority": "Priorité par défaut",
     "form.feed.label.pushover_high_priority": "Priorité élevée",
@@ -254,7 +255,7 @@
     "form.integration.ntfy_icon_url": "URL de l'icône Ntfy (facultatif)",
     "form.integration.ntfy_internal_links": "Utiliser les liens internes vers Miniflux (facultatif)",
     "form.integration.ntfy_password": "Mot de passe Ntfy (facultatif)",
-    "form.integration.ntfy_topic": "Sujet Ntfy",
+    "form.integration.ntfy_topic": "Sujet Ntfy (défaut s'il n'est pas défini dans le flux)",
     "form.integration.ntfy_url": "URL de Ntfy (optionnel, ntfy.sh par défaut)",
     "form.integration.ntfy_username": "Nom d'utilisateur Ntfy (optionnel)",
     "form.integration.nunux_keeper_activate": "Sauvegarder les articles vers Nunux Keeper",
@@ -400,6 +401,7 @@
     "page.about.author": "Auteur :",
     "page.about.build_date": "Date de la compilation :",
     "page.about.credits": "Crédits",
+    "page.about.db_usage": "Database size:",
     "page.about.global_config_options": "Options de configuration globales",
     "page.about.go_version": "Version de Go :",
     "page.about.license": "Licence :",
@@ -419,10 +421,6 @@
     "page.api_keys.table.last_used_at": "Dernière utilisation",
     "page.api_keys.table.token": "Jeton",
     "page.api_keys.title": "Clés d'API",
-    "page.categories_count": [
-        "%d catégorie",
-        "%d catégories"
-    ],
     "page.categories.entries": "Articles",
     "page.categories.feed_count": [
         "Il y a %d abonnement.",
@@ -431,6 +429,10 @@
     "page.categories.feeds": "Abonnements",
     "page.categories.no_feed": "Aucun abonnement.",
     "page.categories.title": "Catégories",
+    "page.categories_count": [
+        "%d catégorie",
+        "%d catégories"
+    ],
     "page.category_label": "Catégorie : %s",
     "page.edit_category.title": "Modification de la catégorie : %s",
     "page.edit_feed.etag_header": "En-tête ETag :",
@@ -536,25 +538,25 @@
     "page.settings.webauthn.passkeys": "Clés d’accès",
     "page.settings.webauthn.register": "Enregister une nouvelle clé d’accès",
     "page.settings.webauthn.register.error": "Impossible d'enregistrer la clé d’accès",
+    "page.shared_entries.title": "Articles partagés",
     "page.shared_entries_count": [
         "%d article partagé",
         "%d articles partagés"
     ],
-    "page.shared_entries.title": "Articles partagés",
+    "page.starred.title": "Favoris",
     "page.starred_entry_count": [
         "%d favori",
         "%d favoris"
     ],
-    "page.starred.title": "Favoris",
     "page.total_entry_count": [
         "%d article au total",
         "%d articles au total"
     ],
+    "page.unread.title": "Non lus",
     "page.unread_entry_count": [
         "%d article non lu",
         "%d articles non lus"
     ],
-    "page.unread.title": "Non lus",
     "page.users.actions": "Actions",
     "page.users.admin.no": "Non",
     "page.users.admin.yes": "Oui",

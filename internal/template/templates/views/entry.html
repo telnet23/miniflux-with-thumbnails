@@ -15,12 +15,12 @@
                         title="{{ t "entry.status.title" }}"
                         data-toggle-status="true"
                         data-label-loading="{{ t "entry.state.saving" }}"
-                        data-label-unread="{{ t "entry.status.unread" }}"
-                        data-label-read="{{ t "entry.status.read" }}"
+                        data-label-unread="{{ t "entry.status.mark_as_unread" }}"
+                        data-label-read="{{ t "entry.status.mark_as_read" }}"
                         data-toast-unread="{{ t "entry.status.toast.unread" }}"
                         data-toast-read="{{ t "entry.status.toast.read" }}"
                         data-value="{{ if eq .entry.Status "read" }}read{{ else }}unread{{ end }}"
-                        >{{ if eq .entry.Status "unread" }}{{ icon "read" }}{{ else }}{{ icon "unread" }}{{ end }}<span class="icon-label">{{ if eq .entry.Status "unread" }}{{ t "entry.status.read" }}{{ else }}{{ t "entry.status.unread" }}{{ end }}</span></button>
+                        >{{ if eq .entry.Status "unread" }}{{ icon "read" }}{{ else }}{{ icon "unread" }}{{ end }}<span class="icon-label">{{ if eq .entry.Status "unread" }}{{ t "entry.status.mark_as_read" }}{{ else }}{{ t "entry.status.mark_as_unread" }}{{ end }}</span></button>
                 </li>
                 <li>
                     <button
@@ -108,8 +108,8 @@
         {{ end }}
         <div class="entry-meta" dir="auto">
             <span class="entry-website">
-                {{ if and .user (ne .entry.Feed.Icon.IconID 0) }}
-                <img src="{{ route "icon" "iconID" .entry.Feed.Icon.IconID }}" width="16" height="16" loading="lazy" alt="{{ .entry.Feed.Title }}">
+                {{ if ne .entry.Feed.Icon.IconID 0 }}
+                <img src="{{ route "feedIcon" "externalIconID" .entry.Feed.Icon.ExternalIconID }}" width="16" height="16" loading="lazy" alt="{{ .entry.Feed.Title }}">
                 {{ end }}
                 {{ if .user }}
                 <a href="{{ route "feedEntries" "feedID" .entry.Feed.ID }}">{{ .entry.Feed.Title }}</a>
@@ -135,7 +135,14 @@
         {{ if .entry.Tags }}
         <div class="entry-tags">
             {{ t "entry.tags.label" }}
-	    {{range $i, $e := .entry.Tags}}{{if $i}}, {{end}}<a href="{{ route "tagEntriesAll" "tagName" (urlEncode $e) }}"><strong>{{ $e }}</strong></a>{{end}}
+            {{ range $i, $e := .entry.Tags }}
+                {{if $i}}, {{end}}
+                {{ if $.user }}
+                    <a href="{{ route "tagEntriesAll" "tagName" (urlEncode $e) }}"><strong>{{ $e }}</strong></a>
+                {{ else }}
+                    <strong>{{ $e }}</strong>
+                {{ end }}
+            {{ end }}
         </div>
         {{ end }}
         <div class="entry-date">
@@ -164,7 +171,7 @@
 </div>
 {{ end }}
 {{ end }}
-<article class="entry-content gesture-nav-{{ $.user.GestureNav }}" dir="auto">
+<article class="entry-content {{ if ne $.user.GestureNav "none" }}gesture-nav-{{ $.user.GestureNav }}{{ end }}" dir="auto">
     {{ if not .entry.Feed.NoMediaPlayer }}
         {{ $mediaPlayerEnclosure := .entry.Enclosures.FindMediaPlayerEnclosure }}
 

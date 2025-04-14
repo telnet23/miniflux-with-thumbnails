@@ -827,6 +827,14 @@ func move(stream Stream, destination Stream, store *storage.Storage, userID int6
 	return store.UpdateFeed(feed)
 }
 
+func (h *handler) feedIconURL(f *model.Feed) string {
+	if f.Icon != nil && f.Icon.ExternalIconID != "" {
+		return config.Opts.RootURL() + route.Path(h.router, "feedIcon", "externalIconID", f.Icon.ExternalIconID)
+	} else {
+		return ""
+	}
+}
+
 func (h *handler) editSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
 	userID := request.UserID(r)
 	clientIP := request.ClientIP(r)
@@ -950,6 +958,7 @@ func (h *handler) streamItemContentsHandler(w http.ResponseWriter, r *http.Reque
 	)
 
 	builder := h.store.NewEntryQueryBuilder(userID)
+	builder.WithEnclosures()
 	builder.WithoutStatus(model.EntryStatusRemoved)
 	builder.WithEntryIDs(itemIDs)
 	builder.WithSorting(model.DefaultSortingOrder, requestModifiers.SortDirection)
@@ -1207,6 +1216,7 @@ func (h *handler) subscriptionListHandler(w http.ResponseWriter, r *http.Request
 		json.ServerError(w, r, err)
 		return
 	}
+
 	result.Subscriptions = make([]subscription, 0)
 	for _, feed := range feeds {
 		result.Subscriptions = append(result.Subscriptions, subscription{
@@ -1215,7 +1225,7 @@ func (h *handler) subscriptionListHandler(w http.ResponseWriter, r *http.Request
 			URL:        feed.FeedURL,
 			Categories: []subscriptionCategory{{fmt.Sprintf(UserLabelPrefix, userID) + feed.Category.Title, feed.Category.Title, "folder"}},
 			HTMLURL:    feed.SiteURL,
-			IconURL:    "", // TODO: Icons are base64 encoded in the DB.
+			IconURL:    h.feedIconURL(feed),
 		})
 	}
 	json.OK(w, r, result)

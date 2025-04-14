@@ -71,11 +71,11 @@
     "entry.shared_entry.title": "Open de openbare link",
     "entry.state.loading": "Laden...",
     "entry.state.saving": "Opslaan...",
-    "entry.status.read": "Gelezen",
+    "entry.status.mark_as_read": "Markeren als gelezen",
     "entry.status.title": "Verander artikelstatus",
     "entry.status.toast.read": "Gemarkeerd als gelezen",
     "entry.status.toast.unread": "Gemarkeerd als ongelezen",
-    "entry.status.unread": "Ongelezen",
+    "entry.status.mark_as_unread": "Markeren als ongelezen",
     "entry.tags.label": "Tags:",
     "entry.unshare.label": "Delen ongedaan maken",
     "error.api_key_already_exists": "Deze API-sleutel bestaat al.",
@@ -186,6 +186,7 @@
     "form.feed.label.ntfy_max_priority": "Ntfy maximale prioriteit",
     "form.feed.label.ntfy_min_priority": "Ntfy minimale prioriteit",
     "form.feed.label.ntfy_priority": "Ntfy prioriteit",
+    "form.feed.label.ntfy_topic": "Ntfy topic (optional)",
     "form.feed.label.pushover_activate": "Push entries to pushover.net",
     "form.feed.label.pushover_default_priority": "Pushover default priority",
     "form.feed.label.pushover_high_priority": "Pushover high priority",
@@ -254,7 +255,7 @@
     "form.integration.ntfy_icon_url": "Ntfy Icon URL (optioneel)",
     "form.integration.ntfy_internal_links": "Use internal links on click (optional)",
     "form.integration.ntfy_password": "Ntfy wachtwoord (optioneel)",
-    "form.integration.ntfy_topic": "Ntfy topic",
+    "form.integration.ntfy_topic": "Ntfy topic (standaard gebruikt als deze niet is ingesteld in feed)",
     "form.integration.ntfy_url": "Ntfy URL (optioneel, standaard is ntfy.sh)",
     "form.integration.ntfy_username": "Ntfy gebruikersnaam (optioneel)",
     "form.integration.nunux_keeper_activate": "Artikelen opslaan in Nunux Keeper",
@@ -400,6 +401,7 @@
     "page.about.author": "Auteur:",
     "page.about.build_date": "Compilatiedatum:",
     "page.about.credits": "Credits",
+    "page.about.db_usage": "Database size:",
     "page.about.global_config_options": "Globale Configuratie Opties",
     "page.about.go_version": "Go versie:",
     "page.about.license": "Licentie:",
@@ -419,10 +421,6 @@
     "page.api_keys.table.last_used_at": "Laatst gebruikt",
     "page.api_keys.table.token": "Token",
     "page.api_keys.title": "API-sleutels",
-    "page.categories_count": [
-        "%d categorie",
-        "%d categorieën"
-    ],
     "page.categories.entries": "Artikelen",
     "page.categories.feed_count": [
         "Er is %d feed.",
@@ -431,6 +429,10 @@
     "page.categories.feeds": "Feeds",
     "page.categories.no_feed": "Geen feed.",
     "page.categories.title": "Categorieën",
+    "page.categories_count": [
+        "%d categorie",
+        "%d categorieën"
+    ],
     "page.category_label": "Categorie: %s",
     "page.edit_category.title": "Bewerk categorie: %s",
     "page.edit_feed.etag_header": "ETAG header:",
@@ -536,25 +538,25 @@
     "page.settings.webauthn.passkeys": "Passkeys",
     "page.settings.webauthn.register": "Passkey registreren",
     "page.settings.webauthn.register.error": "Kan passkey niet registreren",
+    "page.shared_entries.title": "Gedeelde artikelen",
     "page.shared_entries_count": [
         "%d gedeeld artikel",
         "%d gedeelde artikelen"
     ],
-    "page.shared_entries.title": "Gedeelde artikelen",
+    "page.starred.title": "Favorieten",
     "page.starred_entry_count": [
         "%d favoriet artikel",
         "%d favoriete artikelen"
     ],
-    "page.starred.title": "Favorieten",
     "page.total_entry_count": [
         "%d artikel totaal",
         "%d artikelen totaal"
     ],
+    "page.unread.title": "Ongelezen",
     "page.unread_entry_count": [
         "%d ongelezen artikel",
         "%d ongelezen artikelen"
     ],
-    "page.unread.title": "Ongelezen",
     "page.users.actions": "Acties",
     "page.users.admin.no": "Nee",
     "page.users.admin.yes": "Ja",

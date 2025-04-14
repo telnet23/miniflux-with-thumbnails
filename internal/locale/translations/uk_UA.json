@@ -73,11 +73,11 @@
     "entry.shared_entry.title": "Відкрити публічне посилання",
     "entry.state.loading": "Завантаження...",
     "entry.state.saving": "Зберігаю...",
-    "entry.status.read": "Прочитане",
+    "entry.status.mark_as_read": "Позначити як прочитане",
     "entry.status.title": "Змінити стан запису",
     "entry.status.toast.read": "Відмічено прочитаним",
     "entry.status.toast.unread": "Відмічено непрочитаним",
-    "entry.status.unread": "Непрочитане",
+    "entry.status.mark_as_unread": "Позначити як непрочитане",
     "entry.tags.label": "Теги:",
     "entry.unshare.label": "Не ділитися",
     "error.api_key_already_exists": "Такий ключ API вже існує.",
@@ -188,6 +188,7 @@
     "form.feed.label.ntfy_max_priority": "Ntfy max priority",
     "form.feed.label.ntfy_min_priority": "Ntfy min priority",
     "form.feed.label.ntfy_priority": "Ntfy priority",
+    "form.feed.label.ntfy_topic": "Ntfy topic (optional)",
     "form.feed.label.pushover_activate": "Push entries to pushover.net",
     "form.feed.label.pushover_default_priority": "Pushover default priority",
     "form.feed.label.pushover_high_priority": "Pushover high priority",
@@ -256,7 +257,7 @@
     "form.integration.ntfy_icon_url": "Ntfy Icon URL (optional)",
     "form.integration.ntfy_internal_links": "Use internal links on click (optional)",
     "form.integration.ntfy_password": "Ntfy Password (optional)",
-    "form.integration.ntfy_topic": "Ntfy topic",
+    "form.integration.ntfy_topic": "Ntfy topic (default if not set in feed)",
     "form.integration.ntfy_url": "Ntfy URL (optional, default is ntfy.sh)",
     "form.integration.ntfy_username": "Ntfy Username (optional)",
     "form.integration.nunux_keeper_activate": "Зберігати статті до Nunux Keeper",
@@ -402,6 +403,7 @@
     "page.about.author": "Автор:",
     "page.about.build_date": "Дата побудови:",
     "page.about.credits": "Титри",
+    "page.about.db_usage": "Database size:",
     "page.about.global_config_options": "Параметри глобальної конфігурації",
     "page.about.go_version": "Версія Go:",
     "page.about.license": "Ліцензія:",
@@ -421,11 +423,6 @@
     "page.api_keys.table.last_used_at": "Дата останнього використання",
     "page.api_keys.table.token": "Токен",
     "page.api_keys.title": "Ключі API",
-    "page.categories_count": [
-        "%d category",
-        "%d categories",
-        "%d categories"
-    ],
     "page.categories.entries": "Статті",
     "page.categories.feed_count": [
         "Містить %d стрічку.",
@@ -435,6 +432,11 @@
     "page.categories.feeds": "Підписки",
     "page.categories.no_feed": "Немає стрічки.",
     "page.categories.title": "Категорії",
+    "page.categories_count": [
+        "%d category",
+        "%d categories",
+        "%d categories"
+    ],
     "page.category_label": "Категорія: %s",
     "page.edit_category.title": "Редагування категорії: %s",
     "page.edit_feed.etag_header": "Заголовок ETag:",
@@ -543,29 +545,29 @@
     "page.settings.webauthn.passkeys": "Passkeys",
     "page.settings.webauthn.register": "Зареєструвати пароль",
     "page.settings.webauthn.register.error": "Не вдалося зареєструвати ключ доступу",
+    "page.shared_entries.title": "Спільні записи",
     "page.shared_entries_count": [
         "%d shared entry",
         "%d shared entries",
         "%d shared entries"
     ],
-    "page.shared_entries.title": "Спільні записи",
+    "page.starred.title": "З зірочкою",
     "page.starred_entry_count": [
         "%d starred entry",
         "%d starred entries",
         "%d starred entries"
     ],
-    "page.starred.title": "З зірочкою",
     "page.total_entry_count": [
         "%d entry in total",
         "%d entries in total",
         "%d entries in total"
     ],
+    "page.unread.title": "Непрочитане",
     "page.unread_entry_count": [
         "%d unread entry",
         "%d unread entries",
         "%d unread entries"
     ],
-    "page.unread.title": "Непрочитане",
     "page.users.actions": "Дії",
     "page.users.admin.no": "Ні",
     "page.users.admin.yes": "Так",

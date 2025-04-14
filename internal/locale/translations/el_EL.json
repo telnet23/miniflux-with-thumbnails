@@ -71,11 +71,11 @@
     "entry.shared_entry.title": "Ανοίξτε τον δημόσιο σύνδεσμο",
     "entry.state.loading": "Φόρτωση...",
     "entry.state.saving": "Aποθήκευση...",
-    "entry.status.read": "Αναγνωσμένο",
+    "entry.status.mark_as_read": "Επισήμανση ως αναγνωσμένο",
     "entry.status.title": "Αλλαγή κατάστασης καταχώρησης",
     "entry.status.toast.read": "Επισήμανση ως αναγνωσμένο",
     "entry.status.toast.unread": "Επισήμανση ως μη αναγνωσμένο",
-    "entry.status.unread": "Μη αναγνωσμένο",
+    "entry.status.mark_as_unread": "Επισήμανση ως μη αναγνωσμένο",
     "entry.tags.label": "Ετικέτες:",
     "entry.unshare.label": "Aναίρεση Διαμοιρασμού",
     "error.api_key_already_exists": "Αυτό το κλειδί API υπάρχει ήδη.",
@@ -186,6 +186,7 @@
     "form.feed.label.ntfy_max_priority": "Ntfy max priority",
     "form.feed.label.ntfy_min_priority": "Ntfy min priority",
     "form.feed.label.ntfy_priority": "Ntfy priority",
+    "form.feed.label.ntfy_topic": "Ntfy topic (optional)",
     "form.feed.label.pushover_activate": "Push entries to pushover.net",
     "form.feed.label.pushover_default_priority": "Pushover default priority",
     "form.feed.label.pushover_high_priority": "Pushover high priority",
@@ -254,7 +255,7 @@
     "form.integration.ntfy_icon_url": "Ntfy Icon URL (optional)",
     "form.integration.ntfy_internal_links": "Use internal links on click (optional)",
     "form.integration.ntfy_password": "Ntfy Password (optional)",
-    "form.integration.ntfy_topic": "Ntfy topic",
+    "form.integration.ntfy_topic": "Ntfy topic (default used if not set in feed)",
     "form.integration.ntfy_url": "Ntfy URL (optional, default is ntfy.sh)",
     "form.integration.ntfy_username": "Ntfy Username (optional)",
     "form.integration.nunux_keeper_activate": "Αποθήκευση άρθρων στο Nunux Keeper",
@@ -400,6 +401,7 @@
     "page.about.author": "Συγγραφέας:",
     "page.about.build_date": "Ημερομηνία Κατασκευής:",
     "page.about.credits": "Συνεισφέροντες",
+    "page.about.db_usage": "Database size:",
     "page.about.global_config_options": "Γενικές ρυθμίσεις",
     "page.about.go_version": "Έκδοση Go:",
     "page.about.license": "Άδεια:",
@@ -419,10 +421,6 @@
     "page.api_keys.table.last_used_at": "Τελευταία Χρήση",
     "page.api_keys.table.token": "Token",
     "page.api_keys.title": "Κλειδιά API",
-    "page.categories_count": [
-        "%d category",
-        "%d categories"
-    ],
     "page.categories.entries": "Άρθρα",
     "page.categories.feed_count": [
         "Υπάρχει μία %d ροή.",
@@ -431,6 +429,10 @@
     "page.categories.feeds": "Συνδρομές",
     "page.categories.no_feed": "Καμία ροή.",
     "page.categories.title": "Κατηγορίες",
+    "page.categories_count": [
+        "%d category",
+        "%d categories"
+    ],
     "page.category_label": "Category: %s",
     "page.edit_category.title": "Επεξεργασία κατηγορίας: % s",
     "page.edit_feed.etag_header": "Κεφαλίδα ETag:",
@@ -536,25 +538,25 @@
     "page.settings.webauthn.passkeys": "Passkeys",
     "page.settings.webauthn.register": "Εγγραφή κωδικού πρόσβασης",
     "page.settings.webauthn.register.error": "Δεν είναι δυνατή η εγγραφή του κωδικού πρόσβασης",
+    "page.shared_entries.title": "Κοινόχρηστες Καταχωρήσεις",
     "page.shared_entries_count": [
         "%d shared entry",
         "%d shared entries"
     ],
-    "page.shared_entries.title": "Κοινόχρηστες Καταχωρήσεις",
+    "page.starred.title": "Αγαπημένo",
     "page.starred_entry_count": [
         "%d starred entry",
         "%d starred entries"
     ],
-    "page.starred.title": "Αγαπημένo",
     "page.total_entry_count": [
         "%d entry in total",
         "%d entries in total"
     ],
+    "page.unread.title": "Μη αναγνωσμένα",
     "page.unread_entry_count": [
         "%d unread entry",
         "%d unread entries"
     ],
-    "page.unread.title": "Μη αναγνωσμένα",
     "page.users.actions": "Eνέργειες",
     "page.users.admin.no": "Όχι",
     "page.users.admin.yes": "Ναι.",
