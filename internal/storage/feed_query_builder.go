@@ -163,20 +163,25 @@ func (f *FeedQueryBuilder) GetFeeds() (model.Feeds, error) {
 			c.title as category_title,
 			c.hide_globally as category_hidden,
 			fi.icon_id,
+			i.external_id,
 			u.timezone,
 			f.apprise_service_urls,
 			f.webhook_url,
 			f.disable_http2,
 			f.ntfy_enabled,
 			f.ntfy_priority,
+			f.ntfy_topic,
 			f.pushover_enabled,
-			f.pushover_priority
+			f.pushover_priority,
+			f.proxy_url
 		FROM
 			feeds f
 		LEFT JOIN
 			categories c ON c.id=f.category_id
 		LEFT JOIN
 			feed_icons fi ON fi.feed_id=f.id
+		LEFT JOIN
+			icons i ON i.id=fi.icon_id
 		LEFT JOIN
 			users u ON u.id=f.user_id
 		WHERE %s
@@ -200,6 +205,7 @@ func (f *FeedQueryBuilder) GetFeeds() (model.Feeds, error) {
 	for rows.Next() {
 		var feed model.Feed
 		var iconID sql.NullInt64
+		var externalIconID sql.NullString
 		var tz string
 		feed.Category = &model.Category{}
 
@@ -236,24 +242,27 @@ func (f *FeedQueryBuilder) GetFeeds() (model.Feeds, error) {
 			&feed.Category.Title,
 			&feed.Category.HideGlobally,
 			&iconID,
+			&externalIconID,
 			&tz,
 			&feed.AppriseServiceURLs,
 			&feed.WebhookURL,
 			&feed.DisableHTTP2,
 			&feed.NtfyEnabled,
 			&feed.NtfyPriority,
+			&feed.NtfyTopic,
 			&feed.PushoverEnabled,
 			&feed.PushoverPriority,
+			&feed.ProxyURL,
 		)
 
 		if err != nil {
 			return nil, fmt.Errorf(`store: unable to fetch feeds row: %w`, err)
 		}
 
-		if iconID.Valid {
-			feed.Icon = &model.FeedIcon{FeedID: feed.ID, IconID: iconID.Int64}
+		if iconID.Valid && externalIconID.Valid {
+			feed.Icon = &model.FeedIcon{FeedID: feed.ID, IconID: iconID.Int64, ExternalIconID: externalIconID.String}
 		} else {
-			feed.Icon = &model.FeedIcon{FeedID: feed.ID, IconID: 0}
+			feed.Icon = &model.FeedIcon{FeedID: feed.ID, IconID: 0, ExternalIconID: ""}
 		}
 
 		if readCounters != nil {
@@ -316,9 +325,10 @@ func (f *FeedQueryBuilder) fetchFeedCounter() (unreadCounters map[int64]int, rea
 			return nil, nil, fmt.Errorf(`store: unable to fetch feed counter row: %w`, err)
 		}
 
-		if status == model.EntryStatusRead {
+		switch status {
+		case model.EntryStatusRead:
 			readCounters[feedID] = count
-		} else if status == model.EntryStatusUnread {
+		case model.EntryStatusUnread:
 			unreadCounters[feedID] = count
 		}
 	}

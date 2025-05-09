@@ -25,6 +25,7 @@ var (
 		"aside":      {},
 		"audio":      {"src"},
 		"blockquote": {},
+		"b":          {},
 		"br":         {},
 		"caption":    {},
 		"cite":       {},
@@ -71,6 +72,7 @@ var (
 		"thead":      {},
 		"time":       {"datetime"},
 		"tr":         {},
+		"u":          {},
 		"ul":         {"id"},
 		"var":        {},
 		"video":      {"poster", "height", "width", "src"},
@@ -281,9 +283,10 @@ func isPixelTracker(tagName string, attributes []html.Attribute) bool {
 
 	for _, attribute := range attributes {
 		if attribute.Val == "1" {
-			if attribute.Key == "height" {
+			switch attribute.Key {
+			case "height":
 				hasHeight = true
-			} else if attribute.Key == "width" {
+			case "width":
 				hasWidth = true
 			}
 		}

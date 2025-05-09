@@ -97,6 +97,9 @@
             <label for="form-user-agent">{{ t "form.feed.label.user_agent" }}</label>
             <input type="text" name="user_agent" id="form-user-agent" placeholder="{{ .defaultUserAgent }}" value="{{ .form.UserAgent }}" spellcheck="false">
 
+            <label for="form-proxy-url">{{ t "form.feed.label.proxy_url" }}</label>
+            <input type="url" name="proxy_url" id="form-proxy-url" value="{{ .form.ProxyURL }}" spellcheck="false">
+
             <label for="form-cookie">{{ t "form.feed.label.cookie" }}</label>
             <input type="text" name="cookie" id="form-cookie" value="{{ .form.Cookie }}" spellcheck="false">
 
@@ -191,6 +194,12 @@
             <details {{ if .form.NtfyEnabled }}open{{ end }}>
                 <summary>Ntfy</summary>
                 <label><input type="checkbox" name="ntfy_enabled" value="1" {{ if .form.NtfyEnabled }}checked{{ end }}> {{ t "form.feed.label.ntfy_activate" }}</label>
+                <div class="form-label-row">
+                    <label for="form-ntfy-topic">
+                        {{ t "form.feed.label.ntfy_topic" }}
+                    </label>
+                </div>
+                <input type="text" name="ntfy_topic" id="form-ntfy-topic" value="{{ .form.NtfyTopic }}" spellcheck="false" autocomplete="off">
                 <div class="form-label-row">
                     <label for="form-ntfy-priority">
                         {{ t "form.feed.label.ntfy_priority" }}

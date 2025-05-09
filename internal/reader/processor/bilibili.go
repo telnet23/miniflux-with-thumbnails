@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The Miniflux Authors. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package processor // import "miniflux.app/v2/internal/reader/processor
+package processor // import "miniflux.app/v2/internal/reader/processor"
 
 import (
 	"encoding/json"
@@ -11,6 +11,7 @@ import (
 
 	"miniflux.app/v2/internal/config"
 	"miniflux.app/v2/internal/model"
+	"miniflux.app/v2/internal/proxyrotator"
 	"miniflux.app/v2/internal/reader/fetcher"
 )
 
@@ -45,7 +46,7 @@ func extractBilibiliVideoID(websiteURL string) (string, string, error) {
 func fetchBilibiliWatchTime(websiteURL string) (int, error) {
 	requestBuilder := fetcher.NewRequestBuilder()
 	requestBuilder.WithTimeout(config.Opts.HTTPClientTimeout())
-	requestBuilder.WithProxy(config.Opts.HTTPClientProxy())
+	requestBuilder.WithProxyRotator(proxyrotator.ProxyRotatorInstance)
 
 	idType, videoID, extractErr := extractBilibiliVideoID(websiteURL)
 	if extractErr != nil {

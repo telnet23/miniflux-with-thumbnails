@@ -116,6 +116,16 @@ run:
 clean:
 	@ rm -f $(APP)-* $(APP) $(APP)*.rpm $(APP)*.deb $(APP)*.exe $(APP)*.sha256
 
+.PHONY: add-string
+add-string:
+	cd internal/locale/translations && \
+	for file in *.json; do \
+		jq --indent 4 --arg key "$(KEY)" --arg val "$(VAL)" \
+		   '. + {($$key): $$val} | to_entries | sort_by(.key) | from_entries' "$$file" > tmp && \
+		mv tmp "$$file"; \
+	done
+
+
 test:
 	go test -cover -race -count=1 ./...
 
@@ -134,7 +144,7 @@ integration-test:
 	ADMIN_PASSWORD=test123 \
 	CREATE_ADMIN=1 \
 	RUN_MIGRATIONS=1 \
-	DEBUG=1 \
+	LOG_LEVEL=debug \
 	./miniflux-test >/tmp/miniflux.log 2>&1 & echo "$$!" > "/tmp/miniflux.pid"
 
 	while ! nc -z localhost 8080; do sleep 1; done

@@ -1,12 +1,13 @@
 .\" Manpage for miniflux.
-.TH "MINIFLUX" "1" "December 7, 2024" "\ \&" "\ \&"
+.TH "MINIFLUX" "1" "April 11, 2025" "\ \&" "\ \&"
 
 .SH NAME
 miniflux \- Minimalist and opinionated feed reader
 
 .SH SYNOPSIS
-\fBminiflux\fR [-vic] [-config-dump] [-config-file] [-create-admin] [-debug] [-flush-sessions]
-    [-healthcheck] [-info] [-migrate] [-refresh-feeds] [-reset-feed-errors] [-reset-password]
+\fBminiflux\fR [-vic] [-config-dump] [-config-file] [-create-admin] [-debug]
+    [-flush-sessions] [-healthcheck] [-info] [-migrate] [-refresh-feeds]
+    [-reset-feed-errors] [-reset-feed-next-check-at] [-reset-password]
     [-run-cleanup-tasks] [-version]
 
 .SH DESCRIPTION
@@ -81,6 +82,11 @@ Refresh a batch of feeds and exit\&.
 .B \-reset-feed-errors
 .RS 4
 Clear all feed errors for all users\&.
+.RE
+.PP
+.B \-reset-feed-next-check-at
+.RS 4
+Reset the next check time for all feeds\&.
 .RE
 .PP
 .B \-reset-password
@@ -293,8 +299,13 @@ Maximum body size for HTTP requests in Mebibyte (MiB)\&.
 .br
 Default is 15 MiB\&.
 .TP
+.B HTTP_CLIENT_PROXIES
+Enable proxy rotation for outgoing requests by providing a comma-separated list of proxy URLs\&.
+.br
+Default is empty\&.
+.TP
 .B HTTP_CLIENT_PROXY
-Proxy URL for HTTP client\&.
+Proxy URL to use when the "Fetch via proxy" feed option is enabled\&.
 .br
 Default is empty\&.
 .TP
@@ -527,6 +538,11 @@ Default is 24 hours\&.
 Minimum interval in minutes for the entry frequency scheduler\&.
 .br
 Default is 5 minutes\&.
+.TP
+.B SCHEDULER_ROUND_ROBIN_MAX_INTERVAL
+Maximum interval in minutes for the round robin scheduler\&.
+.br
+Default is 1440 minutes (24 hours)\&.
 .TP
 .B SCHEDULER_ROUND_ROBIN_MIN_INTERVAL
 Minimum interval in minutes for the round robin scheduler\&.

@@ -1028,6 +1028,41 @@ func TestSchedulerRoundRobin(t *testing.T) {
 	}
 }
 
+func TestDefaultSchedulerRoundRobinMaxIntervalValue(t *testing.T) {
+	os.Clearenv()
+
+	parser := NewParser()
+	opts, err := parser.ParseEnvironmentVariables()
+	if err != nil {
+		t.Fatalf(`Parsing failure: %v`, err)
+	}
+
+	expected := defaultSchedulerRoundRobinMaxInterval
+	result := opts.SchedulerRoundRobinMaxInterval()
+
+	if result != expected {
+		t.Fatalf(`Unexpected SCHEDULER_ROUND_ROBIN_MAX_INTERVAL value, got %v instead of %v`, result, expected)
+	}
+}
+
+func TestSchedulerRoundRobinMaxInterval(t *testing.T) {
+	os.Clearenv()
+	os.Setenv("SCHEDULER_ROUND_ROBIN_MAX_INTERVAL", "150")
+
+	parser := NewParser()
+	opts, err := parser.ParseEnvironmentVariables()
+	if err != nil {
+		t.Fatalf(`Parsing failure: %v`, err)
+	}
+
+	expected := 150
+	result := opts.SchedulerRoundRobinMaxInterval()
+
+	if result != expected {
+		t.Fatalf(`Unexpected SCHEDULER_ROUND_ROBIN_MAX_INTERVAL value, got %v instead of %v`, result, expected)
+	}
+}
+
 func TestPollingParsingErrorLimit(t *testing.T) {
 	os.Clearenv()
 	os.Setenv("POLLING_PARSING_ERROR_LIMIT", "100")
@@ -2184,5 +2219,73 @@ func TestParseConfigDumpOutput(t *testing.T) {
 
 	if err := os.Remove(tmpfile.Name()); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestHTTPClientProxies(t *testing.T) {
+	os.Clearenv()
+	os.Setenv("HTTP_CLIENT_PROXIES", "http://proxy1.example.com,http://proxy2.example.com")
+
+	parser := NewParser()
+	opts, err := parser.ParseEnvironmentVariables()
+	if err != nil {
+		t.Fatalf(`Parsing failure: %v`, err)
+	}
+
+	expected := []string{"http://proxy1.example.com", "http://proxy2.example.com"}
+	result := opts.HTTPClientProxies()
+
+	if len(expected) != len(result) {
+		t.Fatalf(`Unexpected HTTP_CLIENT_PROXIES value, got %v instead of %v`, result, expected)
+	}
+
+	for i, proxy := range expected {
+		if result[i] != proxy {
+			t.Fatalf(`Unexpected HTTP_CLIENT_PROXIES value at index %d, got %q instead of %q`, i, result[i], proxy)
+		}
+	}
+}
+
+func TestDefaultHTTPClientProxiesValue(t *testing.T) {
+	os.Clearenv()
+
+	parser := NewParser()
+	opts, err := parser.ParseEnvironmentVariables()
+	if err != nil {
+		t.Fatalf(`Parsing failure: %v`, err)
+	}
+
+	expected := []string{}
+	result := opts.HTTPClientProxies()
+
+	if len(expected) != len(result) {
+		t.Fatalf(`Unexpected default HTTP_CLIENT_PROXIES value, got %v instead of %v`, result, expected)
+	}
+}
+
+func TestHTTPClientProxy(t *testing.T) {
+	os.Clearenv()
+	os.Setenv("HTTP_CLIENT_PROXY", "http://proxy.example.com")
+
+	parser := NewParser()
+	opts, err := parser.ParseEnvironmentVariables()
+	if err != nil {
+		t.Fatalf(`Parsing failure: %v`, err)
+	}
+
+	expected := "http://proxy.example.com"
+	if opts.HTTPClientProxyURL() == nil || opts.HTTPClientProxyURL().String() != expected {
+		t.Fatalf(`Unexpected HTTP_CLIENT_PROXY value, got %v instead of %v`, opts.HTTPClientProxyURL(), expected)
+	}
+}
+
+func TestInvalidHTTPClientProxy(t *testing.T) {
+	os.Clearenv()
+	os.Setenv("HTTP_CLIENT_PROXY", "sche|me://invalid-proxy-url")
+
+	parser := NewParser()
+	_, err := parser.ParseEnvironmentVariables()
+	if err == nil {
+		t.Fatalf(`Expected error for invalid HTTP_CLIENT_PROXY value, but got none`)
 	}
 }

@@ -56,8 +56,10 @@ type Feed struct {
 	WebhookURL                  string    `json:"webhook_url"`
 	NtfyEnabled                 bool      `json:"ntfy_enabled"`
 	NtfyPriority                int       `json:"ntfy_priority"`
-	PushoverEnabled             bool      `json:"pushover_enabled,omitempty"`
-	PushoverPriority            int       `json:"pushover_priority,omitempty"`
+	NtfyTopic                   string    `json:"ntfy_topic"`
+	PushoverEnabled             bool      `json:"pushover_enabled"`
+	PushoverPriority            int       `json:"pushover_priority"`
+	ProxyURL                    string    `json:"proxy_url"`
 
 	// Non-persisted attributes
 	Category *Category `json:"category,omitempty"`
@@ -115,9 +117,7 @@ func (f *Feed) CheckedNow() {
 }
 
 // ScheduleNextCheck set "next_check_at" of a feed based on the scheduler selected from the configuration.
-func (f *Feed) ScheduleNextCheck(weeklyCount int, refreshDelayInMinutes int) {
-	f.TTL = refreshDelayInMinutes
-
+func (f *Feed) ScheduleNextCheck(weeklyCount int, refreshDelayInMinutes int) int {
 	// Default to the global config Polling Frequency.
 	intervalMinutes := config.Opts.SchedulerRoundRobinMinInterval()
 
@@ -131,12 +131,21 @@ func (f *Feed) ScheduleNextCheck(weeklyCount int, refreshDelayInMinutes int) {
 		}
 	}
 
-	// If the feed has a TTL or a Retry-After defined, we use it to make sure we don't check it too often.
+	// Use the RSS TTL field, Retry-After, Cache-Control or Expires HTTP headers if defined.
 	if refreshDelayInMinutes > 0 && refreshDelayInMinutes > intervalMinutes {
 		intervalMinutes = refreshDelayInMinutes
 	}
 
+	// Limit the max interval value for misconfigured feeds.
+	switch config.Opts.PollingScheduler() {
+	case SchedulerRoundRobin:
+		intervalMinutes = min(intervalMinutes, config.Opts.SchedulerRoundRobinMaxInterval())
+	case SchedulerEntryFrequency:
+		intervalMinutes = min(intervalMinutes, config.Opts.SchedulerEntryFrequencyMaxInterval())
+	}
+
 	f.NextCheckAt = time.Now().Add(time.Minute * time.Duration(intervalMinutes))
+	return intervalMinutes
 }
 
 // FeedCreationRequest represents the request to create a feed.
@@ -160,6 +169,7 @@ type FeedCreationRequest struct {
 	HideGlobally                bool   `json:"hide_globally"`
 	UrlRewriteRules             string `json:"urlrewrite_rules"`
 	DisableHTTP2                bool   `json:"disable_http2"`
+	ProxyURL                    string `json:"proxy_url"`
 }
 
 type FeedCreationRequestFromSubscriptionDiscovery struct {
@@ -194,6 +204,7 @@ type FeedModificationRequest struct {
 	FetchViaProxy               *bool   `json:"fetch_via_proxy"`
 	HideGlobally                *bool   `json:"hide_globally"`
 	DisableHTTP2                *bool   `json:"disable_http2"`
+	ProxyURL                    *string `json:"proxy_url"`
 }
 
 // Patch updates a feed with modified values.
@@ -284,6 +295,10 @@ func (f *FeedModificationRequest) Patch(feed *Feed) {
 
 	if f.DisableHTTP2 != nil {
 		feed.DisableHTTP2 = *f.DisableHTTP2
+	}
+
+	if f.ProxyURL != nil {
+		feed.ProxyURL = *f.ProxyURL
 	}
 }
 

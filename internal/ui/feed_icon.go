@@ -12,9 +12,9 @@ import (
 	"miniflux.app/v2/internal/http/response/html"
 )
 
-func (h *handler) showIcon(w http.ResponseWriter, r *http.Request) {
-	iconID := request.RouteInt64Param(r, "iconID")
-	icon, err := h.store.IconByID(iconID)
+func (h *handler) showFeedIcon(w http.ResponseWriter, r *http.Request) {
+	externalIconID := request.RouteStringParam(r, "externalIconID")
+	icon, err := h.store.IconByExternalID(externalIconID)
 	if err != nil {
 		html.ServerError(w, r, err)
 		return
@@ -26,7 +26,7 @@ func (h *handler) showIcon(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.New(w, r).WithCaching(icon.Hash, 72*time.Hour, func(b *response.Builder) {
-		b.WithHeader("Content-Security-Policy", `default-src 'self'`)
+		b.WithHeader("Content-Security-Policy", response.ContentSecurityPolicyForUntrustedContent)
 		b.WithHeader("Content-Type", icon.MimeType)
 		b.WithBody(icon.Content)
 		if icon.MimeType != "image/svg+xml" {
