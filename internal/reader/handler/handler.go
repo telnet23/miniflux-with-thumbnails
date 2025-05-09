@@ -12,6 +12,7 @@ import (
 	"miniflux.app/v2/internal/integration"
 	"miniflux.app/v2/internal/locale"
 	"miniflux.app/v2/internal/model"
+	"miniflux.app/v2/internal/proxyrotator"
 	"miniflux.app/v2/internal/reader/fetcher"
 	"miniflux.app/v2/internal/reader/icon"
 	"miniflux.app/v2/internal/reader/parser"
@@ -29,6 +30,7 @@ func CreateFeedFromSubscriptionDiscovery(store *storage.Storage, userID int64, f
 	slog.Debug("Begin feed creation process from subscription discovery",
 		slog.Int64("user_id", userID),
 		slog.String("feed_url", feedCreationRequest.FeedURL),
+		slog.String("proxy_url", feedCreationRequest.ProxyURL),
 	)
 
 	if !store.CategoryIDExists(userID, feedCreationRequest.CategoryID) {
@@ -64,6 +66,7 @@ func CreateFeedFromSubscriptionDiscovery(store *storage.Storage, userID int64, f
 	subscription.FeedURL = feedCreationRequest.FeedURL
 	subscription.DisableHTTP2 = feedCreationRequest.DisableHTTP2
 	subscription.WithCategoryID(feedCreationRequest.CategoryID)
+	subscription.ProxyURL = feedCreationRequest.ProxyURL
 	subscription.CheckedNow()
 
 	processor.ProcessFeedEntries(store, subscription, userID, true)
@@ -83,8 +86,10 @@ func CreateFeedFromSubscriptionDiscovery(store *storage.Storage, userID int64, f
 	requestBuilder.WithUserAgent(feedCreationRequest.UserAgent, config.Opts.HTTPClientUserAgent())
 	requestBuilder.WithCookie(feedCreationRequest.Cookie)
 	requestBuilder.WithTimeout(config.Opts.HTTPClientTimeout())
-	requestBuilder.WithProxy(config.Opts.HTTPClientProxy())
-	requestBuilder.UseProxy(feedCreationRequest.FetchViaProxy)
+	requestBuilder.WithProxyRotator(proxyrotator.ProxyRotatorInstance)
+	requestBuilder.WithCustomFeedProxyURL(feedCreationRequest.ProxyURL)
+	requestBuilder.WithCustomApplicationProxyURL(config.Opts.HTTPClientProxyURL())
+	requestBuilder.UseCustomApplicationProxyURL(feedCreationRequest.FetchViaProxy)
 	requestBuilder.IgnoreTLSErrors(feedCreationRequest.AllowSelfSignedCertificates)
 	requestBuilder.DisableHTTP2(feedCreationRequest.DisableHTTP2)
 
@@ -98,6 +103,7 @@ func CreateFeed(store *storage.Storage, userID int64, feedCreationRequest *model
 	slog.Debug("Begin feed creation process",
 		slog.Int64("user_id", userID),
 		slog.String("feed_url", feedCreationRequest.FeedURL),
+		slog.String("proxy_url", feedCreationRequest.ProxyURL),
 	)
 
 	if !store.CategoryIDExists(userID, feedCreationRequest.CategoryID) {
@@ -109,8 +115,10 @@ func CreateFeed(store *storage.Storage, userID int64, feedCreationRequest *model
 	requestBuilder.WithUserAgent(feedCreationRequest.UserAgent, config.Opts.HTTPClientUserAgent())
 	requestBuilder.WithCookie(feedCreationRequest.Cookie)
 	requestBuilder.WithTimeout(config.Opts.HTTPClientTimeout())
-	requestBuilder.WithProxy(config.Opts.HTTPClientProxy())
-	requestBuilder.UseProxy(feedCreationRequest.FetchViaProxy)
+	requestBuilder.WithProxyRotator(proxyrotator.ProxyRotatorInstance)
+	requestBuilder.WithCustomFeedProxyURL(feedCreationRequest.ProxyURL)
+	requestBuilder.WithCustomApplicationProxyURL(config.Opts.HTTPClientProxyURL())
+	requestBuilder.UseCustomApplicationProxyURL(feedCreationRequest.FetchViaProxy)
 	requestBuilder.IgnoreTLSErrors(feedCreationRequest.AllowSelfSignedCertificates)
 	requestBuilder.DisableHTTP2(feedCreationRequest.DisableHTTP2)
 
@@ -157,6 +165,7 @@ func CreateFeed(store *storage.Storage, userID int64, feedCreationRequest *model
 	subscription.EtagHeader = responseHandler.ETag()
 	subscription.LastModifiedHeader = responseHandler.LastModified()
 	subscription.FeedURL = responseHandler.EffectiveURL()
+	subscription.ProxyURL = feedCreationRequest.ProxyURL
 	subscription.WithCategoryID(feedCreationRequest.CategoryID)
 	subscription.CheckedNow()
 
@@ -212,8 +221,10 @@ func RefreshFeed(store *storage.Storage, userID, feedID int64, forceRefresh bool
 	requestBuilder.WithUserAgent(originalFeed.UserAgent, config.Opts.HTTPClientUserAgent())
 	requestBuilder.WithCookie(originalFeed.Cookie)
 	requestBuilder.WithTimeout(config.Opts.HTTPClientTimeout())
-	requestBuilder.WithProxy(config.Opts.HTTPClientProxy())
-	requestBuilder.UseProxy(originalFeed.FetchViaProxy)
+	requestBuilder.WithProxyRotator(proxyrotator.ProxyRotatorInstance)
+	requestBuilder.WithCustomFeedProxyURL(originalFeed.ProxyURL)
+	requestBuilder.WithCustomApplicationProxyURL(config.Opts.HTTPClientProxyURL())
+	requestBuilder.UseCustomApplicationProxyURL(originalFeed.FetchViaProxy)
 	requestBuilder.IgnoreTLSErrors(originalFeed.AllowSelfSignedCertificates)
 	requestBuilder.DisableHTTP2(originalFeed.DisableHTTP2)
 
@@ -229,18 +240,24 @@ func RefreshFeed(store *storage.Storage, userID, feedID int64, forceRefresh bool
 	if responseHandler.IsRateLimited() {
 		retryDelayInSeconds := responseHandler.ParseRetryDelay()
 		refreshDelayInMinutes = retryDelayInSeconds / 60
-		originalFeed.ScheduleNextCheck(weeklyEntryCount, refreshDelayInMinutes)
+		calculatedNextCheckIntervalInMinutes := originalFeed.ScheduleNextCheck(weeklyEntryCount, refreshDelayInMinutes)
 
 		slog.Warn("Feed is rate limited",
 			slog.String("feed_url", originalFeed.FeedURL),
 			slog.Int("retry_delay_in_seconds", retryDelayInSeconds),
 			slog.Int("refresh_delay_in_minutes", refreshDelayInMinutes),
+			slog.Int("calculated_next_check_interval_in_minutes", calculatedNextCheckIntervalInMinutes),
 			slog.Time("new_next_check_at", originalFeed.NextCheckAt),
 		)
 	}
 
 	if localizedError := responseHandler.LocalizedError(); localizedError != nil {
-		slog.Warn("Unable to fetch feed", slog.String("feed_url", originalFeed.FeedURL), slog.Any("error", localizedError.Error()))
+		slog.Warn("Unable to fetch feed",
+			slog.Int64("user_id", userID),
+			slog.Int64("feed_id", feedID),
+			slog.String("feed_url", originalFeed.FeedURL),
+			slog.Any("error", localizedError.Error()),
+		)
 		user, storeErr := store.UserByID(userID)
 		if storeErr != nil {
 			return locale.NewLocalizedErrorWrapper(storeErr, "error.database_error", storeErr)
@@ -292,16 +309,25 @@ func RefreshFeed(store *storage.Storage, userID, feedID int64, forceRefresh bool
 			return localizedError
 		}
 
-		// If the feed has a TTL defined, we use it to make sure we don't check it too often.
-		refreshDelayInMinutes = updatedFeed.TTL
+		// Use the RSS TTL value, or the Cache-Control or Expires HTTP headers if available.
+		// Otherwise, we use the default value from the configuration (min interval parameter).
+		feedTTLValue := updatedFeed.TTL
+		cacheControlMaxAgeValue := responseHandler.CacheControlMaxAgeInMinutes()
+		expiresValue := responseHandler.ExpiresInMinutes()
+		refreshDelayInMinutes = max(feedTTLValue, cacheControlMaxAgeValue, expiresValue)
 
 		// Set the next check at with updated arguments.
-		originalFeed.ScheduleNextCheck(weeklyEntryCount, refreshDelayInMinutes)
+		calculatedNextCheckIntervalInMinutes := originalFeed.ScheduleNextCheck(weeklyEntryCount, refreshDelayInMinutes)
 
 		slog.Debug("Updated next check date",
 			slog.Int64("user_id", userID),
 			slog.Int64("feed_id", feedID),
+			slog.String("feed_url", originalFeed.FeedURL),
+			slog.Int("feed_ttl_minutes", feedTTLValue),
+			slog.Int("cache_control_max_age_in_minutes", cacheControlMaxAgeValue),
+			slog.Int("expires_in_minutes", expiresValue),
 			slog.Int("refresh_delay_in_minutes", refreshDelayInMinutes),
+			slog.Int("calculated_next_check_interval_in_minutes", calculatedNextCheckIntervalInMinutes),
 			slog.Time("new_next_check_at", originalFeed.NextCheckAt),
 		)
 

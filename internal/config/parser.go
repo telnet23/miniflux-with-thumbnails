@@ -160,6 +160,8 @@ func (p *Parser) parseLines(lines []string) (err error) {
 			p.opts.schedulerEntryFrequencyFactor = parseInt(value, defaultSchedulerEntryFrequencyFactor)
 		case "SCHEDULER_ROUND_ROBIN_MIN_INTERVAL":
 			p.opts.schedulerRoundRobinMinInterval = parseInt(value, defaultSchedulerRoundRobinMinInterval)
+		case "SCHEDULER_ROUND_ROBIN_MAX_INTERVAL":
+			p.opts.schedulerRoundRobinMaxInterval = parseInt(value, defaultSchedulerRoundRobinMaxInterval)
 		case "POLLING_PARSING_ERROR_LIMIT":
 			p.opts.pollingParsingErrorLimit = parseInt(value, defaultPollingParsingErrorLimit)
 		case "PROXY_IMAGES":
@@ -240,7 +242,12 @@ func (p *Parser) parseLines(lines []string) (err error) {
 		case "HTTP_CLIENT_MAX_BODY_SIZE":
 			p.opts.httpClientMaxBodySize = int64(parseInt(value, defaultHTTPClientMaxBodySize) * 1024 * 1024)
 		case "HTTP_CLIENT_PROXY":
-			p.opts.httpClientProxy = parseString(value, defaultHTTPClientProxy)
+			p.opts.httpClientProxyURL, err = url.Parse(parseString(value, defaultHTTPClientProxy))
+			if err != nil {
+				return fmt.Errorf("config: invalid HTTP_CLIENT_PROXY value: %w", err)
+			}
+		case "HTTP_CLIENT_PROXIES":
+			p.opts.httpClientProxies = parseStringList(value, []string{})
 		case "HTTP_CLIENT_USER_AGENT":
 			p.opts.httpClientUserAgent = parseString(value, defaultHTTPClientUserAgent)
 		case "HTTP_SERVER_TIMEOUT":
