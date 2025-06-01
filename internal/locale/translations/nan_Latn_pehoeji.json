@@ -112,9 +112,11 @@
     "error.http_service_unavailable": "Chit ê bāng-chām in-ūi in ka-kī lāi-pō͘ ū būn-tôe，m̄ sī Miniflux chia ê būn-tôe, chhiáⁿ tán--chi̍t-ē chiah koh chhì-khòaⁿ-māi.",
     "error.http_too_many_requests": "Miniflux tùi chit ê bāng-chām ê chhéng-kiû siuⁿ kè chōe, chhiáⁿ têng chhì-khòaⁿ-māi ah-sī tiâu-chéng thêng-sek siat-tēng.",
     "error.http_unexpected_status_code": "Chit ê bāng-chām chòe liáu chi̍t ê liāu-bōe-tio̍h ê HTTP chōng-thài bé: %d, chhiáⁿ tán--chi̍t-ē chiah koh chhì-khòaⁿ-māi.",
+    "error.invalid_categories_sorting_order": "Lūi-pia̍t ê chōe pái bô-hāu, chhiáⁿ tán-hāu %d hun-cheng āu koh chhì-khòaⁿ-māi.",
     "error.invalid_default_home_page": "Ū-siat chú-ia̍h ū būn-tôe!",
     "error.invalid_display_mode": "Ū būn-tôe ê su-li̍p bô͘-sek.",
     "error.invalid_entry_direction": "Ū būn-tôe ê su-li̍p hong-hiòng.",
+    "error.invalid_entry_order": "Siau-sit ê chōe pái bô-hāu, chhiáⁿ tán-hāu %d hun-cheng āu koh chhì-khòaⁿ-māi.",
     "error.invalid_feed_proxy_url": "Invalid proxy URL.",
     "error.invalid_feed_url": "Beh tēng ê siau-sit lâi-goân ê bāng-chí ū būn-tôe.",
     "error.invalid_gesture_nav": "Chhiú-sè tō-lám ū būn-tôe.",
@@ -291,6 +293,7 @@
     "form.integration.readwise_api_key": "Readwise Reader Acess Token",
     "form.integration.readwise_api_key_link": "Chhú-tek lí ê Readwise Acess Token",
     "form.integration.rssbridge_activate": "Sin cheng-ka siau-sit lâi-goân ê sî tio̍h RSS-Bridge",
+    "form.integration.rssbridge_token": "RSS-Bridge authentication token",
     "form.integration.rssbridge_url": "RSS-Bridge su-hāu-khì的bāng-chí",
     "form.integration.shaarli_activate": "Pó-chûn siau-sit kàu Shaarli",
     "form.integration.shaarli_api_secret": "Shaarli API só-sî",
@@ -343,6 +346,7 @@
     "form.prefs.label.mark_read_on_view": "Phah khui ê sî-chūn sūn-sòa kā siau-sit chù chòe tha̍k kè",
     "form.prefs.label.mark_read_on_view_or_media_completion": "Phah khui ê sî-chūn sūn-sòa kā siau-sit chù chòe tha̍k kè, m̄-koh nā-sī im-sìn, sī-sìn tio̍h tī hòng-sàng kàu 90%% ê si-chun chiah lâi chù",
     "form.prefs.label.media_playback_rate": "Im-sìn, sī-sìn pàng ê sok-tō͘",
+    "form.prefs.label.always_open_external_links": "Read articles by opening external links",
     "form.prefs.label.show_reading_time": "Hián-sī siau-sit àn-sǹg ài gōa-kú lâi tha̍k",
     "form.prefs.label.theme": "Chú-tôe",
     "form.prefs.label.timezone": "Sî-khu",
@@ -403,6 +407,7 @@
     "page.about.build_date": "Kiàn-tì li̍t-kî:",
     "page.about.credits": "Pán-koân",
     "page.about.db_usage": "Database size:",
+    "page.about.git_commit": "Git Commit:",
     "page.about.global_config_options": "Choân-he̍k siat-tēng soán-hāng",
     "page.about.go_version": "Go pán-pún:",
     "page.about.license": "Pàng-koân:",
@@ -422,9 +427,6 @@
     "page.api_keys.table.last_used_at": "Siōng-bóe pái sú-iōng",
     "page.api_keys.table.token": "Só-sî",
     "page.api_keys.title": "API só-sî",
-    "page.categories_count": [
-        "%d ê lūi-pia̍t"
-    ],
     "page.categories.entries": "Siau-sit",
     "page.categories.feed_count": [
         "Ū %d ê Siau-sit lâi-goân"
@@ -432,6 +434,9 @@
     "page.categories.feeds": "Siau-sit lâi-goân",
     "page.categories.no_feed": "Ah-bô siau-sit lâi-goân",
     "page.categories.title": "Lūi-pia̍t",
+    "page.categories_count": [
+        "%d ê lūi-pia̍t"
+    ],
     "page.category_label": "Lūi-pia̍t: %s",
     "page.edit_category.title": "Pian-chi̍p lūi-pia̍t: %s",
     "page.edit_feed.etag_header": "ETag piau-thâu:",
@@ -534,21 +539,21 @@
     "page.settings.webauthn.passkeys": "Passkeys",
     "page.settings.webauthn.register": "Chù-chheh Passkey",
     "page.settings.webauthn.register.error": "Bô-hoat-tō͘ chù-chheh Passkey",
+    "page.shared_entries.title": "Hun-hióng kè ê siau-sit",
     "page.shared_entries_count": [
         "Í-keng hun-hióng %d ê siau-sit"
     ],
-    "page.shared_entries.title": "Hun-hióng kè ê siau-sit",
+    "page.starred.title": "Siu-chông",
     "page.starred_entry_count": [
         "%d ê siu-chông ê siau-sit"
     ],
-    "page.starred.title": "Siu-chông",
     "page.total_entry_count": [
         "Lóng-chóng %d ê siau-sit"
     ],
+    "page.unread.title": "Ah-bōe tha̍k",
     "page.unread_entry_count": [
         "%d ê siau-sit ah-bōe tha̍k"
     ],
-    "page.unread.title": "Ah-bōe tha̍k",
     "page.users.actions": "chhau-chok",
     "page.users.admin.no": "Hóⁿ",
     "page.users.admin.yes": "Sī",

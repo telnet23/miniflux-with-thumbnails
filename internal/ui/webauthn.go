@@ -105,6 +105,8 @@ func (h *handler) beginRegistration(w http.ResponseWriter, r *http.Request) {
 			nil,
 		},
 		webauthn.WithExclusions(credsDescriptors),
+		webauthn.WithResidentKeyRequirement(protocol.ResidentKeyRequirementPreferred),
+		webauthn.WithExtensions(protocol.AuthenticationExtensions{"credProps": true}),
 	)
 
 	if err != nil {
@@ -209,7 +211,7 @@ func (h *handler) finishLogin(w http.ResponseWriter, r *http.Request) {
 
 	slog.Debug("WebAuthn: parsed response flags",
 		slog.Bool("user_present", parsedResponse.Response.AuthenticatorData.Flags.HasUserPresent()),
-		slog.Bool("user_verified", parsedResponse.Response.AuthenticatorData.Flags.HasUserPresent()),
+		slog.Bool("user_verified", parsedResponse.Response.AuthenticatorData.Flags.HasUserVerified()),
 		slog.Bool("has_attested_credential_data", parsedResponse.Response.AuthenticatorData.Flags.HasAttestedCredentialData()),
 		slog.Bool("has_backup_eligible", parsedResponse.Response.AuthenticatorData.Flags.HasBackupEligible()),
 		slog.Bool("has_backup_state", parsedResponse.Response.AuthenticatorData.Flags.HasBackupState()),

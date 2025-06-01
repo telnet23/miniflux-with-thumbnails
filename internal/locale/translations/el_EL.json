@@ -114,9 +114,11 @@
     "error.http_service_unavailable": "The website is not available at the moment due to an internal server error. The problem is not on Miniflux side. Please, try again later.",
     "error.http_too_many_requests": "Miniflux generated too many requests to this website. Please, try again later or change the application configuration.",
     "error.http_unexpected_status_code": "The website is not available at the moment due to an unexpected HTTP status code: %d. The problem is not on Miniflux side. Please, try again later.",
+    "error.invalid_categories_sorting_order": "Η κατηγορία δεν μπορεί να είναι κενή.",
     "error.invalid_default_home_page": "Μη έγκυρη προεπιλεγμένη αρχική σελίδα!",
     "error.invalid_display_mode": "Μη έγκυρη λειτουργία εμφάνισης εφαρμογών ιστού.",
     "error.invalid_entry_direction": "Μη έγκυρη κατεύθυνση ταξινόμησης άρθρων.",
+    "error.invalid_entry_order": "Η σειρά των καταχωρήσεων είναι μη έγκυρη.",
     "error.invalid_feed_proxy_url": "Invalid proxy URL.",
     "error.invalid_feed_url": "Μη έγκυρη διεύθυνση URL ροής.",
     "error.invalid_gesture_nav": "Μη έγκυρη πλοήγηση με χειρονομίες.",
@@ -293,6 +295,7 @@
     "form.integration.readwise_api_key": "Readwise Reader Access Token",
     "form.integration.readwise_api_key_link": "Get your Readwise Access Token",
     "form.integration.rssbridge_activate": "Check RSS-Bridge when adding subscriptions",
+    "form.integration.rssbridge_token": "RSS-Bridge authentication token",
     "form.integration.rssbridge_url": "RSS-Bridge server URL",
     "form.integration.shaarli_activate": "Save articles to Shaarli",
     "form.integration.shaarli_api_secret": "Shaarli API Secret",
@@ -345,6 +348,7 @@
     "form.prefs.label.mark_read_on_view": "Αυτόματη επισήμανση καταχωρήσεων ως αναγνωσμένων κατά την προβολή",
     "form.prefs.label.mark_read_on_view_or_media_completion": "Mark entries as read when viewed. For audio/video, mark as read at 90%% completion",
     "form.prefs.label.media_playback_rate": "Ταχύτητα αναπαραγωγής του ήχου/βίντεο",
+    "form.prefs.label.always_open_external_links": "Read articles by opening external links",
     "form.prefs.label.show_reading_time": "Εμφάνιση εκτιμώμενου χρόνου ανάγνωσης για άρθρα",
     "form.prefs.label.theme": "Θέμα",
     "form.prefs.label.timezone": "Ζώνη Ώρας",
@@ -405,6 +409,7 @@
     "page.about.build_date": "Ημερομηνία Κατασκευής:",
     "page.about.credits": "Συνεισφέροντες",
     "page.about.db_usage": "Database size:",
+    "page.about.git_commit": "Git Commit:",
     "page.about.global_config_options": "Γενικές ρυθμίσεις",
     "page.about.go_version": "Έκδοση Go:",
     "page.about.license": "Άδεια:",
@@ -424,10 +429,6 @@
     "page.api_keys.table.last_used_at": "Τελευταία Χρήση",
     "page.api_keys.table.token": "Token",
     "page.api_keys.title": "Κλειδιά API",
-    "page.categories_count": [
-        "%d category",
-        "%d categories"
-    ],
     "page.categories.entries": "Άρθρα",
     "page.categories.feed_count": [
         "Υπάρχει μία %d ροή.",
@@ -436,6 +437,10 @@
     "page.categories.feeds": "Συνδρομές",
     "page.categories.no_feed": "Καμία ροή.",
     "page.categories.title": "Κατηγορίες",
+    "page.categories_count": [
+        "%d category",
+        "%d categories"
+    ],
     "page.category_label": "Category: %s",
     "page.edit_category.title": "Επεξεργασία κατηγορίας: % s",
     "page.edit_feed.etag_header": "Κεφαλίδα ETag:",
@@ -541,25 +546,25 @@
     "page.settings.webauthn.passkeys": "Passkeys",
     "page.settings.webauthn.register": "Εγγραφή κωδικού πρόσβασης",
     "page.settings.webauthn.register.error": "Δεν είναι δυνατή η εγγραφή του κωδικού πρόσβασης",
+    "page.shared_entries.title": "Κοινόχρηστες Καταχωρήσεις",
     "page.shared_entries_count": [
         "%d shared entry",
         "%d shared entries"
     ],
-    "page.shared_entries.title": "Κοινόχρηστες Καταχωρήσεις",
+    "page.starred.title": "Αγαπημένo",
     "page.starred_entry_count": [
         "%d starred entry",
         "%d starred entries"
     ],
-    "page.starred.title": "Αγαπημένo",
     "page.total_entry_count": [
         "%d entry in total",
         "%d entries in total"
     ],
+    "page.unread.title": "Μη αναγνωσμένα",
     "page.unread_entry_count": [
         "%d unread entry",
         "%d unread entries"
     ],
-    "page.unread.title": "Μη αναγνωσμένα",
     "page.users.actions": "Eνέργειες",
     "page.users.admin.no": "Όχι",
     "page.users.admin.yes": "Ναι.",

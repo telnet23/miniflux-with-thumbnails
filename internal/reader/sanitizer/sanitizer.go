@@ -77,6 +77,38 @@ var (
 		"var":        {},
 		"video":      {"poster", "height", "width", "src"},
 		"wbr":        {},
+
+		// MathML: https://w3c.github.io/mathml-core/ and https://developer.mozilla.org/en-US/docs/Web/MathML/Reference/Element
+		"annotation":     {},
+		"annotation-xml": {},
+		"maction":        {},
+		"math":           {"xmlns"},
+		"merror":         {},
+		"mfrac":          {},
+		"mi":             {},
+		"mmultiscripts":  {},
+		"mn":             {},
+		"mo":             {},
+		"mover":          {},
+		"mpadded":        {},
+		"mphantom":       {},
+		"mprescripts":    {},
+		"mroot":          {},
+		"mrow":           {},
+		"ms":             {},
+		"mspace":         {},
+		"msqrt":          {},
+		"mstyle":         {},
+		"msub":           {},
+		"msubsup":        {},
+		"msup":           {},
+		"mtable":         {},
+		"mtd":            {},
+		"mtext":          {},
+		"mtr":            {},
+		"munder":         {},
+		"munderover":     {},
+		"semantics":      {},
 	}
 )
 
@@ -99,7 +131,15 @@ func Sanitize(baseURL, input string) string {
 		}
 
 		token := tokenizer.Token()
-		tagName := token.DataAtom.String()
+
+		// Note: MathML elements are not fully supported by golang.org/x/net/html.
+		// See https://github.com/golang/net/blob/master/html/atom/gen.go
+		// and https://github.com/golang/net/blob/master/html/atom/table.go
+		tagName := token.Data
+		if tagName == "" {
+			continue
+		}
+
 		switch token.Type {
 		case html.TextToken:
 			if len(blockedStack) > 0 {
@@ -217,7 +257,8 @@ func sanitizeAttributes(baseURL, tagName string, attributes []html.Attribute) ([
 					continue
 				}
 
-				if cleanedURL, err := urlcleaner.RemoveTrackingParameters(value); err == nil {
+				// TODO use feedURL instead of baseURL twice.
+				if cleanedURL, err := urlcleaner.RemoveTrackingParameters(baseURL, baseURL, value); err == nil {
 					value = cleanedURL
 				}
 			}
@@ -385,6 +426,7 @@ func isValidIframeSource(baseURL, src string) bool {
 		"dailymotion.com",
 		"youtube-nocookie.com",
 		"youtube.com",
+		"open.spotify.com",
 	}
 	domain := urllib.Domain(src)
 

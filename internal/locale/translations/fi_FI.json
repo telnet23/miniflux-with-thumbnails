@@ -114,9 +114,11 @@
     "error.http_service_unavailable": "The website is not available at the moment due to an internal server error. The problem is not on Miniflux side. Please, try again later.",
     "error.http_too_many_requests": "Miniflux generated too many requests to this website. Please, try again later or change the application configuration.",
     "error.http_unexpected_status_code": "The website is not available at the moment due to an unexpected HTTP status code: %d. The problem is not on Miniflux side. Please, try again later.",
+    "error.invalid_categories_sorting_order": "Virheellinen kategorioiden lajittelujärjestys.",
     "error.invalid_default_home_page": "Väärä oletusarvoinen kotisivu!",
     "error.invalid_display_mode": "Virheellinen verkkosovelluksen näyttötila.",
     "error.invalid_entry_direction": "Invalid entry direction.",
+    "error.invalid_entry_order": "Virheellinen artikkelin lajittelu.",
     "error.invalid_feed_proxy_url": "Invalid proxy URL.",
     "error.invalid_feed_url": "Virheellinen syötteen URL-osoite.",
     "error.invalid_gesture_nav": "Virheellinen ele-navigointi.",
@@ -293,6 +295,7 @@
     "form.integration.readwise_api_key": "Readwise Reader Access Token",
     "form.integration.readwise_api_key_link": "Get your Readwise Access Token",
     "form.integration.rssbridge_activate": "Check RSS-Bridge when adding subscriptions",
+    "form.integration.rssbridge_token": "RSS-Bridge authentication token",
     "form.integration.rssbridge_url": "RSS-Bridge server URL",
     "form.integration.shaarli_activate": "Save articles to Shaarli",
     "form.integration.shaarli_api_secret": "Shaarli API Secret",
@@ -345,6 +348,7 @@
     "form.prefs.label.mark_read_on_view": "Merkitse kohdat automaattisesti luetuiksi, kun niitä tarkastellaan",
     "form.prefs.label.mark_read_on_view_or_media_completion": "Mark entries as read when viewed. For audio/video, mark as read at 90%% completion",
     "form.prefs.label.media_playback_rate": "Äänen/videon toistonopeus",
+    "form.prefs.label.always_open_external_links": "Read articles by opening external links",
     "form.prefs.label.show_reading_time": "Näytä artikkeleiden arvioitu lukuaika",
     "form.prefs.label.theme": "Teema",
     "form.prefs.label.timezone": "Aikavyöhyke",
@@ -405,6 +409,7 @@
     "page.about.build_date": "Valmistuspäivä:",
     "page.about.credits": "Kiitokset",
     "page.about.db_usage": "Database size:",
+    "page.about.git_commit": "Git Commit:",
     "page.about.global_config_options": "Yleiset asetukset",
     "page.about.go_version": "Go-versio:",
     "page.about.license": "Lisenssi:",
@@ -424,10 +429,6 @@
     "page.api_keys.table.last_used_at": "Viimeksi käytetty",
     "page.api_keys.table.token": "Tunnus",
     "page.api_keys.title": "API-avaimet",
-    "page.categories_count": [
-        "%d category",
-        "%d categories"
-    ],
     "page.categories.entries": "Artikkelit",
     "page.categories.feed_count": [
         "On %d syöte.",
@@ -436,6 +437,10 @@
     "page.categories.feeds": "Tilaukset",
     "page.categories.no_feed": "Ei syötettä.",
     "page.categories.title": "Kategoriat",
+    "page.categories_count": [
+        "%d category",
+        "%d categories"
+    ],
     "page.category_label": "Category: %s",
     "page.edit_category.title": "Muokkaa kategoria: %s",
     "page.edit_feed.etag_header": "ETag-otsikko:",
@@ -541,25 +546,25 @@
     "page.settings.webauthn.passkeys": "Passkeys",
     "page.settings.webauthn.register": "Rekisteröi salasana",
     "page.settings.webauthn.register.error": "Salasanaa ei voi rekisteröidä",
+    "page.shared_entries.title": "Jaetut artikkelit",
     "page.shared_entries_count": [
         "%d shared entry",
         "%d shared entries"
     ],
-    "page.shared_entries.title": "Jaetut artikkelit",
+    "page.starred.title": "Suosikit",
     "page.starred_entry_count": [
         "%d starred entry",
         "%d starred entries"
     ],
-    "page.starred.title": "Suosikit",
     "page.total_entry_count": [
         "%d entry in total",
         "%d entries in total"
     ],
+    "page.unread.title": "Lukemattomat",
     "page.unread_entry_count": [
         "%d unread entry",
         "%d unread entries"
     ],
-    "page.unread.title": "Lukemattomat",
     "page.users.actions": "Toiminnot",
     "page.users.admin.no": "Ei",
     "page.users.admin.yes": "Kyllä",

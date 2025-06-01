@@ -114,9 +114,11 @@
     "error.http_service_unavailable": "De website is momenteel niet beschikbaar vanwege een interne-server-fout. De oorzaak hiervan ligt niet bij Miniflux. Probeer het later nogmaals aub.",
     "error.http_too_many_requests": "Miniflux heeft te veel aanvragen gegenereerd voor deze website. Probeer het later nog eens of wijzig de applicatieconfiguratie.",
     "error.http_unexpected_status_code": "De website is momenteel niet beschikbaar vanwege een onverwachte HTTP-statuscode: %d. De oorzaak hiervan ligt niet bij Miniflux. Probeer het later nogmaals aub.",
+    "error.invalid_categories_sorting_order": "Ongeldige volgorde van categorieën.",
     "error.invalid_default_home_page": "Ongeldige startpagina!",
     "error.invalid_display_mode": "Ongeldige weergavemodus voor de webapp.",
     "error.invalid_entry_direction": "Ongeldige sorteervolgorde.",
+    "error.invalid_entry_order": "Ongeldige volgorde van artikelen.",
     "error.invalid_feed_proxy_url": "Invalid proxy URL.",
     "error.invalid_feed_url": "Ongeldige feed URL.",
     "error.invalid_gesture_nav": "Ongeldige gebarennavigatie.",
@@ -293,6 +295,7 @@
     "form.integration.readwise_api_key": "Readwise Reader Access Token",
     "form.integration.readwise_api_key_link": "Readwise Access Token ophalen",
     "form.integration.rssbridge_activate": "Controleer RSS-Bridge bij het toevoegen van abonnementen",
+    "form.integration.rssbridge_token": "RSS-Bridge authentication token",
     "form.integration.rssbridge_url": "RSS-Bridge server URL",
     "form.integration.shaarli_activate": "Artikelen opslaan in Shaarli",
     "form.integration.shaarli_api_secret": "Shaarli API Secret",
@@ -345,6 +348,7 @@
     "form.prefs.label.mark_read_on_view": "Markeer artikelen automatisch als gelezen wanneer ze worden bekeken",
     "form.prefs.label.mark_read_on_view_or_media_completion": "Markeer artikelen als gelezen wanneer ze worden bekeken. Voor audio/video, markeer als gelezen bij 90%% voltooiing",
     "form.prefs.label.media_playback_rate": "Afspeelsnelheid van de audio/video",
+    "form.prefs.label.always_open_external_links": "Read articles by opening external links",
     "form.prefs.label.show_reading_time": "Toon geschatte leestijd van artikelen",
     "form.prefs.label.theme": "Thema",
     "form.prefs.label.timezone": "Tijdzone",
@@ -405,6 +409,7 @@
     "page.about.build_date": "Compilatiedatum:",
     "page.about.credits": "Credits",
     "page.about.db_usage": "Database size:",
+    "page.about.git_commit": "Git Commit:",
     "page.about.global_config_options": "Globale Configuratie Opties",
     "page.about.go_version": "Go versie:",
     "page.about.license": "Licentie:",
@@ -424,10 +429,6 @@
     "page.api_keys.table.last_used_at": "Laatst gebruikt",
     "page.api_keys.table.token": "Token",
     "page.api_keys.title": "API-sleutels",
-    "page.categories_count": [
-        "%d categorie",
-        "%d categorieën"
-    ],
     "page.categories.entries": "Artikelen",
     "page.categories.feed_count": [
         "Er is %d feed.",
@@ -436,6 +437,10 @@
     "page.categories.feeds": "Feeds",
     "page.categories.no_feed": "Geen feed.",
     "page.categories.title": "Categorieën",
+    "page.categories_count": [
+        "%d categorie",
+        "%d categorieën"
+    ],
     "page.category_label": "Categorie: %s",
     "page.edit_category.title": "Bewerk categorie: %s",
     "page.edit_feed.etag_header": "ETAG header:",
@@ -541,25 +546,25 @@
     "page.settings.webauthn.passkeys": "Passkeys",
     "page.settings.webauthn.register": "Passkey registreren",
     "page.settings.webauthn.register.error": "Kan passkey niet registreren",
+    "page.shared_entries.title": "Gedeelde artikelen",
     "page.shared_entries_count": [
         "%d gedeeld artikel",
         "%d gedeelde artikelen"
     ],
-    "page.shared_entries.title": "Gedeelde artikelen",
+    "page.starred.title": "Favorieten",
     "page.starred_entry_count": [
         "%d favoriet artikel",
         "%d favoriete artikelen"
     ],
-    "page.starred.title": "Favorieten",
     "page.total_entry_count": [
         "%d artikel totaal",
         "%d artikelen totaal"
     ],
+    "page.unread.title": "Ongelezen",
     "page.unread_entry_count": [
         "%d ongelezen artikel",
         "%d ongelezen artikelen"
     ],
-    "page.unread.title": "Ongelezen",
     "page.users.actions": "Acties",
     "page.users.admin.no": "Nee",
     "page.users.admin.yes": "Ja",

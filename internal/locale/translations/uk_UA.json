@@ -116,9 +116,11 @@
     "error.http_service_unavailable": "The website is not available at the moment due to an internal server error. The problem is not on Miniflux side. Please, try again later.",
     "error.http_too_many_requests": "Miniflux generated too many requests to this website. Please, try again later or change the application configuration.",
     "error.http_unexpected_status_code": "The website is not available at the moment due to an unexpected HTTP status code: %d. The problem is not on Miniflux side. Please, try again later.",
+    "error.invalid_categories_sorting_order": "Недійсний порядок сортування категорій.",
     "error.invalid_default_home_page": "Недійсна домашня сторінка за замовчуванням!",
     "error.invalid_display_mode": "Недійсний режим відображення.",
     "error.invalid_entry_direction": "Недійсний напрямок запису.",
+    "error.invalid_entry_order": "Недійсний порядок запису.",
     "error.invalid_feed_proxy_url": "Invalid proxy URL.",
     "error.invalid_feed_url": "Недійсна URL-адреса стрічки.",
     "error.invalid_gesture_nav": "Недійсна навігація жестами.",
@@ -295,6 +297,7 @@
     "form.integration.readwise_api_key": "Readwise Reader Access Token",
     "form.integration.readwise_api_key_link": "Get your Readwise Access Token",
     "form.integration.rssbridge_activate": "Check RSS-Bridge when adding subscriptions",
+    "form.integration.rssbridge_token": "RSS-Bridge authentication token",
     "form.integration.rssbridge_url": "RSS-Bridge server URL",
     "form.integration.shaarli_activate": "Save articles to Shaarli",
     "form.integration.shaarli_api_secret": "Shaarli API Secret",
@@ -347,6 +350,7 @@
     "form.prefs.label.mark_read_on_view": "Автоматично позначати записи як прочитані під час перегляду",
     "form.prefs.label.mark_read_on_view_or_media_completion": "Mark entries as read when viewed. For audio/video, mark as read at 90%% completion",
     "form.prefs.label.media_playback_rate": "Швидкість відтворення аудіо/відео",
+    "form.prefs.label.always_open_external_links": "Read articles by opening external links",
     "form.prefs.label.show_reading_time": "Показувати приблизний час читання для записів",
     "form.prefs.label.theme": "Тема",
     "form.prefs.label.timezone": "Часовий пояс",
@@ -407,6 +411,7 @@
     "page.about.build_date": "Дата побудови:",
     "page.about.credits": "Титри",
     "page.about.db_usage": "Database size:",
+    "page.about.git_commit": "Git Commit:",
     "page.about.global_config_options": "Параметри глобальної конфігурації",
     "page.about.go_version": "Версія Go:",
     "page.about.license": "Ліцензія:",
@@ -426,11 +431,6 @@
     "page.api_keys.table.last_used_at": "Дата останнього використання",
     "page.api_keys.table.token": "Токен",
     "page.api_keys.title": "Ключі API",
-    "page.categories_count": [
-        "%d category",
-        "%d categories",
-        "%d categories"
-    ],
     "page.categories.entries": "Статті",
     "page.categories.feed_count": [
         "Містить %d стрічку.",
@@ -440,6 +440,11 @@
     "page.categories.feeds": "Підписки",
     "page.categories.no_feed": "Немає стрічки.",
     "page.categories.title": "Категорії",
+    "page.categories_count": [
+        "%d category",
+        "%d categories",
+        "%d categories"
+    ],
     "page.category_label": "Категорія: %s",
     "page.edit_category.title": "Редагування категорії: %s",
     "page.edit_feed.etag_header": "Заголовок ETag:",
@@ -548,29 +553,29 @@
     "page.settings.webauthn.passkeys": "Passkeys",
     "page.settings.webauthn.register": "Зареєструвати пароль",
     "page.settings.webauthn.register.error": "Не вдалося зареєструвати ключ доступу",
+    "page.shared_entries.title": "Спільні записи",
     "page.shared_entries_count": [
         "%d shared entry",
         "%d shared entries",
         "%d shared entries"
     ],
-    "page.shared_entries.title": "Спільні записи",
+    "page.starred.title": "З зірочкою",
     "page.starred_entry_count": [
         "%d starred entry",
         "%d starred entries",
         "%d starred entries"
     ],
-    "page.starred.title": "З зірочкою",
     "page.total_entry_count": [
         "%d entry in total",
         "%d entries in total",
         "%d entries in total"
     ],
+    "page.unread.title": "Непрочитане",
     "page.unread_entry_count": [
         "%d unread entry",
         "%d unread entries",
         "%d unread entries"
     ],
-    "page.unread.title": "Непрочитане",
     "page.users.actions": "Дії",
     "page.users.admin.no": "Ні",
     "page.users.admin.yes": "Так",

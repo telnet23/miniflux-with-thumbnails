@@ -116,9 +116,11 @@
     "error.http_service_unavailable": "Acest site web nu este disponibil momentan din cauza unei erori generată de server. Problema nu este de la Miniflux. Vă rugăm să reîncercați mai târziu.",
     "error.http_too_many_requests": "Miniflux a generat prea multe solicitări pe acest site web. Vă rog, încercați mai tîrziu sau modificați configurațiile aplicației.",
     "error.http_unexpected_status_code": "Acest site web nu este disponibil momentan din cauza unei erori HTTP: %d. Problema nu este de la Miniflux. Vă rugăm să reîncercați mai târziu.",
+    "error.invalid_categories_sorting_order": "Ordinea de sortare a categoriilor nu este validă.",
     "error.invalid_default_home_page": "Pagină de start invalidă!",
     "error.invalid_display_mode": "Mod invalid de afișare în aplicația web.",
     "error.invalid_entry_direction": "Direcție invalidă ăn intrare.",
+    "error.invalid_entry_order": "Direcție de sortare invalidă.",
     "error.invalid_feed_proxy_url": "Invalid proxy URL.",
     "error.invalid_feed_url": "Adresa URL a fluxului este invalidă.",
     "error.invalid_gesture_nav": "Gest de navigare invalid.",
@@ -295,6 +297,7 @@
     "form.integration.readwise_api_key": "Token Acces Readwise Reader",
     "form.integration.readwise_api_key_link": "Obțineți Token-ul de Acess pe Readwise",
     "form.integration.rssbridge_activate": "Verifică RSS-Bridge la adăugarea de abonamente",
+    "form.integration.rssbridge_token": "RSS-Bridge authentication token",
     "form.integration.rssbridge_url": "URL server RSS-Bridge",
     "form.integration.shaarli_activate": "Salvează articolele în Shaarli",
     "form.integration.shaarli_api_secret": "Secret API Shaarli",
@@ -347,6 +350,7 @@
     "form.prefs.label.mark_read_on_view": "Marchează intrările ca citite la vizualizare",
     "form.prefs.label.mark_read_on_view_or_media_completion": "Marchează intrările ca citite la vizualizare. Pentru audio/video, marchează ca citit la redarea a 90%% de conținut",
     "form.prefs.label.media_playback_rate": "Viteza de rulare audio/video",
+    "form.prefs.label.always_open_external_links": "Read articles by opening external links",
     "form.prefs.label.show_reading_time": "Afișare timp estimat de citire pentru înregistrări",
     "form.prefs.label.theme": "Temă",
     "form.prefs.label.timezone": "Fus orar",
@@ -407,6 +411,7 @@
     "page.about.build_date": "Dată Build:",
     "page.about.credits": "Credit",
     "page.about.db_usage": "Utilizare Bază de Date",
+    "page.about.git_commit": "Git Commit:",
     "page.about.global_config_options": "Opțiuni globale de configurare",
     "page.about.go_version": "Versiune Go:",
     "page.about.license": "Licență:",
@@ -426,11 +431,6 @@
     "page.api_keys.table.last_used_at": "Utilizat ultima dată",
     "page.api_keys.table.token": "Token",
     "page.api_keys.title": "Chei API",
-    "page.categories_count": [
-        "%d categorie",
-        "%d categorii",
-        "%d categorie găsită"
-    ],
     "page.categories.entries": "Intrări",
     "page.categories.feed_count": [
         "Este %d flux.",
@@ -440,6 +440,11 @@
     "page.categories.feeds": "Fluxuri",
     "page.categories.no_feed": "Nici un flux.",
     "page.categories.title": "Categorii",
+    "page.categories_count": [
+        "%d categorie",
+        "%d categorii",
+        "%d categorie găsită"
+    ],
     "page.category_label": "Categorie: %s",
     "page.edit_category.title": "Editare Categorie: %s",
     "page.edit_feed.etag_header": "Antet ETag:",
@@ -548,29 +553,29 @@
     "page.settings.webauthn.passkeys": "Chei Acces",
     "page.settings.webauthn.register": "Înregistrare cheie acces",
     "page.settings.webauthn.register.error": "Eroare la înregistrarea cheii de acces",
+    "page.shared_entries.title": "Înregistrări partajate",
     "page.shared_entries_count": [
         "%d înregistrare partajată",
         "%d înregistrări partajate",
         "%d înregistrări partajate"
     ],
-    "page.shared_entries.title": "Înregistrări partajate",
+    "page.starred.title": "Marcate",
     "page.starred_entry_count": [
         "%d înregistrare marcată",
         "%d Înregistrări marcate",
         "%d Înregistrări marcate"
     ],
-    "page.starred.title": "Marcate",
     "page.total_entry_count": [
         "%d intrare în total",
         "%d intrări în total",
         "%d intrări în total"
     ],
+    "page.unread.title": "Necitite",
     "page.unread_entry_count": [
         "%d înregistrare necitită",
         "%d înregistrări necitite",
         "%d înregistrări necitite"
     ],
-    "page.unread.title": "Necitite",
     "page.users.actions": "Acțiuni",
     "page.users.admin.no": "Nu",
     "page.users.admin.yes": "Da",

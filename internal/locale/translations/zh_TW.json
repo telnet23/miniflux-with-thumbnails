@@ -112,9 +112,11 @@
     "error.http_service_unavailable": "此網站目前因內部問題無法使用，問題不在 Miniflux，請稍後重試。",
     "error.http_too_many_requests": "Miniflux 對此網站的請求過多，請稍後重試或調整程式設定。",
     "error.http_unexpected_status_code": "此網站回應了意外的 HTTP 狀態碼：%d，請稍後重試。",
+    "error.invalid_categories_sorting_order": "無效的分類排序",
     "error.invalid_default_home_page": "預設主頁無效！",
     "error.invalid_display_mode": "無效的顯示模式。",
     "error.invalid_entry_direction": "無效的輸入方向。",
+    "error.invalid_entry_order": "無效的文章排序依據。",
     "error.invalid_feed_proxy_url": "Invalid proxy URL.",
     "error.invalid_feed_url": "訂閱網址無效。",
     "error.invalid_gesture_nav": "手勢導覽無效。",
@@ -291,6 +293,7 @@
     "form.integration.readwise_api_key": "Readwise Reader 存取金鑰",
     "form.integration.readwise_api_key_link": "取得您的 Readwise 存取金鑰",
     "form.integration.rssbridge_activate": "新增訂閱時檢查 RSS-Bridge",
+    "form.integration.rssbridge_token": "RSS-Bridge authentication token",
     "form.integration.rssbridge_url": "RSS-Bridge 伺服器的網址",
     "form.integration.shaarli_activate": "儲存文章到 Shaarli",
     "form.integration.shaarli_api_secret": "Shaarli API 金鑰",
@@ -343,6 +346,7 @@
     "form.prefs.label.mark_read_on_view": "檢視時自動將文章標記為已讀",
     "form.prefs.label.mark_read_on_view_or_media_completion": "檢視文章即標記為已讀；若是音訊/視訊則在 90% 播放完成時標記",
     "form.prefs.label.media_playback_rate": "音訊/視訊播放速度",
+    "form.prefs.label.always_open_external_links": "Read articles by opening external links",
     "form.prefs.label.show_reading_time": "顯示文章的預計閱讀時間",
     "form.prefs.label.theme": "主題",
     "form.prefs.label.timezone": "時區",
@@ -403,6 +407,7 @@
     "page.about.build_date": "建構日期：",
     "page.about.credits": "版權",
     "page.about.db_usage": "Database size:",
+    "page.about.git_commit": "Git Commit:",
     "page.about.global_config_options": "全域設定選項",
     "page.about.go_version": "Go 版本：",
     "page.about.license": "授權：",
@@ -422,9 +427,6 @@
     "page.api_keys.table.last_used_at": "最後使用",
     "page.api_keys.table.token": "金鑰",
     "page.api_keys.title": "API 金鑰",
-    "page.categories_count": [
-        "%d 個分類"
-    ],
     "page.categories.entries": "檢視內容",
     "page.categories.feed_count": [
         "有 %d 個 Feed"
@@ -432,6 +434,9 @@
     "page.categories.feeds": "檢視 Feeds",
     "page.categories.no_feed": "沒有 Feed",
     "page.categories.title": "分類",
+    "page.categories_count": [
+        "%d 個分類"
+    ],
     "page.category_label": "分類：%s",
     "page.edit_category.title": "編輯分類 : %s",
     "page.edit_feed.etag_header": "ETag 標頭：",
@@ -534,21 +539,21 @@
     "page.settings.webauthn.passkeys": "Passkeys",
     "page.settings.webauthn.register": "註冊 Passkey",
     "page.settings.webauthn.register.error": "無法註冊 Passkey",
+    "page.shared_entries.title": "已分享的文章",
     "page.shared_entries_count": [
         "已分享 %d 篇文章"
     ],
-    "page.shared_entries.title": "已分享的文章",
+    "page.starred.title": "收藏",
     "page.starred_entry_count": [
         "%d 篇收藏文章"
     ],
-    "page.starred.title": "收藏",
     "page.total_entry_count": [
         "總共 %d 篇文章"
     ],
+    "page.unread.title": "未讀",
     "page.unread_entry_count": [
         "%d 篇未讀文章"
     ],
-    "page.unread.title": "未讀",
     "page.users.actions": "操作",
     "page.users.admin.no": "否",
     "page.users.admin.yes": "是",

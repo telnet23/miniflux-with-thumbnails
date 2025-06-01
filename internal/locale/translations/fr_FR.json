@@ -114,9 +114,11 @@
     "error.http_service_unavailable": "Le site web n'est pas disponible pour le moment. Le problème ne vient pas de Miniflux. Veuillez réessayer plus tard.",
     "error.http_too_many_requests": "Miniflux a généré trop de requêtes vers ce site web. Veuillez réessayer plus tard ou changez la configuration de l'application.",
     "error.http_unexpected_status_code": "Le site web a répondu avec un code HTTP inattendu : %d. Le problème ne vient pas de Miniflux. Veuillez réessayer plus tard.",
+    "error.invalid_categories_sorting_order": "L'ordre de tri des catégories n'est pas valide.",
     "error.invalid_default_home_page": "Page d'accueil par défaut invalide !",
     "error.invalid_display_mode": "Mode d'affichage de l'application web non valide.",
     "error.invalid_entry_direction": "Ordre de trie non valide.",
+    "error.invalid_entry_order": "Ordre de tri non valide.",
     "error.invalid_feed_proxy_url": "L'URL du proxy n'est pas valide.",
     "error.invalid_feed_url": "URL de flux non valide.",
     "error.invalid_gesture_nav": "Navigation gestuelle non valide.",
@@ -212,8 +214,8 @@
     "form.integration.betula_activate": "Sauvegarder les entrées vers Betula",
     "form.integration.betula_token": "Jeton de sécurité de l'API de Betula",
     "form.integration.betula_url": "URL du serveur Betula",
-    "form.integration.cubox_activate": "Save entries to Cubox",
-    "form.integration.cubox_api_link": "Cubox API link",
+    "form.integration.cubox_activate": "Sauvegarder les entrées vers Cubox",
+    "form.integration.cubox_api_link": "Lien API Cubox",
     "form.integration.discord_activate": "Envoyer les articles vers Discord",
     "form.integration.discord_webhook_link": "URL du Webhook Discord",
     "form.integration.espial_activate": "Sauvegarder les articles vers Espial",
@@ -292,8 +294,9 @@
     "form.integration.readwise_activate": "Enregistrer les entrées vers Readwise Reader",
     "form.integration.readwise_api_key": "Jeton d'accès au lecteur Readwise",
     "form.integration.readwise_api_key_link": "Obtenez votre jeton d'accès Readwise",
-    "form.integration.rssbridge_activate": "Check RSS-Bridge when adding subscriptions",
-    "form.integration.rssbridge_url": "RSS-Bridge server URL",
+    "form.integration.rssbridge_activate": "Vérifier RSS-Bridge lors de l'ajout d'abonnements",
+    "form.integration.rssbridge_token": "Jeton d'authentification RSS-Bridge",
+    "form.integration.rssbridge_url": "URL du serveur RSS-Bridge",
     "form.integration.shaarli_activate": "Sauvegarder les articles vers Shaarli",
     "form.integration.shaarli_api_secret": "Clé d'API de Shaarli API",
     "form.integration.shaarli_endpoint": "URL de l'API de Shaarli",
@@ -345,6 +348,7 @@
     "form.prefs.label.mark_read_on_view": "Marquer automatiquement les entrées comme lues lorsqu'elles sont consultées",
     "form.prefs.label.mark_read_on_view_or_media_completion": "Marquer automatiquement les entrées comme lues lorsqu'elles sont consultées. Pour l'audio/vidéo, marquer comme lues après 90%%",
     "form.prefs.label.media_playback_rate": "Vitesse de lecture de l'audio/vidéo",
+    "form.prefs.label.always_open_external_links": "Read articles by opening external links",
     "form.prefs.label.show_reading_time": "Afficher le temps de lecture estimé des articles",
     "form.prefs.label.theme": "Thème",
     "form.prefs.label.timezone": "Fuseau horaire",
@@ -404,7 +408,8 @@
     "page.about.author": "Auteur :",
     "page.about.build_date": "Date de la compilation :",
     "page.about.credits": "Crédits",
-    "page.about.db_usage": "Database size:",
+    "page.about.db_usage": "Taille de la base de données :",
+    "page.about.git_commit": "Commit Git :",
     "page.about.global_config_options": "Options de configuration globales",
     "page.about.go_version": "Version de Go :",
     "page.about.license": "Licence :",
@@ -424,10 +429,6 @@
     "page.api_keys.table.last_used_at": "Dernière utilisation",
     "page.api_keys.table.token": "Jeton",
     "page.api_keys.title": "Clés d'API",
-    "page.categories_count": [
-        "%d catégorie",
-        "%d catégories"
-    ],
     "page.categories.entries": "Articles",
     "page.categories.feed_count": [
         "Il y a %d abonnement.",
@@ -436,6 +437,10 @@
     "page.categories.feeds": "Abonnements",
     "page.categories.no_feed": "Aucun abonnement.",
     "page.categories.title": "Catégories",
+    "page.categories_count": [
+        "%d catégorie",
+        "%d catégories"
+    ],
     "page.category_label": "Catégorie : %s",
     "page.edit_category.title": "Modification de la catégorie : %s",
     "page.edit_feed.etag_header": "En-tête ETag :",
@@ -499,7 +504,7 @@
     "page.keyboard_shortcuts.subtitle.sections": "Navigation entre les sections",
     "page.keyboard_shortcuts.title": "Raccourcis clavier",
     "page.keyboard_shortcuts.toggle_bookmark_status": "Ajouter/Enlever favoris",
-    "page.keyboard_shortcuts.toggle_entry_attachments": "Toggle open/close entry attachments",
+    "page.keyboard_shortcuts.toggle_entry_attachments": "Ouvrir/Fermer les pièces jointes de l'entrée",
     "page.keyboard_shortcuts.toggle_read_status_next": "Basculer entre lu/non lu, et changer le focus sur l'élément suivant",
     "page.keyboard_shortcuts.toggle_read_status_prev": "Basculer entre lu/non lu, et changer le focus sur l'élément précédent",
     "page.login.google_signin": "Se connecter avec Google",
@@ -515,8 +520,8 @@
     "page.offline.refresh_page": "Essayez de rafraîchir la page",
     "page.offline.title": "Mode Hors-Ligne",
     "page.read_entry_count": [
-        "%d read entry",
-        "%d read entries"
+        "%d entrée lue",
+        "%d entrées lues"
     ],
     "page.search.title": "Résultats de la recherche",
     "page.sessions.table.actions": "Actions",
@@ -541,25 +546,25 @@
     "page.settings.webauthn.passkeys": "Clés d’accès",
     "page.settings.webauthn.register": "Enregister une nouvelle clé d’accès",
     "page.settings.webauthn.register.error": "Impossible d'enregistrer la clé d’accès",
+    "page.shared_entries.title": "Articles partagés",
     "page.shared_entries_count": [
         "%d article partagé",
         "%d articles partagés"
     ],
-    "page.shared_entries.title": "Articles partagés",
+    "page.starred.title": "Favoris",
     "page.starred_entry_count": [
         "%d favori",
         "%d favoris"
     ],
-    "page.starred.title": "Favoris",
     "page.total_entry_count": [
         "%d article au total",
         "%d articles au total"
     ],
+    "page.unread.title": "Non lus",
     "page.unread_entry_count": [
         "%d article non lu",
         "%d articles non lus"
     ],
-    "page.unread.title": "Non lus",
     "page.users.actions": "Actions",
     "page.users.admin.no": "Non",
     "page.users.admin.yes": "Oui",
@@ -568,7 +573,7 @@
     "page.users.never_logged": "Jamais",
     "page.users.title": "Utilisateurs",
     "page.users.username": "Nom d'utilisateur",
-    "page.webauthn_rename.title": "Rename Passkey",
+    "page.webauthn_rename.title": "Renommer la clé d'accès",
     "pagination.first": "Première page",
     "pagination.last": "Dernière page",
     "pagination.next": "Suivant",
