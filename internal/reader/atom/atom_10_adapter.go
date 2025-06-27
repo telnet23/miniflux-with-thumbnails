@@ -55,6 +55,9 @@ func (a *Atom10Adapter) BuildFeed(baseURL string) *model.Feed {
 		feed.Title = feed.SiteURL
 	}
 
+	// Populate the feed description.
+	feed.Description = a.atomFeed.Subtitle.Body()
+
 	// Populate the feed icon.
 	if a.atomFeed.Icon != "" {
 		if absoluteIconURL, err := urllib.AbsoluteURL(feed.SiteURL, a.atomFeed.Icon); err == nil {
@@ -149,7 +152,7 @@ func (a *Atom10Adapter) populateEntries(siteURL string) model.Entries {
 		// Generate the entry hash.
 		for _, value := range []string{atomEntry.ID, atomEntry.Links.OriginalLink()} {
 			if value != "" {
-				entry.Hash = crypto.Hash(value)
+				entry.Hash = crypto.SHA256(value)
 				break
 			}
 		}

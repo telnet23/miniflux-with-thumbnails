@@ -17,35 +17,37 @@ const (
 
 // User represents a user in the system.
 type User struct {
-	ID                     int64      `json:"id"`
-	Username               string     `json:"username"`
-	Password               string     `json:"password,omitempty"`
-	IsAdmin                bool       `json:"is_admin"`
-	Theme                  string     `json:"theme"`
-	Language               string     `json:"language"`
-	Timezone               string     `json:"timezone"`
-	EntryDirection         string     `json:"entry_sorting_direction"`
-	EntryOrder             string     `json:"entry_sorting_order"`
-	Stylesheet             string     `json:"stylesheet"`
-	CustomJS               string     `json:"custom_js"`
-	GoogleID               string     `json:"google_id"`
-	OpenIDConnectID        string     `json:"openid_connect_id"`
-	EntriesPerPage         int        `json:"entries_per_page"`
-	KeyboardShortcuts      bool       `json:"keyboard_shortcuts"`
-	ShowReadingTime        bool       `json:"show_reading_time"`
-	EntrySwipe             bool       `json:"entry_swipe"`
-	GestureNav             string     `json:"gesture_nav"`
-	LastLoginAt            *time.Time `json:"last_login_at"`
-	DisplayMode            string     `json:"display_mode"`
-	DefaultReadingSpeed    int        `json:"default_reading_speed"`
-	CJKReadingSpeed        int        `json:"cjk_reading_speed"`
-	DefaultHomePage        string     `json:"default_home_page"`
-	CategoriesSortingOrder string     `json:"categories_sorting_order"`
-	MarkReadOnView         bool       `json:"mark_read_on_view"`
-	MediaPlaybackRate      float64    `json:"media_playback_rate"`
-	BlockFilterEntryRules  string     `json:"block_filter_entry_rules"`
-	KeepFilterEntryRules   string     `json:"keep_filter_entry_rules"`
-	ExternalFontHosts      string     `json:"external_font_hosts"`
+	ID                        int64      `json:"id"`
+	Username                  string     `json:"username"`
+	Password                  string     `json:"password,omitempty"`
+	IsAdmin                   bool       `json:"is_admin"`
+	Theme                     string     `json:"theme"`
+	Language                  string     `json:"language"`
+	Timezone                  string     `json:"timezone"`
+	EntryDirection            string     `json:"entry_sorting_direction"`
+	EntryOrder                string     `json:"entry_sorting_order"`
+	Stylesheet                string     `json:"stylesheet"`
+	CustomJS                  string     `json:"custom_js"`
+	GoogleID                  string     `json:"google_id"`
+	OpenIDConnectID           string     `json:"openid_connect_id"`
+	EntriesPerPage            int        `json:"entries_per_page"`
+	KeyboardShortcuts         bool       `json:"keyboard_shortcuts"`
+	ShowReadingTime           bool       `json:"show_reading_time"`
+	EntrySwipe                bool       `json:"entry_swipe"`
+	GestureNav                string     `json:"gesture_nav"`
+	LastLoginAt               *time.Time `json:"last_login_at"`
+	DisplayMode               string     `json:"display_mode"`
+	DefaultReadingSpeed       int        `json:"default_reading_speed"`
+	CJKReadingSpeed           int        `json:"cjk_reading_speed"`
+	DefaultHomePage           string     `json:"default_home_page"`
+	CategoriesSortingOrder    string     `json:"categories_sorting_order"`
+	MarkReadOnView            bool       `json:"mark_read_on_view"`
+	MediaPlaybackRate         float64    `json:"media_playback_rate"`
+	BlockFilterEntryRules     string     `json:"block_filter_entry_rules"`
+	KeepFilterEntryRules      string     `json:"keep_filter_entry_rules"`
+	ExternalFontHosts         string     `json:"external_font_hosts"`
+	AlwaysOpenExternalLinks   bool       `json:"always_open_external_links"`
+	OpenExternalLinksInNewTab bool       `json:"open_external_links_in_new_tab"`
 }
 
 func (u User) String() string {
@@ -63,33 +65,35 @@ type UserCreationRequest struct {
 
 // UserModificationRequest represents the request to update a user.
 type UserModificationRequest struct {
-	Username               *string  `json:"username"`
-	Password               *string  `json:"password"`
-	IsAdmin                *bool    `json:"is_admin"`
-	Theme                  *string  `json:"theme"`
-	Language               *string  `json:"language"`
-	Timezone               *string  `json:"timezone"`
-	EntryDirection         *string  `json:"entry_sorting_direction"`
-	EntryOrder             *string  `json:"entry_sorting_order"`
-	Stylesheet             *string  `json:"stylesheet"`
-	CustomJS               *string  `json:"custom_js"`
-	GoogleID               *string  `json:"google_id"`
-	OpenIDConnectID        *string  `json:"openid_connect_id"`
-	EntriesPerPage         *int     `json:"entries_per_page"`
-	KeyboardShortcuts      *bool    `json:"keyboard_shortcuts"`
-	ShowReadingTime        *bool    `json:"show_reading_time"`
-	EntrySwipe             *bool    `json:"entry_swipe"`
-	GestureNav             *string  `json:"gesture_nav"`
-	DisplayMode            *string  `json:"display_mode"`
-	DefaultReadingSpeed    *int     `json:"default_reading_speed"`
-	CJKReadingSpeed        *int     `json:"cjk_reading_speed"`
-	DefaultHomePage        *string  `json:"default_home_page"`
-	CategoriesSortingOrder *string  `json:"categories_sorting_order"`
-	MarkReadOnView         *bool    `json:"mark_read_on_view"`
-	MediaPlaybackRate      *float64 `json:"media_playback_rate"`
-	BlockFilterEntryRules  *string  `json:"block_filter_entry_rules"`
-	KeepFilterEntryRules   *string  `json:"keep_filter_entry_rules"`
-	ExternalFontHosts      *string  `json:"external_font_hosts"`
+	Username                  *string  `json:"username"`
+	Password                  *string  `json:"password"`
+	IsAdmin                   *bool    `json:"is_admin"`
+	Theme                     *string  `json:"theme"`
+	Language                  *string  `json:"language"`
+	Timezone                  *string  `json:"timezone"`
+	EntryDirection            *string  `json:"entry_sorting_direction"`
+	EntryOrder                *string  `json:"entry_sorting_order"`
+	Stylesheet                *string  `json:"stylesheet"`
+	CustomJS                  *string  `json:"custom_js"`
+	GoogleID                  *string  `json:"google_id"`
+	OpenIDConnectID           *string  `json:"openid_connect_id"`
+	EntriesPerPage            *int     `json:"entries_per_page"`
+	KeyboardShortcuts         *bool    `json:"keyboard_shortcuts"`
+	ShowReadingTime           *bool    `json:"show_reading_time"`
+	EntrySwipe                *bool    `json:"entry_swipe"`
+	GestureNav                *string  `json:"gesture_nav"`
+	DisplayMode               *string  `json:"display_mode"`
+	DefaultReadingSpeed       *int     `json:"default_reading_speed"`
+	CJKReadingSpeed           *int     `json:"cjk_reading_speed"`
+	DefaultHomePage           *string  `json:"default_home_page"`
+	CategoriesSortingOrder    *string  `json:"categories_sorting_order"`
+	MarkReadOnView            *bool    `json:"mark_read_on_view"`
+	MediaPlaybackRate         *float64 `json:"media_playback_rate"`
+	BlockFilterEntryRules     *string  `json:"block_filter_entry_rules"`
+	KeepFilterEntryRules      *string  `json:"keep_filter_entry_rules"`
+	ExternalFontHosts         *string  `json:"external_font_hosts"`
+	AlwaysOpenExternalLinks   *bool    `json:"always_open_external_links"`
+	OpenExternalLinksInNewTab *bool    `json:"open_external_links_in_new_tab"`
 }
 
 // Users represents a list of users.
@@ -156,8 +160,11 @@ type Feed struct {
 	FetchViaProxy               bool      `json:"fetch_via_proxy"`
 	ScraperRules                string    `json:"scraper_rules"`
 	RewriteRules                string    `json:"rewrite_rules"`
+	UrlRewriteRules             string    `json:"urlrewrite_rules"`
 	BlocklistRules              string    `json:"blocklist_rules"`
 	KeeplistRules               string    `json:"keeplist_rules"`
+	BlockFilterEntryRules       string    `json:"block_filter_entry_rules"`
+	KeepFilterEntryRules        string    `json:"keep_filter_entry_rules"`
 	Crawler                     bool      `json:"crawler"`
 	UserAgent                   string    `json:"user_agent"`
 	Cookie                      string    `json:"cookie"`
@@ -184,8 +191,11 @@ type FeedCreationRequest struct {
 	FetchViaProxy               bool   `json:"fetch_via_proxy"`
 	ScraperRules                string `json:"scraper_rules"`
 	RewriteRules                string `json:"rewrite_rules"`
+	UrlRewriteRules             string `json:"urlrewrite_rules"`
 	BlocklistRules              string `json:"blocklist_rules"`
 	KeeplistRules               string `json:"keeplist_rules"`
+	BlockFilterEntryRules       string `json:"block_filter_entry_rules"`
+	KeepFilterEntryRules        string `json:"keep_filter_entry_rules"`
 	HideGlobally                bool   `json:"hide_globally"`
 	DisableHTTP2                bool   `json:"disable_http2"`
 	ProxyURL                    string `json:"proxy_url"`
@@ -198,8 +208,11 @@ type FeedModificationRequest struct {
 	Title                       *string `json:"title"`
 	ScraperRules                *string `json:"scraper_rules"`
 	RewriteRules                *string `json:"rewrite_rules"`
+	UrlRewriteRules             *string `json:"urlrewrite_rules"`
 	BlocklistRules              *string `json:"blocklist_rules"`
 	KeeplistRules               *string `json:"keeplist_rules"`
+	BlockFilterEntryRules       *string `json:"block_filter_entry_rules"`
+	KeepFilterEntryRules        *string `json:"keep_filter_entry_rules"`
 	Crawler                     *bool   `json:"crawler"`
 	UserAgent                   *string `json:"user_agent"`
 	Cookie                      *string `json:"cookie"`
@@ -323,6 +336,24 @@ type VersionResponse struct {
 	Compiler  string `json:"compiler"`
 	Arch      string `json:"arch"`
 	OS        string `json:"os"`
+}
+
+// APIKey represents an application API key.
+type APIKey struct {
+	ID          int64      `json:"id"`
+	UserID      int64      `json:"user_id"`
+	Token       string     `json:"token"`
+	Description string     `json:"description"`
+	LastUsedAt  *time.Time `json:"last_used_at"`
+	CreatedAt   time.Time  `json:"created_at"`
+}
+
+// APIKeys represents a collection of API keys.
+type APIKeys []*APIKey
+
+// APIKeyCreationRequest represents the request to create an API key.
+type APIKeyCreationRequest struct {
+	Description string `json:"description"`
 }
 
 func SetOptionalField[T any](value T) *T {

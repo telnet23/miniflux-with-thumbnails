@@ -16,6 +16,7 @@ type ContextKey int
 // List of context keys.
 const (
 	UserIDContextKey ContextKey = iota
+	UserNameContextKey
 	UserTimezoneContextKey
 	IsAdminUserContextKey
 	IsAuthenticatedContextKey
@@ -28,7 +29,6 @@ const (
 	OAuth2CodeVerifierContextKey
 	FlashMessageContextKey
 	FlashErrorMessageContextKey
-	PocketRequestTokenContextKey
 	LastForceRefreshContextKey
 	ClientIPContextKey
 	GoogleReaderToken
@@ -62,6 +62,15 @@ func IsAuthenticated(r *http.Request) bool {
 // UserID returns the UserID of the logged user.
 func UserID(r *http.Request) int64 {
 	return getContextInt64Value(r, UserIDContextKey)
+}
+
+// UserName returns the username of the logged user.
+func UserName(r *http.Request) string {
+	value := getContextStringValue(r, UserNameContextKey)
+	if value == "" {
+		value = "unknown"
+	}
+	return value
 }
 
 // UserTimezone returns the timezone used by the logged user.
@@ -123,11 +132,6 @@ func FlashMessage(r *http.Request) string {
 // FlashErrorMessage returns the message error message if any.
 func FlashErrorMessage(r *http.Request) string {
 	return getContextStringValue(r, FlashErrorMessageContextKey)
-}
-
-// PocketRequestToken returns the Pocket Request Token if any.
-func PocketRequestToken(r *http.Request) string {
-	return getContextStringValue(r, PocketRequestTokenContextKey)
 }
 
 // LastForceRefresh returns the last force refresh timestamp.

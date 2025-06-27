@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"miniflux.app/v2/internal/config"
-	httpd "miniflux.app/v2/internal/http/server"
+	"miniflux.app/v2/internal/http/server"
 	"miniflux.app/v2/internal/metric"
 	"miniflux.app/v2/internal/storage"
 	"miniflux.app/v2/internal/systemd"
@@ -33,9 +33,9 @@ func startDaemon(store *storage.Storage) {
 		runScheduler(store, pool)
 	}
 
-	var httpServer *http.Server
+	var httpServers []*http.Server
 	if config.Opts.HasHTTPService() {
-		httpServer = httpd.StartWebServer(store, pool)
+		httpServers = server.StartWebServer(store, pool)
 	}
 
 	if config.Opts.HasMetricsCollector() {
@@ -78,8 +78,18 @@ func startDaemon(store *storage.Storage) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if httpServer != nil {
-		httpServer.Shutdown(ctx)
+	if len(httpServers) > 0 {
+		slog.Debug("Shutting down HTTP servers...")
+		for _, server := range httpServers {
+			if server != nil {
+				if err := server.Shutdown(ctx); err != nil {
+					slog.Error("HTTP server shutdown error", slog.Any("error", err), slog.String("addr", server.Addr))
+				}
+			}
+		}
+		slog.Debug("All HTTP servers shut down.")
+	} else {
+		slog.Debug("No HTTP servers to shut down.")
 	}
 
 	slog.Debug("Process gracefully stopped")

@@ -26,9 +26,10 @@ func NewJSONAdapter(jsonFeed *JSONFeed) *JSONAdapter {
 
 func (j *JSONAdapter) BuildFeed(baseURL string) *model.Feed {
 	feed := &model.Feed{
-		Title:   strings.TrimSpace(j.jsonFeed.Title),
-		FeedURL: strings.TrimSpace(j.jsonFeed.FeedURL),
-		SiteURL: strings.TrimSpace(j.jsonFeed.HomePageURL),
+		Title:       strings.TrimSpace(j.jsonFeed.Title),
+		FeedURL:     strings.TrimSpace(j.jsonFeed.FeedURL),
+		SiteURL:     strings.TrimSpace(j.jsonFeed.HomePageURL),
+		Description: strings.TrimSpace(j.jsonFeed.Description),
 	}
 
 	if feed.FeedURL == "" {
@@ -160,7 +161,7 @@ func (j *JSONAdapter) BuildFeed(baseURL string) *model.Feed {
 		for _, value := range []string{item.ID, item.URL, item.ContentText + item.ContentHTML + item.Summary} {
 			value = strings.TrimSpace(value)
 			if value != "" {
-				entry.Hash = crypto.Hash(value)
+				entry.Hash = crypto.SHA256(value)
 				break
 			}
 		}

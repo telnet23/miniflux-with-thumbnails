@@ -126,8 +126,6 @@ func Serve(router *mux.Router, store *storage.Storage, pool *worker.Pool) {
 	uiRouter.HandleFunc("/settings", handler.updateSettings).Name("updateSettings").Methods(http.MethodPost)
 	uiRouter.HandleFunc("/integrations", handler.showIntegrationPage).Name("integrations").Methods(http.MethodGet)
 	uiRouter.HandleFunc("/integration", handler.updateIntegration).Name("updateIntegration").Methods(http.MethodPost)
-	uiRouter.HandleFunc("/integration/pocket/authorize", handler.pocketAuthorize).Name("pocketAuthorize").Methods(http.MethodGet)
-	uiRouter.HandleFunc("/integration/pocket/callback", handler.pocketCallback).Name("pocketCallback").Methods(http.MethodGet)
 	uiRouter.HandleFunc("/about", handler.showAboutPage).Name("about").Methods(http.MethodGet)
 
 	// Session pages.
@@ -136,7 +134,7 @@ func Serve(router *mux.Router, store *storage.Storage, pool *worker.Pool) {
 
 	// API Keys pages.
 	uiRouter.HandleFunc("/keys", handler.showAPIKeysPage).Name("apiKeys").Methods(http.MethodGet)
-	uiRouter.HandleFunc("/keys/{keyID}/remove", handler.removeAPIKey).Name("removeAPIKey").Methods(http.MethodPost)
+	uiRouter.HandleFunc("/keys/{keyID}/delete", handler.deleteAPIKey).Name("deleteAPIKey").Methods(http.MethodPost)
 	uiRouter.HandleFunc("/keys/create", handler.showCreateAPIKeyPage).Name("createAPIKey").Methods(http.MethodGet)
 	uiRouter.HandleFunc("/keys/save", handler.saveAPIKey).Name("saveAPIKey").Methods(http.MethodPost)
 

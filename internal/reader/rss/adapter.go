@@ -28,14 +28,15 @@ func NewRSSAdapter(rss *RSS) *RSSAdapter {
 
 func (r *RSSAdapter) BuildFeed(baseURL string) *model.Feed {
 	feed := &model.Feed{
-		Title:   html.UnescapeString(strings.TrimSpace(r.rss.Channel.Title)),
-		FeedURL: strings.TrimSpace(baseURL),
-		SiteURL: strings.TrimSpace(r.rss.Channel.Link),
+		Title:       html.UnescapeString(strings.TrimSpace(r.rss.Channel.Title)),
+		FeedURL:     strings.TrimSpace(baseURL),
+		SiteURL:     strings.TrimSpace(r.rss.Channel.Link),
+		Description: strings.TrimSpace(r.rss.Channel.Description),
 	}
 
 	// Ensure the Site URL is absolute.
-	if siteURL, err := urllib.AbsoluteURL(baseURL, feed.SiteURL); err == nil {
-		feed.SiteURL = siteURL
+	if absoluteSiteURL, err := urllib.AbsoluteURL(baseURL, feed.SiteURL); err == nil {
+		feed.SiteURL = absoluteSiteURL
 	}
 
 	// Try to find the feed URL from the Atom links.
@@ -103,11 +104,11 @@ func (r *RSSAdapter) BuildFeed(baseURL string) *model.Feed {
 		// Generate the entry hash.
 		switch {
 		case item.GUID.Data != "":
-			entry.Hash = crypto.Hash(item.GUID.Data)
+			entry.Hash = crypto.SHA256(item.GUID.Data)
 		case entryURL != "":
-			entry.Hash = crypto.Hash(entryURL)
+			entry.Hash = crypto.SHA256(entryURL)
 		default:
-			entry.Hash = crypto.Hash(entry.Title + entry.Content)
+			entry.Hash = crypto.SHA256(entry.Title + entry.Content)
 		}
 
 		// Find CommentsURL if defined.
@@ -168,8 +169,11 @@ func findFeedAuthor(rssChannel *RSSChannel) string {
 		author = rssChannel.ManagingEditor
 	case rssChannel.Webmaster != "":
 		author = rssChannel.Webmaster
+	default:
+		return ""
 	}
-	return sanitizer.StripTags(strings.TrimSpace(author))
+
+	return strings.TrimSpace(sanitizer.StripTags(author))
 }
 
 func findEntryTitle(rssItem *RSSItem) string {
@@ -257,8 +261,10 @@ func findEntryAuthor(rssItem *RSSItem) string {
 		author = rssItem.PersonName()
 	case strings.Contains(rssItem.Author.Inner, "<![CDATA["):
 		author = rssItem.Author.Data
-	default:
+	case rssItem.Author.Inner != "":
 		author = rssItem.Author.Inner
+	default:
+		return ""
 	}
 
 	return strings.TrimSpace(sanitizer.StripTags(author))

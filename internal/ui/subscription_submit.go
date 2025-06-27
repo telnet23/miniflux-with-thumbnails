@@ -53,8 +53,10 @@ func (h *handler) submitSubscription(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var rssBridgeURL string
+	var rssBridgeToken string
 	if intg, err := h.store.Integration(user.ID); err == nil && intg != nil && intg.RSSBridgeEnabled {
 		rssBridgeURL = intg.RSSBridgeURL
+		rssBridgeToken = intg.RSSBridgeToken
 	}
 
 	requestBuilder := fetcher.NewRequestBuilder()
@@ -73,6 +75,7 @@ func (h *handler) submitSubscription(w http.ResponseWriter, r *http.Request) {
 	subscriptions, localizedError := subscriptionFinder.FindSubscriptions(
 		subscriptionForm.URL,
 		rssBridgeURL,
+		rssBridgeToken,
 	)
 	if localizedError != nil {
 		v.Set("form", subscriptionForm)
@@ -103,9 +106,11 @@ func (h *handler) submitSubscription(w http.ResponseWriter, r *http.Request) {
 				Password:                    subscriptionForm.Password,
 				ScraperRules:                subscriptionForm.ScraperRules,
 				RewriteRules:                subscriptionForm.RewriteRules,
+				UrlRewriteRules:             subscriptionForm.UrlRewriteRules,
 				BlocklistRules:              subscriptionForm.BlocklistRules,
 				KeeplistRules:               subscriptionForm.KeeplistRules,
-				UrlRewriteRules:             subscriptionForm.UrlRewriteRules,
+				KeepFilterEntryRules:        subscriptionForm.KeepFilterEntryRules,
+				BlockFilterEntryRules:       subscriptionForm.BlockFilterEntryRules,
 				FetchViaProxy:               subscriptionForm.FetchViaProxy,
 				DisableHTTP2:                subscriptionForm.DisableHTTP2,
 				ProxyURL:                    subscriptionForm.ProxyURL,
@@ -131,9 +136,11 @@ func (h *handler) submitSubscription(w http.ResponseWriter, r *http.Request) {
 			Password:                    subscriptionForm.Password,
 			ScraperRules:                subscriptionForm.ScraperRules,
 			RewriteRules:                subscriptionForm.RewriteRules,
+			UrlRewriteRules:             subscriptionForm.UrlRewriteRules,
 			BlocklistRules:              subscriptionForm.BlocklistRules,
 			KeeplistRules:               subscriptionForm.KeeplistRules,
-			UrlRewriteRules:             subscriptionForm.UrlRewriteRules,
+			KeepFilterEntryRules:        subscriptionForm.KeepFilterEntryRules,
+			BlockFilterEntryRules:       subscriptionForm.BlockFilterEntryRules,
 			FetchViaProxy:               subscriptionForm.FetchViaProxy,
 			DisableHTTP2:                subscriptionForm.DisableHTTP2,
 			ProxyURL:                    subscriptionForm.ProxyURL,
