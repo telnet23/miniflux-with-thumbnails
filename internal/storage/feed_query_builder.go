@@ -6,6 +6,7 @@ package storage // import "miniflux.app/v2/internal/storage"
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"miniflux.app/v2/internal/model"
@@ -40,9 +41,9 @@ func NewFeedQueryBuilder(store *Storage, userID int64) *FeedQueryBuilder {
 // WithCategoryID filter by category ID.
 func (f *FeedQueryBuilder) WithCategoryID(categoryID int64) *FeedQueryBuilder {
 	if categoryID > 0 {
-		f.conditions = append(f.conditions, fmt.Sprintf("f.category_id = $%d", len(f.args)+1))
+		f.conditions = append(f.conditions, "f.category_id = $"+strconv.Itoa(len(f.args)+1))
 		f.args = append(f.args, categoryID)
-		f.counterConditions = append(f.counterConditions, fmt.Sprintf("f.category_id = $%d", len(f.counterArgs)+1))
+		f.counterConditions = append(f.counterConditions, "f.category_id = $"+strconv.Itoa(len(f.counterArgs)+1))
 		f.counterArgs = append(f.counterArgs, categoryID)
 		f.counterJoinFeeds = true
 	}
@@ -52,7 +53,7 @@ func (f *FeedQueryBuilder) WithCategoryID(categoryID int64) *FeedQueryBuilder {
 // WithFeedID filter by feed ID.
 func (f *FeedQueryBuilder) WithFeedID(feedID int64) *FeedQueryBuilder {
 	if feedID > 0 {
-		f.conditions = append(f.conditions, fmt.Sprintf("f.id = $%d", len(f.args)+1))
+		f.conditions = append(f.conditions, "f.id = $"+strconv.Itoa(len(f.args)+1))
 		f.args = append(f.args, feedID)
 	}
 	return f
@@ -145,9 +146,11 @@ func (f *FeedQueryBuilder) GetFeeds() (model.Feeds, error) {
 			f.parsing_error_msg,
 			f.scraper_rules,
 			f.rewrite_rules,
+			f.url_rewrite_rules,
 			f.blocklist_rules,
 			f.keeplist_rules,
-			f.url_rewrite_rules,
+			f.block_filter_entry_rules,
+			f.keep_filter_entry_rules,
 			f.crawler,
 			f.user_agent,
 			f.cookie,
@@ -224,9 +227,11 @@ func (f *FeedQueryBuilder) GetFeeds() (model.Feeds, error) {
 			&feed.ParsingErrorMsg,
 			&feed.ScraperRules,
 			&feed.RewriteRules,
+			&feed.UrlRewriteRules,
 			&feed.BlocklistRules,
 			&feed.KeeplistRules,
-			&feed.UrlRewriteRules,
+			&feed.BlockFilterEntryRules,
+			&feed.KeepFilterEntryRules,
 			&feed.Crawler,
 			&feed.UserAgent,
 			&feed.Cookie,

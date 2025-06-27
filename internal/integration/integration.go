@@ -6,13 +6,13 @@ package integration // import "miniflux.app/v2/internal/integration"
 import (
 	"log/slog"
 
-	"miniflux.app/v2/internal/config"
 	"miniflux.app/v2/internal/integration/apprise"
 	"miniflux.app/v2/internal/integration/betula"
 	"miniflux.app/v2/internal/integration/cubox"
 	"miniflux.app/v2/internal/integration/discord"
 	"miniflux.app/v2/internal/integration/espial"
 	"miniflux.app/v2/internal/integration/instapaper"
+	"miniflux.app/v2/internal/integration/karakeep"
 	"miniflux.app/v2/internal/integration/linkace"
 	"miniflux.app/v2/internal/integration/linkding"
 	"miniflux.app/v2/internal/integration/linkwarden"
@@ -22,7 +22,6 @@ import (
 	"miniflux.app/v2/internal/integration/nunuxkeeper"
 	"miniflux.app/v2/internal/integration/omnivore"
 	"miniflux.app/v2/internal/integration/pinboard"
-	"miniflux.app/v2/internal/integration/pocket"
 	"miniflux.app/v2/internal/integration/pushover"
 	"miniflux.app/v2/internal/integration/raindrop"
 	"miniflux.app/v2/internal/integration/readeck"
@@ -188,24 +187,6 @@ func SendEntry(entry *model.Entry, userIntegrations *model.Integration) {
 
 		if err := client.CreateLink(entry.URL, entry.Title, userIntegrations.EspialTags); err != nil {
 			slog.Error("Unable to send entry to Espial",
-				slog.Int64("user_id", userIntegrations.UserID),
-				slog.Int64("entry_id", entry.ID),
-				slog.String("entry_url", entry.URL),
-				slog.Any("error", err),
-			)
-		}
-	}
-
-	if userIntegrations.PocketEnabled {
-		slog.Debug("Sending entry to Pocket",
-			slog.Int64("user_id", userIntegrations.UserID),
-			slog.Int64("entry_id", entry.ID),
-			slog.String("entry_url", entry.URL),
-		)
-
-		client := pocket.NewClient(config.Opts.PocketConsumerKey(userIntegrations.PocketConsumerKey), userIntegrations.PocketAccessToken)
-		if err := client.AddURL(entry.URL, entry.Title); err != nil {
-			slog.Error("Unable to send entry to Pocket",
 				slog.Int64("user_id", userIntegrations.UserID),
 				slog.Int64("entry_id", entry.ID),
 				slog.String("entry_url", entry.URL),
@@ -420,6 +401,24 @@ func SendEntry(entry *model.Entry, userIntegrations *model.Integration) {
 		client := omnivore.NewClient(userIntegrations.OmnivoreAPIKey, userIntegrations.OmnivoreURL)
 		if err := client.SaveUrl(entry.URL); err != nil {
 			slog.Error("Unable to send entry to Omnivore",
+				slog.Int64("user_id", userIntegrations.UserID),
+				slog.Int64("entry_id", entry.ID),
+				slog.String("entry_url", entry.URL),
+				slog.Any("error", err),
+			)
+		}
+	}
+
+	if userIntegrations.KarakeepEnabled {
+		slog.Debug("Sending entry to Karakeep",
+			slog.Int64("user_id", userIntegrations.UserID),
+			slog.Int64("entry_id", entry.ID),
+			slog.String("entry_url", entry.URL),
+		)
+
+		client := karakeep.NewClient(userIntegrations.KarakeepAPIKey, userIntegrations.KarakeepURL)
+		if err := client.SaveURL(entry.URL); err != nil {
+			slog.Error("Unable to send entry to Karakeep",
 				slog.Int64("user_id", userIntegrations.UserID),
 				slog.Int64("entry_id", entry.ID),
 				slog.String("entry_url", entry.URL),

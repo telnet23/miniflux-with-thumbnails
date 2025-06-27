@@ -29,7 +29,7 @@ func (rule rule) applyRule(entryURL string, entry *model.Entry) {
 	case "add_dynamic_iframe":
 		entry.Content = addDynamicIframe(entry.Content)
 	case "add_youtube_video":
-		entry.Content = addYoutubeVideo(entryURL, entry.Content)
+		entry.Content = addYoutubeVideoRewriteRule(entryURL, entry.Content)
 	case "add_invidious_video":
 		entry.Content = addInvidiousVideo(entryURL, entry.Content)
 	case "add_youtube_video_using_invidious_player":
@@ -97,9 +97,8 @@ func (rule rule) applyRule(entryURL string, entry *model.Entry) {
 	}
 }
 
-// Rewriter modify item contents with a set of rewriting rules.
-func Rewriter(entryURL string, entry *model.Entry, customRewriteRules string) {
-	rulesList := getPredefinedRewriteRules(entryURL)
+func ApplyContentRewriteRules(entry *model.Entry, customRewriteRules string) {
+	rulesList := getPredefinedRewriteRules(entry.URL)
 	if customRewriteRules != "" {
 		rulesList = customRewriteRules
 	}
@@ -109,11 +108,11 @@ func Rewriter(entryURL string, entry *model.Entry, customRewriteRules string) {
 
 	slog.Debug("Rewrite rules applied",
 		slog.Any("rules", rules),
-		slog.String("entry_url", entryURL),
+		slog.String("entry_url", entry.URL),
 	)
 
 	for _, rule := range rules {
-		rule.applyRule(entryURL, entry)
+		rule.applyRule(entry.URL, entry)
 	}
 }
 
@@ -137,11 +136,9 @@ func parseRules(rulesText string) (rules []rule) {
 }
 
 func getPredefinedRewriteRules(entryURL string) string {
-	urlDomain := urllib.Domain(entryURL)
-	for domain, rules := range predefinedRules {
-		if strings.Contains(urlDomain, domain) {
-			return rules
-		}
+	urlDomain := urllib.DomainWithoutWWW(entryURL)
+	if rules, ok := predefinedRules[urlDomain]; ok {
+		return rules
 	}
 
 	return ""

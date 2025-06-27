@@ -31,7 +31,7 @@ Features
 - Provides full-text search (powered by Postgres).
 - Available in 20 languages: Portuguese (Brazilian), Chinese (Simplified and Traditional), Dutch, English (US), Finnish, French, German, Greek, Hindi, Indonesian, Italian, Japanese, Polish, Romanian, Russian, Taiwanese POJ, Ukrainian, Spanish, and Turkish.
 
-### Privacy
+### Privacy and Security
 
 - Removes pixel trackers.
 - Strips tracking parameters from URLs (e.g., `utm_source`, `utm_medium`, `utm_campaign`, `fbclid`, etc.).
@@ -42,6 +42,8 @@ Features
 - Plays YouTube videos via the privacy-focused domain `youtube-nocookie.com`.
 - Supports alternative YouTube video players such as [Invidious](https://invidio.us).
 - Blocks external JavaScript to prevent tracking and enhance security.
+- Sanitizes external content before rendering it.
+- Enforces a [Content Security](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) and a [Trusted Types Policy](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API) to only application JavaScript and blocks inline scripts and styles. 
 
 ### Bot Protection Bypass Mechanisms
 
@@ -79,7 +81,7 @@ Features
 
 ### Integrations
 
-- 25+ integrations with third-party services: [Apprise](https://github.com/caronc/apprise), [Betula](https://sr.ht/~bouncepaw/betula/), [Cubox](https://cubox.cc/), [Discord](https://discord.com/), [Espial](https://github.com/jonschoning/espial), [Instapaper](https://www.instapaper.com/), [LinkAce](https://www.linkace.org/), [Linkding](https://github.com/sissbruecker/linkding), [LinkWarden](https://linkwarden.app/), [Matrix](https://matrix.org), [Notion](https://www.notion.com/), [Ntfy](https://ntfy.sh/), [Nunux Keeper](https://keeper.nunux.org/), [Pinboard](https://pinboard.in/), [Pocket](https://getpocket.com/), [Pushover](https://pushover.net), [RainDrop](https://raindrop.io/), [Readeck](https://readeck.org/en/), [Readwise Reader](https://readwise.io/read), [RssBridge](https://rss-bridge.org/), [Shaarli](https://github.com/shaarli/Shaarli), [Shiori](https://github.com/go-shiori/shiori), [Slack](https://slack.com/), [Telegram](https://telegram.org), [Wallabag](https://www.wallabag.org/), etc.
+- 25+ integrations with third-party services: [Apprise](https://github.com/caronc/apprise), [Betula](https://sr.ht/~bouncepaw/betula/), [Cubox](https://cubox.cc/), [Discord](https://discord.com/), [Espial](https://github.com/jonschoning/espial), [Instapaper](https://www.instapaper.com/), [LinkAce](https://www.linkace.org/), [Linkding](https://github.com/sissbruecker/linkding), [LinkWarden](https://linkwarden.app/), [Matrix](https://matrix.org), [Notion](https://www.notion.com/), [Ntfy](https://ntfy.sh/), [Nunux Keeper](https://keeper.nunux.org/), [Pinboard](https://pinboard.in/), [Pushover](https://pushover.net), [RainDrop](https://raindrop.io/), [Readeck](https://readeck.org/en/), [Readwise Reader](https://readwise.io/read), [RssBridge](https://rss-bridge.org/), [Shaarli](https://github.com/shaarli/Shaarli), [Shiori](https://github.com/go-shiori/shiori), [Slack](https://slack.com/), [Telegram](https://telegram.org), [Wallabag](https://www.wallabag.org/), etc.
 - Bookmarklet for subscribing to websites directly from any web browser.
 - Webhooks for real-time notifications or custom integrations.
 - Compatibility with existing mobile applications using the Fever or Google Reader API.
@@ -106,13 +108,15 @@ Features
 - Allows the use of custom <abbr title="Secure Sockets Layer">SSL</abbr> certificates.
 - Supports [HTTP/2](https://en.wikipedia.org/wiki/HTTP/2) when TLS is enabled.
 - Updates feeds in the background using an internal scheduler or a traditional cron job.
-- Sanitizes external content before rendering it.
-- Enforces a [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) that permits only application JavaScript and blocks inline scripts and styles.
 - Uses native lazy loading for images and iframes.
 - Compatible only with modern browsers.
 - Adheres to the [Twelve-Factor App](https://12factor.net/) methodology.
 - Provides official Debian/RPM packages and pre-built binaries.
 - Publishes a Docker image to Docker Hub, GitHub Registry, and Quay.io Registry, with ARM architecture support.
+- Uses a limited amount of third-party go dependencies
+- Has a comprehensive testsuite, with both unit tests and integration tests.
+- Only uses a couple of MB of memory and a negligible amount of CPU, even with several hundreds of feeds.
+- Respects/sends Last-Modified, If-Modified-Since, If-None-Match, Cache-Control, Expires and ETags headers, and has a default polling interval of 1h.
 
 Documentation
 -------------

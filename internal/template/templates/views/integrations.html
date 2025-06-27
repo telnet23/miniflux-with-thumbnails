@@ -26,7 +26,7 @@
             <input type="url" name="apprise_url" id="form-apprise-url" value="{{ .form.AppriseURL }}" placeholder="http://apprise:8080" spellcheck="false">
 
             <label for="form-apprise-services-urls">{{ t "form.integration.apprise_services_url" }}
-                <a href="https://github.com/caronc/apprise/wiki" target="_blank">
+                <a href="https://github.com/caronc/apprise/wiki" {{ if $.user.OpenExternalLinksInNewTab }}target="_blank"{{ end }}>
                     {{ icon "external-link" }}
                 </a>
             </label>
@@ -364,6 +364,25 @@
         </div>
     </details>
 
+    <details {{ if .form.KarakeepEnabled }}open{{ end }}>
+        <summary>Karakeep</summary>
+        <div class="form-section">
+            <label>
+                <input type="checkbox" name="karakeep_enabled" value="1" {{ if .form.KarakeepEnabled }}checked{{ end }}> {{ t "form.integration.karakeep_activate" }}
+            </label>
+
+            <label for="form-karakeep-api-key">{{ t "form.integration.karakeep_api_key" }}</label>
+            <input type="text" name="karakeep_api_key" id="form-karakeep-api-key" value="{{ .form.KarakeepAPIKey }}" spellcheck="false">
+
+            <label for="form-karakeep-url">{{ t "form.integration.karakeep_url" }}</label>
+            <input type="url" name="karakeep_url" id="form-karakeep-url" value="{{ .form.KarakeepURL }}" placeholder="https://try.karakeep.app/api/v1/bookmarks" spellcheck="false">
+
+            <div class="buttons">
+                <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>
+            </div>
+        </div>
+    </details>
+
     <details {{ if .form.PinboardEnabled }}open{{ end }}>
         <summary>Pinboard</summary>
         <div class="form-section">
@@ -380,31 +399,6 @@
             <label>
                 <input type="checkbox" name="pinboard_mark_as_unread" value="1" {{ if .form.PinboardMarkAsUnread }}checked{{ end }}> {{ t "form.integration.pinboard_bookmark" }}
             </label>
-
-            <div class="buttons">
-                <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>
-            </div>
-        </div>
-    </details>
-
-    <details {{ if .form.PocketEnabled }}open{{ end }}>
-        <summary>Pocket</summary>
-        <div class="form-section">
-            <label>
-                <input type="checkbox" name="pocket_enabled" value="1" {{ if .form.PocketEnabled }}checked{{ end }}> {{ t "form.integration.pocket_activate" }}
-            </label>
-
-            {{ if not .hasPocketConsumerKeyConfigured }}
-                <label for="form-pocket-consumer-key">{{ t "form.integration.pocket_consumer_key" }}</label>
-                <input type="text" name="pocket_consumer_key" id="form-pocket-consumer-key" value="{{ .form.PocketConsumerKey }}" spellcheck="false">
-            {{ end }}
-
-            <label for="form-pocket-access-token">{{ t "form.integration.pocket_access_token" }}</label>
-            <input type="password" name="pocket_access_token" id="form-pocket-access-token" value="{{ .form.PocketAccessToken }}" autocomplete="new-password">
-
-            {{ if not .form.PocketAccessToken }}
-                <p><a href="{{ route "pocketAuthorize" }}">{{ t "form.integration.pocket_connect_link" }}</a></p>
-            {{ end }}
 
             <div class="buttons">
                 <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>
@@ -495,7 +489,7 @@
             <label for="form-readwise-api-key">{{ t "form.integration.readwise_api_key" }}</label>
             <input type="text" name="readwise_api_key" id="form-readwise-api-key" value="{{ .form.ReadwiseAPIKey }}" spellcheck="false">
 
-            <p><a href="https://readwise.io/access_token" target="_blank">{{ t "form.integration.readwise_api_key_link" }}</a></p>
+            <p><a href="https://readwise.io/access_token" {{ if $.user.OpenExternalLinksInNewTab }}target="_blank"{{ end }}>{{ t "form.integration.readwise_api_key_link" }}</a></p>
 
             <div class="buttons">
                 <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>

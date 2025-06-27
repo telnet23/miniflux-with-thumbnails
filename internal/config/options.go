@@ -75,7 +75,6 @@ const (
 	defaultOauth2OidcProviderName             = "OpenID Connect"
 	defaultOAuth2Provider                     = ""
 	defaultDisableLocalAuth                   = false
-	defaultPocketConsumerKey                  = ""
 	defaultHTTPClientTimeout                  = 20
 	defaultHTTPClientMaxBodySize              = 15
 	defaultHTTPClientProxy                    = ""
@@ -112,7 +111,6 @@ type Options struct {
 	hsts                               bool
 	httpService                        bool
 	schedulerService                   bool
-	serverTimingHeader                 bool
 	baseURL                            string
 	rootURL                            string
 	basePath                           string
@@ -121,7 +119,7 @@ type Options struct {
 	databaseMinConns                   int
 	databaseConnectionLifetime         int
 	runMigrations                      bool
-	listenAddr                         string
+	listenAddr                         []string
 	certFile                           string
 	certDomain                         string
 	certKeyFile                        string
@@ -155,6 +153,7 @@ type Options struct {
 	filterEntryMaxAgeDays              int
 	youTubeApiKey                      string
 	youTubeEmbedUrlOverride            string
+	youTubeEmbedDomain                 string
 	oauth2UserCreationAllowed          bool
 	oauth2ClientID                     string
 	oauth2ClientSecret                 string
@@ -163,7 +162,6 @@ type Options struct {
 	oidcProviderName                   string
 	oauth2Provider                     string
 	disableLocalAuth                   bool
-	pocketConsumerKey                  string
 	httpClientTimeout                  int
 	httpClientMaxBodySize              int64
 	httpClientProxyURL                 *url.URL
@@ -196,7 +194,6 @@ func NewOptions() *Options {
 		hsts:                               defaultHSTS,
 		httpService:                        defaultHTTPService,
 		schedulerService:                   defaultSchedulerService,
-		serverTimingHeader:                 defaultTiming,
 		baseURL:                            defaultBaseURL,
 		rootURL:                            defaultRootURL,
 		basePath:                           defaultBasePath,
@@ -205,7 +202,7 @@ func NewOptions() *Options {
 		databaseMinConns:                   defaultDatabaseMinConns,
 		databaseConnectionLifetime:         defaultDatabaseConnectionLifetime,
 		runMigrations:                      defaultRunMigrations,
-		listenAddr:                         defaultListenAddr,
+		listenAddr:                         []string{defaultListenAddr},
 		certFile:                           defaultCertFile,
 		certDomain:                         defaultCertDomain,
 		certKeyFile:                        defaultKeyFile,
@@ -245,7 +242,6 @@ func NewOptions() *Options {
 		oidcProviderName:                   defaultOauth2OidcProviderName,
 		oauth2Provider:                     defaultOAuth2Provider,
 		disableLocalAuth:                   defaultDisableLocalAuth,
-		pocketConsumerKey:                  defaultPocketConsumerKey,
 		httpClientTimeout:                  defaultHTTPClientTimeout,
 		httpClientMaxBodySize:              defaultHTTPClientMaxBodySize * 1024 * 1024,
 		httpClientProxyURL:                 nil,
@@ -302,11 +298,6 @@ func (o *Options) MaintenanceMessage() string {
 	return o.maintenanceMessage
 }
 
-// HasServerTimingHeader returns true if server-timing headers enabled.
-func (o *Options) HasServerTimingHeader() bool {
-	return o.serverTimingHeader
-}
-
 // BaseURL returns the application base URL with path.
 func (o *Options) BaseURL() string {
 	return o.baseURL
@@ -348,7 +339,7 @@ func (o *Options) DatabaseConnectionLifetime() time.Duration {
 }
 
 // ListenAddr returns the listen address for the HTTP server.
-func (o *Options) ListenAddr() string {
+func (o *Options) ListenAddr() []string {
 	return o.listenAddr
 }
 
@@ -521,9 +512,17 @@ func (o *Options) YouTubeApiKey() string {
 	return o.youTubeApiKey
 }
 
-// YouTubeEmbedUrlOverride returns YouTube URL which will be used for embeds
+// YouTubeEmbedUrlOverride returns the YouTube embed URL override if defined.
 func (o *Options) YouTubeEmbedUrlOverride() string {
 	return o.youTubeEmbedUrlOverride
+}
+
+// YouTubeEmbedDomain returns the domain used for YouTube embeds.
+func (o *Options) YouTubeEmbedDomain() string {
+	if o.youTubeEmbedDomain != "" {
+		return o.youTubeEmbedDomain
+	}
+	return "www.youtube-nocookie.com"
 }
 
 // FetchNebulaWatchTime returns true if the Nebula video duration
@@ -577,14 +576,6 @@ func (o *Options) HasHTTPService() bool {
 // HasSchedulerService returns true if the scheduler service is enabled.
 func (o *Options) HasSchedulerService() bool {
 	return o.schedulerService
-}
-
-// PocketConsumerKey returns the Pocket Consumer Key if configured.
-func (o *Options) PocketConsumerKey(defaultValue string) string {
-	if o.pocketConsumerKey != "" {
-		return o.pocketConsumerKey
-	}
-	return defaultValue
 }
 
 // HTTPClientTimeout returns the time limit in seconds before the HTTP client cancel the request.
@@ -749,7 +740,7 @@ func (o *Options) SortedOptions(redactSecret bool) []*Option {
 		"HTTP_SERVICE":                           o.httpService,
 		"INVIDIOUS_INSTANCE":                     o.invidiousInstance,
 		"KEY_FILE":                               o.certKeyFile,
-		"LISTEN_ADDR":                            o.listenAddr,
+		"LISTEN_ADDR":                            strings.Join(o.listenAddr, ","),
 		"LOG_FILE":                               o.logFile,
 		"LOG_DATE_TIME":                          o.logDateTime,
 		"LOG_FORMAT":                             o.logFormat,
@@ -769,7 +760,6 @@ func (o *Options) SortedOptions(redactSecret bool) []*Option {
 		"OAUTH2_REDIRECT_URL":                    o.oauth2RedirectURL,
 		"OAUTH2_USER_CREATION":                   o.oauth2UserCreationAllowed,
 		"DISABLE_LOCAL_AUTH":                     o.disableLocalAuth,
-		"POCKET_CONSUMER_KEY":                    redactSecretValue(o.pocketConsumerKey, redactSecret),
 		"POLLING_FREQUENCY":                      o.pollingFrequency,
 		"FORCE_REFRESH_INTERVAL":                 o.forceRefreshInterval,
 		"POLLING_PARSING_ERROR_LIMIT":            o.pollingParsingErrorLimit,
@@ -787,7 +777,6 @@ func (o *Options) SortedOptions(redactSecret bool) []*Option {
 		"SCHEDULER_ROUND_ROBIN_MIN_INTERVAL":     o.schedulerRoundRobinMinInterval,
 		"SCHEDULER_ROUND_ROBIN_MAX_INTERVAL":     o.schedulerRoundRobinMaxInterval,
 		"SCHEDULER_SERVICE":                      o.schedulerService,
-		"SERVER_TIMING_HEADER":                   o.serverTimingHeader,
 		"WATCHDOG":                               o.watchdog,
 		"WORKER_POOL_SIZE":                       o.workerPoolSize,
 		"YOUTUBE_API_KEY":                        redactSecretValue(o.youTubeApiKey, redactSecret),

@@ -21,7 +21,10 @@ func IsAbsoluteURL(link string) bool {
 // AbsoluteURL converts the input URL as absolute URL if necessary.
 func AbsoluteURL(baseURL, input string) (string, error) {
 	if strings.HasPrefix(input, "//") {
-		input = "https://" + input[2:]
+		return "https:" + input, nil
+	}
+	if strings.HasPrefix(input, "https://") || strings.HasPrefix(input, "http://") {
+		return input, nil
 	}
 
 	u, err := url.Parse(input)
@@ -78,6 +81,11 @@ func Domain(websiteURL string) string {
 	}
 
 	return parsedURL.Host
+}
+
+// DomainWithoutWWW returns only the domain part of the given URL, with the "www." prefix removed if present.
+func DomainWithoutWWW(websiteURL string) string {
+	return strings.TrimPrefix(Domain(websiteURL), "www.")
 }
 
 // JoinBaseURLAndPath returns a URL string with the provided path elements joined together.
