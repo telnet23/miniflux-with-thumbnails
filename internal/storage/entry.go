@@ -8,8 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"slices"
-	"strings"
 	"time"
 
 	"miniflux.app/v2/internal/crypto"
@@ -78,12 +76,20 @@ func (s *Storage) UpdateEntryTitleAndContent(entry *model.Entry) error {
 			title=$1,
 			content=$2,
 			reading_time=$3,
-			document_vectors = setweight(to_tsvector(left(coalesce($1, ''), 500000)), 'A') || setweight(to_tsvector(left(coalesce($2, ''), 500000)), 'B')
+			document_vectors = setweight(to_tsvector($4), 'A') || setweight(to_tsvector($5), 'B')
 		WHERE
-			id=$4 AND user_id=$5
+			id=$6 AND user_id=$7
 	`
 
-	if _, err := s.db.Exec(query, entry.Title, entry.Content, entry.ReadingTime, entry.ID, entry.UserID); err != nil {
+	if _, err := s.db.Exec(
+		query,
+		entry.Title,
+		entry.Content,
+		entry.ReadingTime,
+		truncateStringForTSVectorField(entry.Title),
+		truncateStringForTSVectorField(entry.Content),
+		entry.ID,
+		entry.UserID); err != nil {
 		return fmt.Errorf(`store: unable to update entry #%d: %v`, entry.ID, err)
 	}
 
@@ -122,8 +128,8 @@ func (s *Storage) createEntry(tx *sql.Tx, entry *model.Entry) error {
 				$9,
 				$10,
 				now(),
-				setweight(to_tsvector(left(coalesce($1, ''), 500000)), 'A') || setweight(to_tsvector(left(coalesce($6, ''), 500000)), 'B'),
-				$11
+				setweight(to_tsvector($11), 'A') || setweight(to_tsvector($12), 'B'),
+				$13
 			)
 		RETURNING
 			id, status, created_at, changed_at
@@ -140,7 +146,9 @@ func (s *Storage) createEntry(tx *sql.Tx, entry *model.Entry) error {
 		entry.UserID,
 		entry.FeedID,
 		entry.ReadingTime,
-		pq.Array(removeEmpty(removeDuplicates(entry.Tags))),
+		truncateStringForTSVectorField(entry.Title),
+		truncateStringForTSVectorField(entry.Content),
+		pq.Array(entry.Tags),
 	).Scan(
 		&entry.ID,
 		&entry.Status,
@@ -178,10 +186,10 @@ func (s *Storage) updateEntry(tx *sql.Tx, entry *model.Entry) error {
 			content=$4,
 			author=$5,
 			reading_time=$6,
-			document_vectors = setweight(to_tsvector(left(coalesce($1, ''), 500000)), 'A') || setweight(to_tsvector(left(coalesce($4, ''), 500000)), 'B'),
-			tags=$10
+			document_vectors = setweight(to_tsvector($7), 'A') || setweight(to_tsvector($8), 'B'),
+			tags=$12
 		WHERE
-			user_id=$7 AND feed_id=$8 AND hash=$9
+			user_id=$9 AND feed_id=$10 AND hash=$11
 		RETURNING
 			id
 	`
@@ -193,10 +201,12 @@ func (s *Storage) updateEntry(tx *sql.Tx, entry *model.Entry) error {
 		entry.Content,
 		entry.Author,
 		entry.ReadingTime,
+		truncateStringForTSVectorField(entry.Title),
+		truncateStringForTSVectorField(entry.Content),
 		entry.UserID,
 		entry.FeedID,
 		entry.Hash,
-		pq.Array(removeEmpty(removeDuplicates(entry.Tags))),
+		pq.Array(entry.Tags),
 	).Scan(&entry.ID)
 
 	if err != nil {
@@ -628,17 +638,30 @@ func (s *Storage) UnshareEntry(userID int64, entryID int64) (err error) {
 	return
 }
 
-func removeDuplicates(l []string) []string {
-	slices.Sort(l)
-	return slices.Compact(l)
-}
+// truncateStringForTSVectorField truncates a string to fit within the maximum size for a TSVector field in PostgreSQL.
+func truncateStringForTSVectorField(s string) string {
+	// The length of a tsvector (lexemes + positions) must be less than 1 megabyte.
+	const maxTSVectorSize = 1024 * 1024
 
-func removeEmpty(l []string) []string {
-	var finalSlice []string
-	for _, item := range l {
-		if strings.TrimSpace(item) != "" {
-			finalSlice = append(finalSlice, item)
+	if len(s) < maxTSVectorSize {
+		return s
+	}
+
+	// Truncate to fit under the limit, ensuring we don't break UTF-8 characters
+	truncated := s[:maxTSVectorSize-1]
+
+	// Walk backwards to find the last complete UTF-8 character
+	for i := len(truncated) - 1; i >= 0; i-- {
+		if (truncated[i] & 0x80) == 0 {
+			// ASCII character, we can stop here
+			return truncated[:i+1]
+		}
+		if (truncated[i] & 0xC0) == 0xC0 {
+			// Start of a multi-byte UTF-8 character
+			return truncated[:i]
 		}
 	}
-	return finalSlice
+
+	// Fallback: return empty string if we can't find a valid UTF-8 boundary
+	return ""
 }

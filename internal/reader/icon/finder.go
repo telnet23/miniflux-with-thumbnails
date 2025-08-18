@@ -29,28 +29,28 @@ import (
 	"golang.org/x/image/draw"
 )
 
-type IconFinder struct {
+type iconFinder struct {
 	requestBuilder *fetcher.RequestBuilder
 	websiteURL     string
 	feedIconURL    string
 }
 
-func NewIconFinder(requestBuilder *fetcher.RequestBuilder, websiteURL, feedIconURL string) *IconFinder {
-	return &IconFinder{
+func newIconFinder(requestBuilder *fetcher.RequestBuilder, websiteURL, feedIconURL string) *iconFinder {
+	return &iconFinder{
 		requestBuilder: requestBuilder,
 		websiteURL:     websiteURL,
 		feedIconURL:    feedIconURL,
 	}
 }
 
-func (f *IconFinder) FindIcon() (*model.Icon, error) {
+func (f *iconFinder) findIcon() (*model.Icon, error) {
 	slog.Debug("Begin icon discovery process",
 		slog.String("website_url", f.websiteURL),
 		slog.String("feed_icon_url", f.feedIconURL),
 	)
 
 	if f.feedIconURL != "" {
-		if icon, err := f.FetchFeedIcon(); err != nil {
+		if icon, err := f.fetchFeedIcon(); err != nil {
 			slog.Debug("Unable to download icon from feed",
 				slog.String("website_url", f.websiteURL),
 				slog.String("feed_icon_url", f.feedIconURL),
@@ -61,7 +61,7 @@ func (f *IconFinder) FindIcon() (*model.Icon, error) {
 		}
 	}
 
-	if icon, err := f.FetchIconsFromHTMLDocument(); err != nil {
+	if icon, err := f.fetchIconsFromHTMLDocument(); err != nil {
 		slog.Debug("Unable to fetch icons from HTML document",
 			slog.String("website_url", f.websiteURL),
 			slog.Any("error", err),
@@ -70,10 +70,10 @@ func (f *IconFinder) FindIcon() (*model.Icon, error) {
 		return icon, nil
 	}
 
-	return f.FetchDefaultIcon()
+	return f.fetchDefaultIcon()
 }
 
-func (f *IconFinder) FetchDefaultIcon() (*model.Icon, error) {
+func (f *iconFinder) fetchDefaultIcon() (*model.Icon, error) {
 	slog.Debug("Fetching default icon",
 		slog.String("website_url", f.websiteURL),
 	)
@@ -83,7 +83,7 @@ func (f *IconFinder) FetchDefaultIcon() (*model.Icon, error) {
 		return nil, fmt.Errorf(`icon: unable to join root URL and path: %w`, err)
 	}
 
-	icon, err := f.DownloadIcon(iconURL)
+	icon, err := f.downloadIcon(iconURL)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (f *IconFinder) FetchDefaultIcon() (*model.Icon, error) {
 	return icon, nil
 }
 
-func (f *IconFinder) FetchFeedIcon() (*model.Icon, error) {
+func (f *iconFinder) fetchFeedIcon() (*model.Icon, error) {
 	slog.Debug("Fetching feed icon",
 		slog.String("website_url", f.websiteURL),
 		slog.String("feed_icon_url", f.feedIconURL),
@@ -102,10 +102,10 @@ func (f *IconFinder) FetchFeedIcon() (*model.Icon, error) {
 		return nil, fmt.Errorf(`icon: unable to convert icon URL to absolute URL: %w`, err)
 	}
 
-	return f.DownloadIcon(iconURL)
+	return f.downloadIcon(iconURL)
 }
 
-func (f *IconFinder) FetchIconsFromHTMLDocument() (*model.Icon, error) {
+func (f *iconFinder) fetchIconsFromHTMLDocument() (*model.Icon, error) {
 	slog.Debug("Searching icons from HTML document",
 		slog.String("website_url", f.websiteURL),
 	)
@@ -145,7 +145,7 @@ func (f *IconFinder) FetchIconsFromHTMLDocument() (*model.Icon, error) {
 			return nil, fmt.Errorf(`icon: unable to convert icon URL to absolute URL: %w`, err)
 		}
 
-		if icon, err := f.DownloadIcon(iconURL); err != nil {
+		if icon, err := f.downloadIcon(iconURL); err != nil {
 			slog.Debug("Unable to download icon from HTML document",
 				slog.String("website_url", f.websiteURL),
 				slog.String("icon_url", iconURL),
@@ -163,7 +163,7 @@ func (f *IconFinder) FetchIconsFromHTMLDocument() (*model.Icon, error) {
 	return nil, nil
 }
 
-func (f *IconFinder) DownloadIcon(iconURL string) (*model.Icon, error) {
+func (f *iconFinder) downloadIcon(iconURL string) (*model.Icon, error) {
 	slog.Debug("Downloading icon",
 		slog.String("website_url", f.websiteURL),
 		slog.String("icon_url", iconURL),
@@ -241,13 +241,6 @@ func resizeIcon(icon *model.Icon) *model.Icon {
 }
 
 func findIconURLsFromHTMLDocument(body io.Reader, contentType string) ([]string, error) {
-	queries := []string{
-		"link[rel='icon' i]",
-		"link[rel='shortcut icon' i]",
-		"link[rel='icon shortcut' i]",
-		"link[rel='apple-touch-icon-precomposed.png']",
-	}
-
 	htmlDocumentReader, err := encoding.NewCharsetReader(body, contentType)
 	if err != nil {
 		return nil, fmt.Errorf("icon: unable to create charset reader: %w", err)
@@ -258,20 +251,26 @@ func findIconURLsFromHTMLDocument(body io.Reader, contentType string) ([]string,
 		return nil, fmt.Errorf("icon: unable to read document: %v", err)
 	}
 
+	queries := []string{
+		"link[rel='icon' i][href]",
+		"link[rel='shortcut icon' i][href]",
+		"link[rel='icon shortcut' i][href]",
+		"link[rel='apple-touch-icon-precomposed.png'][href]",
+	}
+
 	var iconURLs []string
 	for _, query := range queries {
 		slog.Debug("Searching icon URL in HTML document", slog.String("query", query))
 
-		doc.Find(query).Each(func(i int, s *goquery.Selection) {
-			if href, exists := s.Attr("href"); exists {
-				if iconURL := strings.TrimSpace(href); iconURL != "" {
-					iconURLs = append(iconURLs, iconURL)
-					slog.Debug("Found icon URL in HTML document",
-						slog.String("query", query),
-						slog.String("icon_url", iconURL))
-				}
+		for _, s := range doc.Find(query).EachIter() {
+			href, _ := s.Attr("href")
+			if iconURL := strings.TrimSpace(href); iconURL != "" {
+				iconURLs = append(iconURLs, iconURL)
+				slog.Debug("Found icon URL in HTML document",
+					slog.String("query", query),
+					slog.String("icon_url", iconURL))
 			}
-		})
+		}
 	}
 
 	return iconURLs, nil

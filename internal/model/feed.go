@@ -37,7 +37,6 @@ type Feed struct {
 	ParsingErrorCount           int       `json:"parsing_error_count"`
 	ScraperRules                string    `json:"scraper_rules"`
 	RewriteRules                string    `json:"rewrite_rules"`
-	Crawler                     bool      `json:"crawler"`
 	BlocklistRules              string    `json:"blocklist_rules"`
 	KeeplistRules               string    `json:"keeplist_rules"`
 	BlockFilterEntryRules       string    `json:"block_filter_entry_rules"`
@@ -54,12 +53,13 @@ type Feed struct {
 	FetchViaProxy               bool      `json:"fetch_via_proxy"`
 	HideGlobally                bool      `json:"hide_globally"`
 	DisableHTTP2                bool      `json:"disable_http2"`
+	PushoverEnabled             bool      `json:"pushover_enabled"`
+	NtfyEnabled                 bool      `json:"ntfy_enabled"`
+	Crawler                     bool      `json:"crawler"`
 	AppriseServiceURLs          string    `json:"apprise_service_urls"`
 	WebhookURL                  string    `json:"webhook_url"`
-	NtfyEnabled                 bool      `json:"ntfy_enabled"`
 	NtfyPriority                int       `json:"ntfy_priority"`
 	NtfyTopic                   string    `json:"ntfy_topic"`
-	PushoverEnabled             bool      `json:"pushover_enabled"`
 	PushoverPriority            int       `json:"pushover_priority"`
 	ProxyURL                    string    `json:"proxy_url"`
 
@@ -164,15 +164,15 @@ type FeedCreationRequest struct {
 	IgnoreHTTPCache             bool   `json:"ignore_http_cache"`
 	AllowSelfSignedCertificates bool   `json:"allow_self_signed_certificates"`
 	FetchViaProxy               bool   `json:"fetch_via_proxy"`
+	HideGlobally                bool   `json:"hide_globally"`
+	DisableHTTP2                bool   `json:"disable_http2"`
 	ScraperRules                string `json:"scraper_rules"`
 	RewriteRules                string `json:"rewrite_rules"`
 	BlocklistRules              string `json:"blocklist_rules"`
 	KeeplistRules               string `json:"keeplist_rules"`
 	BlockFilterEntryRules       string `json:"block_filter_entry_rules"`
 	KeepFilterEntryRules        string `json:"keep_filter_entry_rules"`
-	HideGlobally                bool   `json:"hide_globally"`
 	UrlRewriteRules             string `json:"urlrewrite_rules"`
-	DisableHTTP2                bool   `json:"disable_http2"`
 	ProxyURL                    string `json:"proxy_url"`
 }
 

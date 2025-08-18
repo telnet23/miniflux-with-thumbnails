@@ -128,6 +128,7 @@ func matchesEntryRegexRules(rules string, entry *model.Entry, feed *model.Feed, 
 }
 
 func matchesRule(rule string, entry *model.Entry) bool {
+	rule = strings.TrimSpace(strings.ReplaceAll(rule, "\r\n", ""))
 	parts := strings.SplitN(rule, "=", 2)
 	if len(parts) != 2 {
 		return false
@@ -166,7 +167,7 @@ func logFilterAction(entry *model.Entry, feed *model.Feed, filterRule string, fi
 		slog.String("feed_url", feed.FeedURL),
 		slog.String("entry_url", entry.URL),
 		slog.String("filter_rule", filterRule),
-		slog.Any("filter_action", filterAction),
+		slog.String("filter_action", string(filterAction)),
 	)
 }
 

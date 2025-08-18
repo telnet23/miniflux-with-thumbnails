@@ -204,10 +204,15 @@ func SanitizeHTMLWithDefaultOptions(baseURL, rawHTML string) string {
 }
 
 func SanitizeHTML(baseURL, rawHTML string, sanitizerOptions *SanitizerOptions) string {
-	var buffer strings.Builder
 	var tagStack []string
 	var parentTag string
 	var blockedStack []string
+	var buffer strings.Builder
+
+	// Educated guess about how big the sanitized HTML will be,
+	// to reduce the amount of buffer re-allocations in this function.
+	estimatedRatio := len(rawHTML) * 3 / 4
+	buffer.Grow(estimatedRatio)
 
 	// Errors are a non-issue, so they're handled later in the function.
 	parsedBaseUrl, _ := url.Parse(baseURL)
@@ -259,7 +264,7 @@ func SanitizeHTML(baseURL, rawHTML string, sanitizerOptions *SanitizerOptions) s
 			}
 
 			if len(blockedStack) == 0 && isValidTag(tagName) {
-				attrNames, htmlAttributes := sanitizeAttributes(parsedBaseUrl, baseURL, tagName, token.Attr, sanitizerOptions)
+				attrNames, htmlAttributes := sanitizeAttributes(parsedBaseUrl, tagName, token.Attr, sanitizerOptions)
 				if hasRequiredAttributes(tagName, attrNames) {
 					if len(attrNames) > 0 {
 						// Rewrite the start tag with allowed attributes.
@@ -287,7 +292,7 @@ func SanitizeHTML(baseURL, rawHTML string, sanitizerOptions *SanitizerOptions) s
 				continue
 			}
 			if len(blockedStack) == 0 && isValidTag(tagName) {
-				attrNames, htmlAttributes := sanitizeAttributes(parsedBaseUrl, baseURL, tagName, token.Attr, sanitizerOptions)
+				attrNames, htmlAttributes := sanitizeAttributes(parsedBaseUrl, tagName, token.Attr, sanitizerOptions)
 				if hasRequiredAttributes(tagName, attrNames) {
 					if len(attrNames) > 0 {
 						buffer.WriteString("<" + tagName + " " + htmlAttributes + "/>")
@@ -300,29 +305,26 @@ func SanitizeHTML(baseURL, rawHTML string, sanitizerOptions *SanitizerOptions) s
 	}
 }
 
-func sanitizeAttributes(parsedBaseUrl *url.URL, baseURL, tagName string, attributes []html.Attribute, sanitizerOptions *SanitizerOptions) ([]string, string) {
+func sanitizeAttributes(parsedBaseUrl *url.URL, tagName string, attributes []html.Attribute, sanitizerOptions *SanitizerOptions) ([]string, string) {
 	var htmlAttrs, attrNames []string
 	var err error
-	var isImageLargerThanLayout bool
 	var isAnchorLink bool
 
-	if tagName == "img" {
-		imgWidth := getIntegerAttributeValue("width", attributes)
-		isImageLargerThanLayout = imgWidth > 750
-	}
-
 	for _, attribute := range attributes {
-		value := attribute.Val
-
 		if !isValidAttribute(tagName, attribute.Key) {
 			continue
 		}
 
-		if tagName == "math" && attribute.Key == "xmlns" && value != "http://www.w3.org/1998/Math/MathML" {
-			value = "http://www.w3.org/1998/Math/MathML"
-		}
+		value := attribute.Val
 
-		if tagName == "img" {
+		switch tagName {
+		case "math":
+			if attribute.Key == "xmlns" {
+				if value != "http://www.w3.org/1998/Math/MathML" {
+					value = "http://www.w3.org/1998/Math/MathML"
+				}
+			}
+		case "img":
 			switch attribute.Key {
 			case "fetchpriority":
 				if !isValidFetchPriorityValue(value) {
@@ -333,14 +335,21 @@ func sanitizeAttributes(parsedBaseUrl *url.URL, baseURL, tagName string, attribu
 					continue
 				}
 			case "width", "height":
-				if isImageLargerThanLayout || !isPositiveInteger(value) {
+				if !isPositiveInteger(value) {
 					continue
 				}
-			}
-		}
 
-		if (tagName == "img" || tagName == "source") && attribute.Key == "srcset" {
-			value = sanitizeSrcsetAttr(baseURL, value)
+				// Discard width and height attributes when width is larger than Miniflux layout (750px)
+				if imgWidth := getIntegerAttributeValue("width", attributes); imgWidth > 750 {
+					continue
+				}
+			case "srcset":
+				value = sanitizeSrcsetAttr(parsedBaseUrl, value)
+			}
+		case "source":
+			if attribute.Key == "srcset" {
+				value = sanitizeSrcsetAttr(parsedBaseUrl, value)
+			}
 		}
 
 		if isExternalResourceAttribute(attribute.Key) {
@@ -356,7 +365,7 @@ func sanitizeAttributes(parsedBaseUrl *url.URL, baseURL, tagName string, attribu
 				value = attribute.Val
 				isAnchorLink = true
 			default:
-				value, err = urllib.AbsoluteURL(baseURL, value)
+				value, err = absoluteURLParsedBase(parsedBaseUrl, value)
 				if err != nil {
 					continue
 				}
@@ -537,11 +546,11 @@ func isBlockedTag(tagName string) bool {
 	return false
 }
 
-func sanitizeSrcsetAttr(baseURL, value string) string {
+func sanitizeSrcsetAttr(parsedBaseURL *url.URL, value string) string {
 	imageCandidates := ParseSrcSetAttribute(value)
 
 	for _, imageCandidate := range imageCandidates {
-		if absoluteURL, err := urllib.AbsoluteURL(baseURL, imageCandidate.ImageURL); err == nil {
+		if absoluteURL, err := absoluteURLParsedBase(parsedBaseURL, imageCandidate.ImageURL); err == nil {
 			imageCandidate.ImageURL = absoluteURL
 		}
 	}
@@ -592,4 +601,20 @@ func isValidDecodingValue(value string) bool {
 		return true
 	}
 	return false
+}
+
+// absoluteURLParsedBase is used instead of urllib.AbsoluteURL to avoid parsing baseURL over and over.
+func absoluteURLParsedBase(parsedBaseURL *url.URL, input string) (string, error) {
+	absURL, u, err := urllib.GetAbsoluteURL(input)
+	if err != nil {
+		return "", err
+	}
+	if absURL != "" {
+		return absURL, nil
+	}
+	if parsedBaseURL == nil {
+		return "", nil
+	}
+
+	return parsedBaseURL.ResolveReference(u).String(), nil
 }
