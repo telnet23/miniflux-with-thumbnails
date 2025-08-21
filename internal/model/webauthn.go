@@ -14,7 +14,7 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 )
 
-// handle marshalling / unmarshalling session data
+// WebAuthnSession handles marshalling / unmarshalling session data
 type WebAuthnSession struct {
 	*webauthn.SessionData
 }
@@ -23,7 +23,7 @@ func (s WebAuthnSession) Value() (driver.Value, error) {
 	return json.Marshal(s)
 }
 
-func (s *WebAuthnSession) Scan(value interface{}) error {
+func (s *WebAuthnSession) Scan(value any) error {
 	b, ok := value.([]byte)
 	if !ok {
 		return errors.New("type assertion to []byte failed")

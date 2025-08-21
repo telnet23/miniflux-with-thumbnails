@@ -197,12 +197,6 @@ type SanitizerOptions struct {
 	OpenLinksInNewTab bool
 }
 
-func SanitizeHTMLWithDefaultOptions(baseURL, rawHTML string) string {
-	return SanitizeHTML(baseURL, rawHTML, &SanitizerOptions{
-		OpenLinksInNewTab: true,
-	})
-}
-
 func SanitizeHTML(baseURL, rawHTML string, sanitizerOptions *SanitizerOptions) string {
 	var tagStack []string
 	var parentTag string

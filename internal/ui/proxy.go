@@ -20,6 +20,7 @@ import (
 	"miniflux.app/v2/internal/http/request"
 	"miniflux.app/v2/internal/http/response"
 	"miniflux.app/v2/internal/http/response/html"
+	"miniflux.app/v2/internal/reader/fetcher"
 	"miniflux.app/v2/internal/reader/rewrite"
 )
 
@@ -30,13 +31,13 @@ func (h *handler) mediaProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	encodedDigest := request.RouteStringParam(r, "encodedDigest")
 	encodedURL := request.RouteStringParam(r, "encodedURL")
 	if encodedURL == "" {
 		html.BadRequest(w, r, errors.New("no URL provided"))
 		return
 	}
 
+	encodedDigest := request.RouteStringParam(r, "encodedDigest")
 	decodedDigest, err := base64.URLEncoding.DecodeString(encodedDigest)
 	if err != nil {
 		html.BadRequest(w, r, errors.New("unable to decode this digest"))
@@ -84,33 +85,24 @@ func (h *handler) mediaProxy(w http.ResponseWriter, r *http.Request) {
 		slog.String("media_url", mediaURL),
 	)
 
-	req, err := http.NewRequest("GET", mediaURL, nil)
-	if err != nil {
-		html.ServerError(w, r, err)
-		return
-	}
+	requestBuilder := fetcher.NewRequestBuilder()
+	requestBuilder.WithTimeout(config.Opts.MediaProxyHTTPClientTimeout())
 
-	req.Header.Set("Connection", "close")
+	// Disable compression for the media proxy requests (not implemented).
+	requestBuilder.WithoutCompression()
 
 	if referer := rewrite.GetRefererForURL(mediaURL); referer != "" {
-		req.Header.Set("Referer", referer)
+		requestBuilder.WithHeader("Referer", referer)
 	}
 
-	forwardedRequestHeader := []string{"Range", "Accept", "Accept-Encoding", "User-Agent"}
+	forwardedRequestHeader := [...]string{"Range", "Accept", "Accept-Encoding", "User-Agent"}
 	for _, requestHeaderName := range forwardedRequestHeader {
 		if r.Header.Get(requestHeaderName) != "" {
-			req.Header.Set(requestHeaderName, r.Header.Get(requestHeaderName))
+			requestBuilder.WithHeader(requestHeaderName, r.Header.Get(requestHeaderName))
 		}
 	}
 
-	clt := &http.Client{
-		Transport: &http.Transport{
-			IdleConnTimeout: time.Duration(config.Opts.MediaProxyHTTPClientTimeout()) * time.Second,
-		},
-		Timeout: time.Duration(config.Opts.MediaProxyHTTPClientTimeout()) * time.Second,
-	}
-
-	resp, err := clt.Do(req)
+	resp, err := requestBuilder.ExecuteRequest(mediaURL)
 	if err != nil {
 		slog.Error("MediaProxy: Unable to initialize HTTP client",
 			slog.String("media_url", mediaURL),
@@ -151,7 +143,7 @@ func (h *handler) mediaProxy(w http.ResponseWriter, r *http.Request) {
 			b.WithHeader("Content-Disposition", fmt.Sprintf(`inline; filename="%s"`, filename))
 		}
 
-		forwardedResponseHeader := []string{"Content-Encoding", "Content-Type", "Content-Length", "Accept-Ranges", "Content-Range"}
+		forwardedResponseHeader := [...]string{"Content-Encoding", "Content-Type", "Content-Length", "Accept-Ranges", "Content-Range"}
 		for _, responseHeaderName := range forwardedResponseHeader {
 			if resp.Header.Get(responseHeaderName) != "" {
 				b.WithHeader(responseHeaderName, resp.Header.Get(responseHeaderName))

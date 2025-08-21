@@ -720,7 +720,7 @@ func TestWorkerPoolSize(t *testing.T) {
 	}
 }
 
-func TestDefautPollingFrequencyValue(t *testing.T) {
+func TestDefaultPollingFrequencyValue(t *testing.T) {
 	os.Clearenv()
 
 	parser := NewParser()
@@ -755,7 +755,7 @@ func TestPollingFrequency(t *testing.T) {
 	}
 }
 
-func TestDefautForceRefreshInterval(t *testing.T) {
+func TestDefaultForceRefreshInterval(t *testing.T) {
 	os.Clearenv()
 
 	parser := NewParser()
@@ -825,7 +825,7 @@ func TestBatchSize(t *testing.T) {
 	}
 }
 
-func TestDefautPollingSchedulerValue(t *testing.T) {
+func TestDefaultPollingSchedulerValue(t *testing.T) {
 	os.Clearenv()
 
 	parser := NewParser()
@@ -860,7 +860,7 @@ func TestPollingScheduler(t *testing.T) {
 	}
 }
 
-func TestDefautSchedulerEntryFrequencyMaxIntervalValue(t *testing.T) {
+func TestDefaultSchedulerEntryFrequencyMaxIntervalValue(t *testing.T) {
 	os.Clearenv()
 
 	parser := NewParser()
@@ -895,7 +895,7 @@ func TestSchedulerEntryFrequencyMaxInterval(t *testing.T) {
 	}
 }
 
-func TestDefautSchedulerEntryFrequencyMinIntervalValue(t *testing.T) {
+func TestDefaultSchedulerEntryFrequencyMinIntervalValue(t *testing.T) {
 	os.Clearenv()
 
 	parser := NewParser()
@@ -930,7 +930,7 @@ func TestSchedulerEntryFrequencyMinInterval(t *testing.T) {
 	}
 }
 
-func TestDefautSchedulerEntryFrequencyFactorValue(t *testing.T) {
+func TestDefaultSchedulerEntryFrequencyFactorValue(t *testing.T) {
 	os.Clearenv()
 
 	parser := NewParser()
@@ -1601,7 +1601,8 @@ func TestMediaProxyCustomURL(t *testing.T) {
 	}
 	expected := "http://example.org/proxy"
 	result := opts.MediaCustomProxyURL()
-	if result != expected {
+
+	if result == nil || result.String() != expected {
 		t.Fatalf(`Unexpected MEDIA_PROXY_CUSTOM_URL value, got %q instead of %q`, result, expected)
 	}
 }
@@ -2102,5 +2103,38 @@ func TestInvalidHTTPClientProxy(t *testing.T) {
 	_, err := parser.ParseEnvironmentVariables()
 	if err == nil {
 		t.Fatalf(`Expected error for invalid HTTP_CLIENT_PROXY value, but got none`)
+	}
+}
+
+func TestDefaultPollingLimitPerHost(t *testing.T) {
+	os.Clearenv()
+
+	parser := NewParser()
+	opts, err := parser.ParseEnvironmentVariables()
+	if err != nil {
+		t.Fatalf(`Parsing failure: %v`, err)
+	}
+
+	expected := 0
+	result := opts.PollingLimitPerHost()
+	if result != expected {
+		t.Fatalf(`Unexpected default PollingLimitPerHost value, got %v instead of %v`, result, expected)
+	}
+}
+
+func TestCustomPollingLimitPerHost(t *testing.T) {
+	os.Clearenv()
+	os.Setenv("POLLING_LIMIT_PER_HOST", "10")
+
+	parser := NewParser()
+	opts, err := parser.ParseEnvironmentVariables()
+	if err != nil {
+		t.Fatalf(`Parsing failure: %v`, err)
+	}
+
+	expected := 10
+	result := opts.PollingLimitPerHost()
+	if result != expected {
+		t.Fatalf(`Unexpected custom PollingLimitPerHost value, got %v instead of %v`, result, expected)
 	}
 }

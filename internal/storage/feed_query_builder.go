@@ -16,14 +16,14 @@ import (
 // FeedQueryBuilder builds a SQL query to fetch feeds.
 type FeedQueryBuilder struct {
 	store             *Storage
-	args              []interface{}
+	args              []any
 	conditions        []string
 	sortExpressions   []string
 	limit             int
 	offset            int
 	withCounters      bool
 	counterJoinFeeds  bool
-	counterArgs       []interface{}
+	counterArgs       []any
 	counterConditions []string
 }
 
@@ -31,9 +31,9 @@ type FeedQueryBuilder struct {
 func NewFeedQueryBuilder(store *Storage, userID int64) *FeedQueryBuilder {
 	return &FeedQueryBuilder{
 		store:             store,
-		args:              []interface{}{userID},
+		args:              []any{userID},
 		conditions:        []string{"f.user_id = $1"},
-		counterArgs:       []interface{}{userID, model.EntryStatusRead, model.EntryStatusUnread},
+		counterArgs:       []any{userID, model.EntryStatusRead, model.EntryStatusUnread},
 		counterConditions: []string{"e.user_id = $1", "e.status IN ($2, $3)"},
 	}
 }
@@ -67,7 +67,7 @@ func (f *FeedQueryBuilder) WithCounters() *FeedQueryBuilder {
 
 // WithSorting add a sort expression.
 func (f *FeedQueryBuilder) WithSorting(column, direction string) *FeedQueryBuilder {
-	f.sortExpressions = append(f.sortExpressions, fmt.Sprintf("%s %s", column, direction))
+	f.sortExpressions = append(f.sortExpressions, column+" "+direction)
 	return f
 }
 
@@ -95,7 +95,7 @@ func (f *FeedQueryBuilder) buildSorting() string {
 	var parts string
 
 	if len(f.sortExpressions) > 0 {
-		parts += fmt.Sprintf(" ORDER BY %s", strings.Join(f.sortExpressions, ", "))
+		parts += " ORDER BY " + strings.Join(f.sortExpressions, ", ")
 	}
 
 	if len(parts) > 0 {
@@ -103,11 +103,11 @@ func (f *FeedQueryBuilder) buildSorting() string {
 	}
 
 	if f.limit > 0 {
-		parts += fmt.Sprintf(" LIMIT %d", f.limit)
+		parts += " LIMIT " + strconv.Itoa(f.limit)
 	}
 
 	if f.offset > 0 {
-		parts += fmt.Sprintf(" OFFSET %d", f.offset)
+		parts += " OFFSET " + strconv.Itoa(f.offset)
 	}
 
 	return parts

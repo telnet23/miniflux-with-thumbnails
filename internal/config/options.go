@@ -100,6 +100,9 @@ type option struct {
 	Value any
 }
 
+// Opts holds parsed configuration options.
+var Opts *options
+
 // options contains configuration options.
 type options struct {
 	HTTPS                              bool
@@ -127,16 +130,17 @@ type options struct {
 	cleanupArchiveUnreadDays           int
 	cleanupArchiveBatchSize            int
 	cleanupRemoveSessionsDays          int
-	pollingFrequency                   int
 	forceRefreshInterval               int
 	batchSize                          int
-	pollingScheduler                   string
 	schedulerEntryFrequencyMinInterval int
 	schedulerEntryFrequencyMaxInterval int
 	schedulerEntryFrequencyFactor      int
 	schedulerRoundRobinMinInterval     int
 	schedulerRoundRobinMaxInterval     int
+	pollingFrequency                   int
+	pollingLimitPerHost                int
 	pollingParsingErrorLimit           int
+	pollingScheduler                   string
 	workerPoolSize                     int
 	createAdmin                        bool
 	adminUsername                      string
@@ -144,7 +148,7 @@ type options struct {
 	mediaProxyHTTPClientTimeout        int
 	mediaProxyMode                     string
 	mediaProxyResourceTypes            []string
-	mediaProxyCustomURL                string
+	mediaProxyCustomURL                *url.URL
 	fetchBilibiliWatchTime             bool
 	fetchNebulaWatchTime               bool
 	fetchOdyseeWatchTime               bool
@@ -225,7 +229,7 @@ func NewOptions() *options {
 		mediaProxyHTTPClientTimeout:        defaultMediaProxyHTTPClientTimeout,
 		mediaProxyMode:                     defaultMediaProxyMode,
 		mediaProxyResourceTypes:            []string{defaultMediaResourceTypes},
-		mediaProxyCustomURL:                defaultMediaProxyURL,
+		mediaProxyCustomURL:                nil,
 		filterEntryMaxAgeDays:              defaultFilterEntryMaxAgeDays,
 		fetchBilibiliWatchTime:             defaultFetchBilibiliWatchTime,
 		fetchNebulaWatchTime:               defaultFetchNebulaWatchTime,
@@ -387,11 +391,6 @@ func (o *options) WorkerPoolSize() int {
 	return o.workerPoolSize
 }
 
-// PollingFrequency returns the interval to refresh feeds in the background.
-func (o *options) PollingFrequency() int {
-	return o.pollingFrequency
-}
-
 // ForceRefreshInterval returns the force refresh interval
 func (o *options) ForceRefreshInterval() int {
 	return o.forceRefreshInterval
@@ -400,6 +399,22 @@ func (o *options) ForceRefreshInterval() int {
 // BatchSize returns the number of feeds to send for background processing.
 func (o *options) BatchSize() int {
 	return o.batchSize
+}
+
+// PollingFrequency returns the interval to refresh feeds in the background.
+func (o *options) PollingFrequency() int {
+	return o.pollingFrequency
+}
+
+// PollingLimitPerHost returns the limit of concurrent requests per host.
+// Set to zero to disable.
+func (o *options) PollingLimitPerHost() int {
+	return o.pollingLimitPerHost
+}
+
+// PollingParsingErrorLimit returns the limit of errors when to stop polling.
+func (o *options) PollingParsingErrorLimit() int {
+	return o.pollingParsingErrorLimit
 }
 
 // PollingScheduler returns the scheduler used for polling feeds.
@@ -428,11 +443,6 @@ func (o *options) SchedulerRoundRobinMinInterval() int {
 
 func (o *options) SchedulerRoundRobinMaxInterval() int {
 	return o.schedulerRoundRobinMaxInterval
-}
-
-// PollingParsingErrorLimit returns the limit of errors when to stop polling.
-func (o *options) PollingParsingErrorLimit() int {
-	return o.pollingParsingErrorLimit
 }
 
 // IsOAuth2UserCreationAllowed returns true if user creation is allowed for OAuth2 users.
@@ -553,7 +563,7 @@ func (o *options) MediaProxyResourceTypes() []string {
 }
 
 // MediaCustomProxyURL returns the custom proxy URL for medias.
-func (o *options) MediaCustomProxyURL() string {
+func (o *options) MediaCustomProxyURL() *url.URL {
 	return o.mediaProxyCustomURL
 }
 
@@ -701,7 +711,7 @@ func (o *options) SortedOptions(redactSecret bool) []*option {
 		mediaProxyPrivateKeyValue = "<binary-data>"
 	}
 
-	var keyValues = map[string]interface{}{
+	var keyValues = map[string]any{
 		"ADMIN_PASSWORD":                         redactSecretValue(o.adminPassword, redactSecret),
 		"ADMIN_USERNAME":                         o.adminUsername,
 		"AUTH_PROXY_HEADER":                      o.authProxyHeader,
@@ -759,8 +769,9 @@ func (o *options) SortedOptions(redactSecret bool) []*option {
 		"OAUTH2_REDIRECT_URL":                    o.oauth2RedirectURL,
 		"OAUTH2_USER_CREATION":                   o.oauth2UserCreationAllowed,
 		"DISABLE_LOCAL_AUTH":                     o.disableLocalAuth,
-		"POLLING_FREQUENCY":                      o.pollingFrequency,
 		"FORCE_REFRESH_INTERVAL":                 o.forceRefreshInterval,
+		"POLLING_FREQUENCY":                      o.pollingFrequency,
+		"POLLING_LIMIT_PER_HOST":                 o.pollingLimitPerHost,
 		"POLLING_PARSING_ERROR_LIMIT":            o.pollingParsingErrorLimit,
 		"POLLING_SCHEDULER":                      o.pollingScheduler,
 		"MEDIA_PROXY_HTTP_CLIENT_TIMEOUT":        o.mediaProxyHTTPClientTimeout,

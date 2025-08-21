@@ -137,12 +137,16 @@ func (p *parser) parseLines(lines []string) (err error) {
 			p.opts.cleanupRemoveSessionsDays = parseInt(value, defaultCleanupRemoveSessionsDays)
 		case "WORKER_POOL_SIZE":
 			p.opts.workerPoolSize = parseInt(value, defaultWorkerPoolSize)
-		case "POLLING_FREQUENCY":
-			p.opts.pollingFrequency = parseInt(value, defaultPollingFrequency)
 		case "FORCE_REFRESH_INTERVAL":
 			p.opts.forceRefreshInterval = parseInt(value, defaultForceRefreshInterval)
 		case "BATCH_SIZE":
 			p.opts.batchSize = parseInt(value, defaultBatchSize)
+		case "POLLING_FREQUENCY":
+			p.opts.pollingFrequency = parseInt(value, defaultPollingFrequency)
+		case "POLLING_LIMIT_PER_HOST":
+			p.opts.pollingLimitPerHost = parseInt(value, 0)
+		case "POLLING_PARSING_ERROR_LIMIT":
+			p.opts.pollingParsingErrorLimit = parseInt(value, defaultPollingParsingErrorLimit)
 		case "POLLING_SCHEDULER":
 			p.opts.pollingScheduler = strings.ToLower(parseString(value, defaultPollingScheduler))
 		case "SCHEDULER_ENTRY_FREQUENCY_MAX_INTERVAL":
@@ -155,8 +159,6 @@ func (p *parser) parseLines(lines []string) (err error) {
 			p.opts.schedulerRoundRobinMinInterval = parseInt(value, defaultSchedulerRoundRobinMinInterval)
 		case "SCHEDULER_ROUND_ROBIN_MAX_INTERVAL":
 			p.opts.schedulerRoundRobinMaxInterval = parseInt(value, defaultSchedulerRoundRobinMaxInterval)
-		case "POLLING_PARSING_ERROR_LIMIT":
-			p.opts.pollingParsingErrorLimit = parseInt(value, defaultPollingParsingErrorLimit)
 		case "MEDIA_PROXY_HTTP_CLIENT_TIMEOUT":
 			p.opts.mediaProxyHTTPClientTimeout = parseInt(value, defaultMediaProxyHTTPClientTimeout)
 		case "MEDIA_PROXY_MODE":
@@ -165,12 +167,13 @@ func (p *parser) parseLines(lines []string) (err error) {
 			p.opts.mediaProxyResourceTypes = parseStringList(value, []string{defaultMediaResourceTypes})
 		case "MEDIA_PROXY_PRIVATE_KEY":
 			randomKey := make([]byte, 16)
-			if _, err := rand.Read(randomKey); err != nil {
-				return fmt.Errorf("config: unable to generate random key: %w", err)
-			}
+			rand.Read(randomKey)
 			p.opts.mediaProxyPrivateKey = parseBytes(value, randomKey)
 		case "MEDIA_PROXY_CUSTOM_URL":
-			p.opts.mediaProxyCustomURL = parseString(value, defaultMediaProxyURL)
+			p.opts.mediaProxyCustomURL, err = url.Parse(parseString(value, defaultMediaProxyURL))
+			if err != nil {
+				return fmt.Errorf("config: invalid MEDIA_PROXY_CUSTOM_URL value: %w", err)
+			}
 		case "CREATE_ADMIN":
 			p.opts.createAdmin = parseBool(value, defaultCreateAdmin)
 		case "ADMIN_USERNAME":

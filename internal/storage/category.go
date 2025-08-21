@@ -31,7 +31,7 @@ func (s *Storage) CategoryTitleExists(userID int64, title string) bool {
 // CategoryIDExists checks if the given category exists into the database.
 func (s *Storage) CategoryIDExists(userID, categoryID int64) bool {
 	var result bool
-	query := `SELECT true FROM categories WHERE user_id=$1 AND id=$2`
+	query := `SELECT true FROM categories WHERE user_id=$1 AND id=$2 LIMIT 1`
 	s.db.QueryRow(query, userID, categoryID).Scan(&result)
 	return result
 }
@@ -103,7 +103,7 @@ func (s *Storage) Categories(userID int64) (model.Categories, error) {
 			return nil, fmt.Errorf(`store: unable to fetch category row: %v`, err)
 		}
 
-		categories = append(categories, &category)
+		categories = append(categories, category)
 	}
 
 	return categories, nil
@@ -158,7 +158,7 @@ func (s *Storage) CategoriesWithFeedCount(userID int64) (model.Categories, error
 			return nil, fmt.Errorf(`store: unable to fetch category row: %v`, err)
 		}
 
-		categories = append(categories, &category)
+		categories = append(categories, category)
 	}
 
 	return categories, nil
@@ -236,8 +236,8 @@ func (s *Storage) RemoveCategory(userID, categoryID int64) error {
 	return nil
 }
 
-// delete the given categories, replacing those categories with the user's first
-// category on affected feeds
+// RemoveAndReplaceCategoriesByName deletes the given categories, replacing those categories with the user's first
+// category on affected feeds.
 func (s *Storage) RemoveAndReplaceCategoriesByName(userid int64, titles []string) error {
 	tx, err := s.db.Begin()
 	if err != nil {

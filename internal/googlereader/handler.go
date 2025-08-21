@@ -230,7 +230,7 @@ func (h *handler) tokenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := request.GoolgeReaderToken(r)
+	token := request.GoogleReaderToken(r)
 	if token == "" {
 		slog.Warn("[GoogleReader] User does not have token",
 			slog.String("client_ip", clientIP),
@@ -736,14 +736,13 @@ func (h *handler) streamItemContentsHandler(w http.ResponseWriter, r *http.Reque
 		ID:        "user/-/state/com.google/reading-list",
 		Title:     "Reading List",
 		Updated:   time.Now().Unix(),
-		Self: []contentHREF{
-			{
-				HREF: config.Opts.RootURL() + route.Path(h.router, "StreamItemsContents"),
-			},
-		},
+		Self: []contentHREF{{
+			HREF: config.Opts.RootURL() + route.Path(h.router, "StreamItemsContents"),
+		}},
 		Author: userName,
+		Items:  make([]contentItem, len(entries)),
 	}
-	contentItems := make([]contentItem, len(entries))
+
 	for i, entry := range entries {
 		enclosures := make([]contentItemEnclosure, 0, len(entry.Enclosures))
 		for _, enclosure := range entry.Enclosures {
@@ -765,12 +764,12 @@ func (h *handler) streamItemContentsHandler(w http.ResponseWriter, r *http.Reque
 		entry.Content = mediaproxy.RewriteDocumentWithAbsoluteProxyURL(h.router, entry.Content)
 		entry.Enclosures.ProxifyEnclosureURL(h.router, config.Opts.MediaProxyMode(), config.Opts.MediaProxyResourceTypes())
 
-		contentItems[i] = contentItem{
+		result.Items[i] = contentItem{
 			ID:            convertEntryIDToLongFormItemID(entry.ID),
 			Title:         entry.Title,
 			Author:        entry.Author,
-			TimestampUsec: fmt.Sprintf("%d", entry.Date.UnixMicro()),
-			CrawlTimeMsec: fmt.Sprintf("%d", entry.CreatedAt.UnixMilli()),
+			TimestampUsec: strconv.FormatInt(entry.Date.UnixMicro(), 10),
+			CrawlTimeMsec: strconv.FormatInt(entry.CreatedAt.UnixMilli(), 10),
 			Published:     entry.Date.Unix(),
 			Updated:       entry.ChangedAt.Unix(),
 			Categories:    categories,
@@ -801,7 +800,7 @@ func (h *handler) streamItemContentsHandler(w http.ResponseWriter, r *http.Reque
 			Enclosure: enclosures,
 		}
 	}
-	result.Items = contentItems
+
 	json.OK(w, r, result)
 }
 

@@ -37,7 +37,31 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, userID int64, 
 	parsedFeedURL, _ := url.Parse(feed.FeedURL)
 	parsedSiteURL, _ := url.Parse(feed.SiteURL)
 
-	// Process older entries first
+	blockRules := filter.ParseRules(user.BlockFilterEntryRules, feed.BlockFilterEntryRules)
+	allowRules := filter.ParseRules(user.KeepFilterEntryRules, feed.KeepFilterEntryRules)
+	slog.Debug("Filter rules",
+		slog.String("user_block_filter_rules", user.BlockFilterEntryRules),
+		slog.String("feed_block_filter_rules", feed.BlockFilterEntryRules),
+		slog.String("user_keep_filter_rules", user.KeepFilterEntryRules),
+		slog.String("feed_keep_filter_rules", feed.KeepFilterEntryRules),
+		slog.Any("block_rules", blockRules),
+		slog.Any("allow_rules", allowRules),
+		slog.Int64("user_id", user.ID),
+		slog.Int64("feed_id", feed.ID),
+	)
+
+	requestBuilder := fetcher.NewRequestBuilder()
+	requestBuilder.WithUserAgent(feed.UserAgent, config.Opts.HTTPClientUserAgent())
+	requestBuilder.WithCookie(feed.Cookie)
+	requestBuilder.WithTimeout(config.Opts.HTTPClientTimeout())
+	requestBuilder.WithProxyRotator(proxyrotator.ProxyRotatorInstance)
+	requestBuilder.WithCustomFeedProxyURL(feed.ProxyURL)
+	requestBuilder.WithCustomApplicationProxyURL(config.Opts.HTTPClientProxyURL())
+	requestBuilder.UseCustomApplicationProxyURL(feed.FetchViaProxy)
+	requestBuilder.IgnoreTLSErrors(feed.AllowSelfSignedCertificates)
+	requestBuilder.DisableHTTP2(feed.DisableHTTP2)
+
+	// Processing older entries first ensures that their creation timestamp is lower than newer entries.
 	for _, entry := range slices.Backward(feed.Entries) {
 		slog.Debug("Processing entry",
 			slog.Int64("user_id", user.ID),
@@ -48,7 +72,15 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, userID int64, 
 			slog.String("feed_url", feed.FeedURL),
 		)
 
-		if filter.IsBlockedEntry(feed, entry, user) || !filter.IsAllowedEntry(feed, entry, user) {
+		if filter.IsBlockedEntry(blockRules, allowRules, feed, entry) {
+			slog.Debug("Entry is blocked by filter rules",
+				slog.Int64("user_id", user.ID),
+				slog.String("entry_url", entry.URL),
+				slog.String("entry_hash", entry.Hash),
+				slog.String("entry_title", entry.Title),
+				slog.Int64("feed_id", feed.ID),
+				slog.String("feed_url", feed.FeedURL),
+			)
 			continue
 		}
 
@@ -73,17 +105,6 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, userID int64, 
 			)
 
 			startTime := time.Now()
-
-			requestBuilder := fetcher.NewRequestBuilder()
-			requestBuilder.WithUserAgent(feed.UserAgent, config.Opts.HTTPClientUserAgent())
-			requestBuilder.WithCookie(feed.Cookie)
-			requestBuilder.WithTimeout(config.Opts.HTTPClientTimeout())
-			requestBuilder.WithProxyRotator(proxyrotator.ProxyRotatorInstance)
-			requestBuilder.WithCustomFeedProxyURL(feed.ProxyURL)
-			requestBuilder.WithCustomApplicationProxyURL(config.Opts.HTTPClientProxyURL())
-			requestBuilder.UseCustomApplicationProxyURL(feed.FetchViaProxy)
-			requestBuilder.IgnoreTLSErrors(feed.AllowSelfSignedCertificates)
-			requestBuilder.DisableHTTP2(feed.DisableHTTP2)
 
 			scrapedPageBaseURL, extractedContent, scraperErr := scraper.ScrapeWebsite(
 				requestBuilder,

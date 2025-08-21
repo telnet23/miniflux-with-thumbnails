@@ -6,6 +6,7 @@ package storage // import "miniflux.app/v2/internal/storage"
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,7 +19,7 @@ import (
 // EntryQueryBuilder builds a SQL query to fetch entries.
 type EntryQueryBuilder struct {
 	store           *Storage
-	args            []interface{}
+	args            []any
 	conditions      []string
 	sortExpressions []string
 	limit           int
@@ -60,28 +61,28 @@ func (e *EntryQueryBuilder) WithStarred(starred bool) *EntryQueryBuilder {
 
 // BeforeChangedDate adds a condition < changed_at
 func (e *EntryQueryBuilder) BeforeChangedDate(date time.Time) *EntryQueryBuilder {
-	e.conditions = append(e.conditions, fmt.Sprintf("e.changed_at < $%d", len(e.args)+1))
+	e.conditions = append(e.conditions, "e.changed_at < $"+strconv.Itoa(len(e.args)+1))
 	e.args = append(e.args, date)
 	return e
 }
 
 // AfterChangedDate adds a condition > changed_at
 func (e *EntryQueryBuilder) AfterChangedDate(date time.Time) *EntryQueryBuilder {
-	e.conditions = append(e.conditions, fmt.Sprintf("e.changed_at > $%d", len(e.args)+1))
+	e.conditions = append(e.conditions, "e.changed_at > $"+strconv.Itoa(len(e.args)+1))
 	e.args = append(e.args, date)
 	return e
 }
 
 // BeforePublishedDate adds a condition < published_at
 func (e *EntryQueryBuilder) BeforePublishedDate(date time.Time) *EntryQueryBuilder {
-	e.conditions = append(e.conditions, fmt.Sprintf("e.published_at < $%d", len(e.args)+1))
+	e.conditions = append(e.conditions, "e.published_at < $"+strconv.Itoa(len(e.args)+1))
 	e.args = append(e.args, date)
 	return e
 }
 
 // AfterPublishedDate adds a condition > published_at
 func (e *EntryQueryBuilder) AfterPublishedDate(date time.Time) *EntryQueryBuilder {
-	e.conditions = append(e.conditions, fmt.Sprintf("e.published_at > $%d", len(e.args)+1))
+	e.conditions = append(e.conditions, "e.published_at > $"+strconv.Itoa(len(e.args)+1))
 	e.args = append(e.args, date)
 	return e
 }
@@ -89,7 +90,7 @@ func (e *EntryQueryBuilder) AfterPublishedDate(date time.Time) *EntryQueryBuilde
 // BeforeEntryID adds a condition < entryID.
 func (e *EntryQueryBuilder) BeforeEntryID(entryID int64) *EntryQueryBuilder {
 	if entryID != 0 {
-		e.conditions = append(e.conditions, fmt.Sprintf("e.id < $%d", len(e.args)+1))
+		e.conditions = append(e.conditions, "e.id < $"+strconv.Itoa(len(e.args)+1))
 		e.args = append(e.args, entryID)
 	}
 	return e
@@ -98,7 +99,7 @@ func (e *EntryQueryBuilder) BeforeEntryID(entryID int64) *EntryQueryBuilder {
 // AfterEntryID adds a condition > entryID.
 func (e *EntryQueryBuilder) AfterEntryID(entryID int64) *EntryQueryBuilder {
 	if entryID != 0 {
-		e.conditions = append(e.conditions, fmt.Sprintf("e.id > $%d", len(e.args)+1))
+		e.conditions = append(e.conditions, "e.id > $"+strconv.Itoa(len(e.args)+1))
 		e.args = append(e.args, entryID)
 	}
 	return e
@@ -114,7 +115,7 @@ func (e *EntryQueryBuilder) WithEntryIDs(entryIDs []int64) *EntryQueryBuilder {
 // WithEntryID filter by entry ID.
 func (e *EntryQueryBuilder) WithEntryID(entryID int64) *EntryQueryBuilder {
 	if entryID != 0 {
-		e.conditions = append(e.conditions, fmt.Sprintf("e.id = $%d", len(e.args)+1))
+		e.conditions = append(e.conditions, "e.id = $"+strconv.Itoa(len(e.args)+1))
 		e.args = append(e.args, entryID)
 	}
 	return e
@@ -123,7 +124,7 @@ func (e *EntryQueryBuilder) WithEntryID(entryID int64) *EntryQueryBuilder {
 // WithFeedID filter by feed ID.
 func (e *EntryQueryBuilder) WithFeedID(feedID int64) *EntryQueryBuilder {
 	if feedID > 0 {
-		e.conditions = append(e.conditions, fmt.Sprintf("e.feed_id = $%d", len(e.args)+1))
+		e.conditions = append(e.conditions, "e.feed_id = $"+strconv.Itoa(len(e.args)+1))
 		e.args = append(e.args, feedID)
 	}
 	return e
@@ -132,7 +133,7 @@ func (e *EntryQueryBuilder) WithFeedID(feedID int64) *EntryQueryBuilder {
 // WithCategoryID filter by category ID.
 func (e *EntryQueryBuilder) WithCategoryID(categoryID int64) *EntryQueryBuilder {
 	if categoryID > 0 {
-		e.conditions = append(e.conditions, fmt.Sprintf("f.category_id = $%d", len(e.args)+1))
+		e.conditions = append(e.conditions, "f.category_id = $"+strconv.Itoa(len(e.args)+1))
 		e.args = append(e.args, categoryID)
 	}
 	return e
@@ -141,7 +142,7 @@ func (e *EntryQueryBuilder) WithCategoryID(categoryID int64) *EntryQueryBuilder 
 // WithStatus filter by entry status.
 func (e *EntryQueryBuilder) WithStatus(status string) *EntryQueryBuilder {
 	if status != "" {
-		e.conditions = append(e.conditions, fmt.Sprintf("e.status = $%d", len(e.args)+1))
+		e.conditions = append(e.conditions, "e.status = $"+strconv.Itoa(len(e.args)+1))
 		e.args = append(e.args, status)
 	}
 	return e
@@ -170,7 +171,7 @@ func (e *EntryQueryBuilder) WithTags(tags []string) *EntryQueryBuilder {
 // WithoutStatus set the entry status that should not be returned.
 func (e *EntryQueryBuilder) WithoutStatus(status string) *EntryQueryBuilder {
 	if status != "" {
-		e.conditions = append(e.conditions, fmt.Sprintf("e.status <> $%d", len(e.args)+1))
+		e.conditions = append(e.conditions, "e.status <> $"+strconv.Itoa(len(e.args)+1))
 		e.args = append(e.args, status)
 	}
 	return e
@@ -178,7 +179,7 @@ func (e *EntryQueryBuilder) WithoutStatus(status string) *EntryQueryBuilder {
 
 // WithShareCode set the entry share code.
 func (e *EntryQueryBuilder) WithShareCode(shareCode string) *EntryQueryBuilder {
-	e.conditions = append(e.conditions, fmt.Sprintf("e.share_code = $%d", len(e.args)+1))
+	e.conditions = append(e.conditions, "e.share_code = $"+strconv.Itoa(len(e.args)+1))
 	e.args = append(e.args, shareCode)
 	return e
 }
@@ -191,7 +192,7 @@ func (e *EntryQueryBuilder) WithShareCodeNotEmpty() *EntryQueryBuilder {
 
 // WithSorting add a sort expression.
 func (e *EntryQueryBuilder) WithSorting(column, direction string) *EntryQueryBuilder {
-	e.sortExpressions = append(e.sortExpressions, fmt.Sprintf("%s %s", column, direction))
+	e.sortExpressions = append(e.sortExpressions, column+" "+direction)
 	return e
 }
 
@@ -224,11 +225,9 @@ func (e *EntryQueryBuilder) CountEntries() (count int, err error) {
 		FROM entries e
 			JOIN feeds f ON f.id = e.feed_id
 			JOIN categories c ON c.id = f.category_id
-		WHERE %s
-	`
-	condition := e.buildCondition()
+		WHERE ` + e.buildCondition()
 
-	err = e.store.db.QueryRow(fmt.Sprintf(query, condition), e.args...).Scan(&count)
+	err = e.store.db.QueryRow(query, e.args...).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("store: unable to count entries: %v", err)
 	}
@@ -292,6 +291,7 @@ func (e *EntryQueryBuilder) GetEntries() (model.Entries, error) {
 			f.cookie,
 			f.hide_globally,
 			f.no_media_player,
+			f.webhook_url,
 			fi.icon_id,
 			i.external_id AS icon_external_id,
 			u.timezone
@@ -307,12 +307,7 @@ func (e *EntryQueryBuilder) GetEntries() (model.Entries, error) {
 			icons i ON i.id=fi.icon_id
 		LEFT JOIN
 			users u ON u.id=e.user_id
-		WHERE %s %s
-	`
-
-	condition := e.buildCondition()
-	sorting := e.buildSorting()
-	query = fmt.Sprintf(query, condition, sorting)
+		WHERE ` + e.buildCondition() + " " + e.buildSorting()
 
 	rows, err := e.store.db.Query(query, e.args...)
 	if err != nil {
@@ -364,6 +359,7 @@ func (e *EntryQueryBuilder) GetEntries() (model.Entries, error) {
 			&entry.Feed.Cookie,
 			&entry.Feed.HideGlobally,
 			&entry.Feed.NoMediaPlayer,
+			&entry.Feed.WebhookURL,
 			&iconID,
 			&externalIconID,
 			&tz,
@@ -424,12 +420,7 @@ func (e *EntryQueryBuilder) GetEntryIDs() ([]int64, error) {
 			feeds f
 		ON
 			f.id=e.feed_id
-		WHERE
-			%s %s
-	`
-
-	condition := e.buildCondition()
-	query = fmt.Sprintf(query, condition, e.buildSorting())
+		WHERE ` + e.buildCondition() + " " + e.buildSorting()
 
 	rows, err := e.store.db.Query(query, e.args...)
 	if err != nil {
@@ -460,15 +451,15 @@ func (e *EntryQueryBuilder) buildSorting() string {
 	var parts string
 
 	if len(e.sortExpressions) > 0 {
-		parts += fmt.Sprintf(" ORDER BY %s", strings.Join(e.sortExpressions, ", "))
+		parts += " ORDER BY " + strings.Join(e.sortExpressions, ", ")
 	}
 
 	if e.limit > 0 {
-		parts += fmt.Sprintf(" LIMIT %d", e.limit)
+		parts += " LIMIT " + strconv.Itoa(e.limit)
 	}
 
 	if e.offset > 0 {
-		parts += fmt.Sprintf(" OFFSET %d", e.offset)
+		parts += " OFFSET " + strconv.Itoa(e.offset)
 	}
 
 	return parts
@@ -478,7 +469,7 @@ func (e *EntryQueryBuilder) buildSorting() string {
 func NewEntryQueryBuilder(store *Storage, userID int64) *EntryQueryBuilder {
 	return &EntryQueryBuilder{
 		store:      store,
-		args:       []interface{}{userID},
+		args:       []any{userID},
 		conditions: []string{"e.user_id = $1"},
 	}
 }

@@ -16,10 +16,6 @@ type opmlDocument struct {
 	Outlines opmlOutlineCollection `xml:"body>outline"`
 }
 
-func NewOPMLDocument() *opmlDocument {
-	return &opmlDocument{}
-}
-
 type opmlHeader struct {
 	Title       string `xml:"title,omitempty"`
 	DateCreated string `xml:"dateCreated,omitempty"`

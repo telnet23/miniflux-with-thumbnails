@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sort"
+	"time"
 
 	"miniflux.app/v2/internal/config"
 	"miniflux.app/v2/internal/model"
@@ -35,15 +36,26 @@ func (l byStateAndName) Less(i, j int) bool {
 // FeedExists checks if the given feed exists.
 func (s *Storage) FeedExists(userID, feedID int64) bool {
 	var result bool
-	query := `SELECT true FROM feeds WHERE user_id=$1 AND id=$2`
+	query := `SELECT true FROM feeds WHERE user_id=$1 AND id=$2 LIMIT 1`
 	s.db.QueryRow(query, userID, feedID).Scan(&result)
 	return result
+}
+
+// CheckedAt returns when the feed was last checked.
+func (s *Storage) CheckedAt(userID, feedID int64) (time.Time, error) {
+	var result time.Time
+	query := `SELECT checked_at FROM feeds WHERE user_id=$1 AND id=$2 LIMIT 1`
+	err := s.db.QueryRow(query, userID, feedID).Scan(&result)
+	if err != nil {
+		return time.Now(), err
+	}
+	return result, nil
 }
 
 // CategoryFeedExists returns true if the given feed exists that belongs to the given category.
 func (s *Storage) CategoryFeedExists(userID, categoryID, feedID int64) bool {
 	var result bool
-	query := `SELECT true FROM feeds WHERE user_id=$1 AND category_id=$2 AND id=$3`
+	query := `SELECT true FROM feeds WHERE user_id=$1 AND category_id=$2 AND id=$3 LIMIT 1`
 	s.db.QueryRow(query, userID, categoryID, feedID).Scan(&result)
 	return result
 }
@@ -51,7 +63,7 @@ func (s *Storage) CategoryFeedExists(userID, categoryID, feedID int64) bool {
 // FeedURLExists checks if feed URL already exists.
 func (s *Storage) FeedURLExists(userID int64, feedURL string) bool {
 	var result bool
-	query := `SELECT true FROM feeds WHERE user_id=$1 AND feed_url=$2`
+	query := `SELECT true FROM feeds WHERE user_id=$1 AND feed_url=$2 LIMIT 1`
 	s.db.QueryRow(query, userID, feedURL).Scan(&result)
 	return result
 }
@@ -59,7 +71,7 @@ func (s *Storage) FeedURLExists(userID int64, feedURL string) bool {
 // AnotherFeedURLExists checks if the user a duplicated feed.
 func (s *Storage) AnotherFeedURLExists(userID, feedID int64, feedURL string) bool {
 	var result bool
-	query := `SELECT true FROM feeds WHERE id <> $1 AND user_id=$2 AND feed_url=$3`
+	query := `SELECT true FROM feeds WHERE id <> $1 AND user_id=$2 AND feed_url=$3 LIMIT 1`
 	s.db.QueryRow(query, feedID, userID, feedURL).Scan(&result)
 	return result
 }
@@ -99,14 +111,10 @@ func (s *Storage) CountAllFeeds() map[string]int64 {
 
 // CountUserFeedsWithErrors returns the number of feeds with parsing errors that belong to the given user.
 func (s *Storage) CountUserFeedsWithErrors(userID int64) int {
-	pollingParsingErrorLimit := config.Opts.PollingParsingErrorLimit()
-	if pollingParsingErrorLimit <= 0 {
-		pollingParsingErrorLimit = 1
-	}
+	pollingParsingErrorLimit := min(config.Opts.PollingParsingErrorLimit(), 1)
 	query := `SELECT count(*) FROM feeds WHERE user_id=$1 AND parsing_error_count >= $2`
 	var result int
-	err := s.db.QueryRow(query, userID, pollingParsingErrorLimit).Scan(&result)
-	if err != nil {
+	if s.db.QueryRow(query, userID, pollingParsingErrorLimit).Scan(&result) != nil {
 		return 0
 	}
 
@@ -115,14 +123,10 @@ func (s *Storage) CountUserFeedsWithErrors(userID int64) int {
 
 // CountAllFeedsWithErrors returns the number of feeds with parsing errors.
 func (s *Storage) CountAllFeedsWithErrors() int {
-	pollingParsingErrorLimit := config.Opts.PollingParsingErrorLimit()
-	if pollingParsingErrorLimit <= 0 {
-		pollingParsingErrorLimit = 1
-	}
+	pollingParsingErrorLimit := min(config.Opts.PollingParsingErrorLimit(), 1)
 	query := `SELECT count(*) FROM feeds WHERE parsing_error_count >= $1`
 	var result int
-	err := s.db.QueryRow(query, pollingParsingErrorLimit).Scan(&result)
-	if err != nil {
+	if s.db.QueryRow(query, pollingParsingErrorLimit).Scan(&result) != nil {
 		return 0
 	}
 
@@ -138,11 +142,11 @@ func (s *Storage) Feeds(userID int64) (model.Feeds, error) {
 
 func getFeedsSorted(builder *FeedQueryBuilder) (model.Feeds, error) {
 	result, err := builder.GetFeeds()
-	if err == nil {
-		sort.Sort(byStateAndName{result})
-		return result, nil
+	if err != nil {
+		return nil, err
 	}
-	return result, err
+	sort.Sort(byStateAndName{result})
+	return result, nil
 }
 
 // FeedsWithCounters returns all feeds of the given user with counters of read and unread entries.
@@ -153,7 +157,7 @@ func (s *Storage) FeedsWithCounters(userID int64) (model.Feeds, error) {
 	return getFeedsSorted(builder)
 }
 
-// Return read and unread count.
+// FetchCounters returns read and unread count.
 func (s *Storage) FetchCounters(userID int64) (model.FeedCounters, error) {
 	builder := NewFeedQueryBuilder(s, userID)
 	builder.WithCounters()

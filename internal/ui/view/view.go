@@ -13,38 +13,37 @@ import (
 	"miniflux.app/v2/internal/ui/static"
 )
 
-// View wraps template argument building.
-type View struct {
+// view wraps template argument building.
+type view struct {
 	tpl    *template.Engine
 	r      *http.Request
-	params map[string]interface{}
+	params map[string]any
 }
 
 // Set adds a new template argument.
-func (v *View) Set(param string, value interface{}) *View {
+func (v *view) Set(param string, value any) *view {
 	v.params[param] = value
 	return v
 }
 
 // Render executes the template with arguments.
-func (v *View) Render(template string) []byte {
+func (v *view) Render(template string) []byte {
 	return v.tpl.Render(template+".html", v.params)
 }
 
 // New returns a new view with default parameters.
-func New(tpl *template.Engine, r *http.Request, sess *session.Session) *View {
+func New(tpl *template.Engine, r *http.Request, sess *session.Session) *view {
 	theme := request.UserTheme(r)
-	return &View{tpl, r, map[string]interface{}{
-		"menu":                 "",
-		"csrf":                 request.CSRF(r),
-		"flashMessage":         sess.FlashMessage(request.FlashMessage(r)),
-		"flashErrorMessage":    sess.FlashErrorMessage(request.FlashErrorMessage(r)),
-		"theme":                theme,
-		"language":             request.UserLanguage(r),
-		"theme_checksum":       static.StylesheetBundleChecksums[theme],
-		"app_js_checksum":      static.JavascriptBundleChecksums["app"],
-		"sw_js_checksum":       static.JavascriptBundleChecksums["service-worker"],
-		"webauthn_js_checksum": static.JavascriptBundleChecksums["webauthn"],
-		"webAuthnEnabled":      config.Opts.WebAuthn(),
+	return &view{tpl, r, map[string]any{
+		"menu":              "",
+		"csrf":              request.CSRF(r),
+		"flashMessage":      sess.FlashMessage(request.FlashMessage(r)),
+		"flashErrorMessage": sess.FlashErrorMessage(request.FlashErrorMessage(r)),
+		"theme":             theme,
+		"language":          request.UserLanguage(r),
+		"theme_checksum":    static.StylesheetBundles[theme].Checksum,
+		"app_js_checksum":   static.JavascriptBundles["app"].Checksum,
+		"sw_js_checksum":    static.JavascriptBundles["service-worker"].Checksum,
+		"webAuthnEnabled":   config.Opts.WebAuthn(),
 	}}
 }

@@ -1,3 +1,29 @@
+// Sentinel values for specific list navigation.
+const TOP = 9999;
+const BOTTOM = -9999;
+
+/**
+ * Send a POST request to the specified URL with the given body.
+ *
+ * @param {string} url - The URL to send the request to.
+ * @param {Object} [body] - The body of the request (optional).
+ * @returns {Promise<Response>} The response from the fetch request.
+ */
+function sendPOSTRequest(url, body = null) {
+    const options = {
+        method: "POST",
+        headers: {
+            "X-Csrf-Token": document.body.dataset.csrfToken || ""
+        }
+    };
+
+    if (body !== null) {
+        options.headers["Content-Type"] = "application/json";
+        options.body = JSON.stringify(body);
+    }
+
+    return fetch(url, options);
+}
 
 /**
  * Open a new tab with the given URL.
@@ -9,17 +35,6 @@ function openNewTab(url) {
     win.opener = null;
     win.location = url;
     win.focus();
-}
-
-/**
- * Filter visible elements based on the selector.
- *
- * @param {string} selector
- * @returns {Array<Element>}
- */
-function getVisibleElements(selector) {
-    const elements = document.querySelectorAll(selector);
-    return [...elements].filter((element) => element.offsetParent !== null);
 }
 
 /**
@@ -39,7 +54,13 @@ function scrollPageTo(element, evenIfOnScreen) {
     }
 }
 
-// OnClick attaches a listener to the elements that match the selector.
+/**
+ * Attach a click event listener to elements matching the selector.
+ *
+ * @param {string} selector
+ * @param {function} callback
+ * @param {boolean} noPreventDefault
+ */
 function onClick(selector, callback, noPreventDefault) {
     document.querySelectorAll(selector).forEach((element) => {
         element.onclick = (event) => {
@@ -51,6 +72,13 @@ function onClick(selector, callback, noPreventDefault) {
     });
 }
 
+/**
+ * Attach an auxiliary click event listener to elements matching the selector.
+ *
+ * @param {string} selector
+ * @param {function} callback
+ * @param {boolean} noPreventDefault
+ */
 function onAuxClick(selector, callback, noPreventDefault) {
     document.querySelectorAll(selector).forEach((element) => {
         element.onauxclick = (event) => {
@@ -62,434 +90,211 @@ function onAuxClick(selector, callback, noPreventDefault) {
     });
 }
 
-// make logo element as button on mobile layout
-function checkMenuToggleModeByLayout() {
-    const logoElement = document.querySelector(".logo");
-    if (!logoElement) return;
-
-    const homePageLinkElement = document.querySelector(".logo > a");
-
-    if (document.documentElement.clientWidth < 620) {
-        const navMenuElement = document.getElementById("header-menu");
-        const navMenuElementIsExpanded = navMenuElement.classList.contains("js-menu-show");
-        const logoToggleButtonLabel = logoElement.getAttribute("data-toggle-button-label");
-        logoElement.setAttribute("role", "button");
-        logoElement.setAttribute("tabindex", "0");
-        logoElement.setAttribute("aria-label", logoToggleButtonLabel);
-        logoElement.setAttribute("aria-expanded", navMenuElementIsExpanded?"true":"false");
-        homePageLinkElement.setAttribute("tabindex", "-1");
-    } else {
-        logoElement.removeAttribute("role");
-        logoElement.removeAttribute("tabindex");
-        logoElement.removeAttribute("aria-expanded");
-        logoElement.removeAttribute("aria-label");
-        homePageLinkElement.removeAttribute("tabindex");
-    }
-}
-
-function fixVoiceOverDetailsSummaryBug() {
-    document.querySelectorAll("details").forEach((details) => {
-        const summaryElement = details.querySelector("summary");
-        summaryElement.setAttribute("role", "button");
-        summaryElement.setAttribute("aria-expanded", details.open? "true": "false");
-
-        details.addEventListener("toggle", () => {
-            summaryElement.setAttribute("aria-expanded", details.open? "true": "false");
-        });
-    });
-}
-
-// Show and hide the main menu on mobile devices.
-function toggleMainMenu(event) {
-    if (event.type === "keydown" && !(event.key === "Enter" || event.key === " ")) {
-        return;
-    }
-
-    if (event.currentTarget.getAttribute("role")) {
-        event.preventDefault();
-    }
-
-    const menu = document.querySelector(".header nav ul");
-    const menuToggleButton = document.querySelector(".logo");
-    if (menu.classList.contains("js-menu-show")) {
-        menuToggleButton.setAttribute("aria-expanded", "false");
-    } else {
-        menuToggleButton.setAttribute("aria-expanded", "true");
-    }
-    menu.classList.toggle("js-menu-show");
-}
-
-// Handle click events for the main menu (<li> and <a>).
-function onClickMainMenuListItem(event) {
-    const element = event.target;
-
-    if (element.tagName === "A") {
-        window.location.href = element.getAttribute("href");
-    } else {
-        const linkElement = element.querySelector("a") || element.closest("a");
-        window.location.href = linkElement.getAttribute("href");
-    }
-}
-
-// Change the button label when the page is loading.
-function handleSubmitButtons() {
-    document.querySelectorAll("form").forEach((element) => {
-        element.onsubmit = () => {
-            const button = element.querySelector("button");
-            if (button) {
-                button.textContent = button.dataset.labelLoading;
-                button.disabled = true;
-            }
-        };
-    });
-}
-
-// Show modal dialog with the list of keyboard shortcuts.
-function showKeyboardShortcuts() {
-    const template = document.getElementById("keyboard-shortcuts");
-    ModalHandler.open(template.content, "dialog-title");
-}
-
-// Mark as read visible items of the current page.
-function markPageAsRead() {
-    const items = getVisibleElements(".items .item");
-    const entryIDs = [];
-
-    items.forEach((element) => {
-        element.classList.add("item-status-read");
-        entryIDs.push(parseInt(element.dataset.id, 10));
-    });
-
-    if (entryIDs.length > 0) {
-        updateEntriesStatus(entryIDs, "read", () => {
-            // Make sure the Ajax request reach the server before we reload the page.
-
-            const element = document.querySelector(":is(a, button)[data-action=markPageAsRead]");
-            let showOnlyUnread = false;
-            if (element) {
-                showOnlyUnread = element.dataset.showOnlyUnread || false;
-            }
-
-            if (showOnlyUnread) {
-                window.location.href = window.location.href;
-            } else {
-                goToPage("next", true);
-            }
-        });
-    }
+/**
+ * Filter visible elements based on the selector.
+ *
+ * @param {string} selector
+ * @returns {Array<Element>}
+ */
+function getVisibleElements(selector) {
+    const elements = document.querySelectorAll(selector);
+    return [...elements].filter((element) => element.offsetParent !== null);
 }
 
 /**
- * Handle entry status changes from the list view and entry view.
- * Focus the next or the previous entry if it exists.
- * @param {string} item Item to focus: "previous" or "next".
- * @param {Element} element
- * @param {boolean} setToRead
+ * Get all visible entries on the current page.
+ *
+ * @return {Array<Element>}
  */
-function handleEntryStatus(item, element, setToRead) {
-    const toasting = !element;
-    const currentEntry = findEntry(element);
-    if (currentEntry) {
-        if (!setToRead || currentEntry.querySelector(":is(a, button)[data-toggle-status]").dataset.value === "unread") {
-            toggleEntryStatus(currentEntry, toasting);
-        }
-        if (isListView() && currentEntry.classList.contains('current-item')) {
-            switch (item) {
-            case "previous":
-                goToListItem(-1);
-                break;
-            case "next":
-                goToListItem(1);
-                break;
-            }
-        }
-    }
+function getVisibleEntries() {
+    return getVisibleElements(".items .item");
 }
 
-// Add an icon-label span element.
-function appendIconLabel(element, labelTextContent) {
-    const span = document.createElement('span');
-    span.classList.add('icon-label');
-    span.textContent = labelTextContent;
-    element.appendChild(span);
+/**
+ * Check if the current view is a list view.
+ *
+ * @returns {boolean}
+ */
+function isListView() {
+    return document.querySelector(".items") !== null;
 }
 
-// Change the entry status to the opposite value.
-function toggleEntryStatus(element, toasting) {
-    const entryID = parseInt(element.dataset.id, 10);
-    const link = element.querySelector(":is(a, button)[data-toggle-status]");
-
-    const currentStatus = link.dataset.value;
-    const newStatus = currentStatus === "read" ? "unread" : "read";
-
-    link.querySelector("span").textContent = link.dataset.labelLoading;
-    updateEntriesStatus([entryID], newStatus, () => {
-        let iconElement, label;
-
-        if (currentStatus === "read") {
-            iconElement = document.querySelector("template#icon-read");
-            label = link.dataset.labelRead;
-            if (toasting) {
-                showToast(link.dataset.toastUnread, iconElement);
-            }
-        } else {
-            iconElement = document.querySelector("template#icon-unread");
-            label = link.dataset.labelUnread;
-            if (toasting) {
-                showToast(link.dataset.toastRead, iconElement);
-            }
-        }
-
-        link.replaceChildren(iconElement.content.cloneNode(true));
-        appendIconLabel(link, label);
-        link.dataset.value = newStatus;
-
-        if (element.classList.contains("item-status-" + currentStatus)) {
-            element.classList.remove("item-status-" + currentStatus);
-            element.classList.add("item-status-" + newStatus);
-        }
-    });
+/**
+ * Check if the current view is an entry view.
+ *
+ * @return {boolean}
+ */
+function isEntryView() {
+    return document.querySelector("section.entry") !== null;
 }
 
-// Mark a single entry as read.
-function markEntryAsRead(element) {
-    if (element.classList.contains("item-status-unread")) {
-        element.classList.remove("item-status-unread");
-        element.classList.add("item-status-read");
-
-        const entryID = parseInt(element.dataset.id, 10);
-        updateEntriesStatus([entryID], "read");
-    }
-}
-
-// Send the Ajax request to refresh all feeds in the background
-function handleRefreshAllFeeds() {
-    const url = document.body.dataset.refreshAllFeedsUrl;
-    if (url) {
-        window.location.href = url;
-    }
-}
-
-// Send the Ajax request to change entries statuses.
-function updateEntriesStatus(entryIDs, status, callback) {
-    const url = document.body.dataset.entriesStatusUrl;
-    const request = new RequestBuilder(url);
-    request.withBody({ entry_ids: entryIDs, status: status });
-    request.withCallback((resp) => {
-        resp.json().then(count => {
-            if (callback) {
-                callback(resp);
-            }
-
-            if (status === "read") {
-                decrementUnreadCounter(count);
-            } else {
-                incrementUnreadCounter(count);
-            }
-        });
-    });
-    request.execute();
-}
-
-// Handle save entry from list view and entry view.
-function handleSaveEntry(element) {
-    const toasting = !element;
-    const currentEntry = findEntry(element);
-    if (currentEntry) {
-        saveEntry(currentEntry.querySelector(":is(a, button)[data-save-entry]"), toasting);
-    }
-}
-
-// Send the Ajax request to save an entry.
-function saveEntry(element, toasting) {
-    if (!element || element.dataset.completed) {
-        return;
-    }
-
-    element.textContent = "";
-    appendIconLabel(element, element.dataset.labelLoading);
-
-    const request = new RequestBuilder(element.dataset.saveUrl);
-    request.withCallback(() => {
-        element.textContent = "";
-        appendIconLabel(element, element.dataset.labelDone);
-        element.dataset.completed = "true";
-        if (toasting) {
-            const iconElement = document.querySelector("template#icon-save");
-            showToast(element.dataset.toastDone, iconElement);
-        }
-    });
-    request.execute();
-}
-
-// Handle bookmark from the list view and entry view.
-function handleBookmark(element) {
-    const toasting = !element;
-    const currentEntry = findEntry(element);
-    if (currentEntry) {
-        toggleBookmark(currentEntry, toasting);
-    }
-}
-
-// Send the Ajax request and change the icon when bookmarking an entry.
-function toggleBookmark(parentElement, toasting) {
-    const buttonElement = parentElement.querySelector(":is(a, button)[data-toggle-bookmark]");
-    if (!buttonElement) {
-        return;
-    }
-
-    buttonElement.textContent = "";
-    appendIconLabel(buttonElement, buttonElement.dataset.labelLoading);
-
-    const request = new RequestBuilder(buttonElement.dataset.bookmarkUrl);
-    request.withCallback(() => {
-        const currentStarStatus = buttonElement.dataset.value;
-        const newStarStatus = currentStarStatus === "star" ? "unstar" : "star";
-
-        let iconElement, label;
-        if (currentStarStatus === "star") {
-            iconElement = document.querySelector("template#icon-star");
-            label = buttonElement.dataset.labelStar;
-            if (toasting) {
-                showToast(buttonElement.dataset.toastUnstar, iconElement);
-            }
-        } else {
-            iconElement = document.querySelector("template#icon-unstar");
-            label = buttonElement.dataset.labelUnstar;
-            if (toasting) {
-                showToast(buttonElement.dataset.toastStar, iconElement);
-            }
-        }
-
-        buttonElement.replaceChildren(iconElement.content.cloneNode(true));
-        appendIconLabel(buttonElement, label);
-        buttonElement.dataset.value = newStarStatus;
-    });
-    request.execute();
-}
-
-// Send the Ajax request to download the original web page.
-function handleFetchOriginalContent() {
+/**
+ * Find the entry element for the given element.
+ *
+ * @returns {Element|null}
+ */
+function findEntry(element) {
     if (isListView()) {
-        return;
+        if (element) {
+            return element.closest(".item");
+        }
+        return document.querySelector(".current-item");
     }
-
-    const buttonElement = document.querySelector(":is(a, button)[data-fetch-content-entry]");
-    if (!buttonElement) {
-        return;
-    }
-
-    const previousElement = buttonElement.cloneNode(true);
-
-    buttonElement.textContent = "";
-    appendIconLabel(buttonElement, buttonElement.dataset.labelLoading);
-
-    const request = new RequestBuilder(buttonElement.dataset.fetchContentUrl);
-    request.withCallback((response) => {
-        buttonElement.textContent = '';
-        buttonElement.appendChild(previousElement);
-
-        response.json().then((data) => {
-            if (data.hasOwnProperty("content") && data.hasOwnProperty("reading_time")) {
-                document.querySelector(".entry-content").innerHTML = ttpolicy.createHTML(data.content);
-                const entryReadingtimeElement = document.querySelector(".entry-reading-time");
-                if (entryReadingtimeElement) {
-                    entryReadingtimeElement.textContent = data.reading_time;
-                }
-            }
-        });
-    });
-    request.execute();
+    return document.querySelector(".entry");
 }
 
-function openOriginalLink(openLinkInCurrentTab) {
-    const entryLink = document.querySelector(".entry h1 a");
-    if (entryLink !== null) {
-        if (openLinkInCurrentTab) {
-            window.location.href = entryLink.getAttribute("href");
-        } else {
-            openNewTab(entryLink.getAttribute("href"));
-        }
-        return;
-    }
-
-    const currentItemOriginalLink = document.querySelector(".current-item :is(a, button)[data-original-link]");
-    if (currentItemOriginalLink !== null) {
-        openNewTab(currentItemOriginalLink.getAttribute("href"));
-
-        const currentItem = document.querySelector(".current-item");
-        // If we are not on the list of starred items, move to the next item
-        if (document.location.href !== document.querySelector(':is(a, button)[data-page=starred]').href) {
-            goToListItem(1);
-        }
-        markEntryAsRead(currentItem);
-    }
+/**
+ * Create an icon label element with the given text.
+ *
+ * @param {string} labelText - The text to display in the icon label.
+ * @returns {Element} The created icon label element.
+ */
+function createIconLabelElement(labelText) {
+    const labelElement = document.createElement("span");
+    labelElement.classList.add("icon-label");
+    labelElement.textContent = labelText;
+    return labelElement;
 }
 
-function openCommentLink(openLinkInCurrentTab) {
-    if (!isListView()) {
-        const entryLink = document.querySelector(":is(a, button)[data-comments-link]");
-        if (entryLink !== null) {
-            if (openLinkInCurrentTab) {
-                window.location.href = entryLink.getAttribute("href");
-            } else {
-                openNewTab(entryLink.getAttribute("href"));
-            }
-        }
-    } else {
-        const currentItemCommentsLink = document.querySelector(".current-item :is(a, button)[data-comments-link]");
-        if (currentItemCommentsLink !== null) {
-            openNewTab(currentItemCommentsLink.getAttribute("href"));
-        }
+/**
+ * Set the icon and label element in the parent element.
+ *
+ * @param {Element} parentElement - The parent element to insert the icon and label into.
+ * @param {string} iconName - The name of the icon to display.
+ * @param {string} labelText - The text to display in the label.
+ */
+function setIconAndLabelElement(parentElement, iconName, labelText) {
+    const iconElement = document.querySelector(`template#icon-${iconName}`);
+    if (iconElement) {
+        const iconClone = iconElement.content.cloneNode(true);
+        parentElement.textContent = ""; // Clear existing content
+        parentElement.appendChild(iconClone);
     }
-}
 
-function openSelectedItem() {
-    const currentItemLink = document.querySelector(".current-item .item-title a");
-    if (currentItemLink !== null) {
-        window.location.href = currentItemLink.getAttribute("href");
-    }
-}
-
-function unsubscribeFromFeed() {
-    const unsubscribeLinks = document.querySelectorAll("[data-action=remove-feed]");
-    if (unsubscribeLinks.length === 1) {
-        const unsubscribeLink = unsubscribeLinks[0];
-
-        const request = new RequestBuilder(unsubscribeLink.dataset.url);
-        request.withCallback(() => {
-            if (unsubscribeLink.dataset.redirectUrl) {
-                window.location.href = unsubscribeLink.dataset.redirectUrl;
-            } else {
-                window.location.reload();
-            }
-        });
-        request.execute();
+    if (labelText) {
+        const labelElement = createIconLabelElement(labelText);
+        parentElement.appendChild(labelElement);
     }
 }
 
 /**
- * @param {string} page Page to redirect to.
- * @param {boolean} fallbackSelf Refresh actual page if the page is not found.
+ * Set the button to a loading state and return a clone of the original button element.
+ *
+ * @param {Element} buttonElement - The button element to set to loading state.
+ * @return {Element} The original button element cloned before modification.
  */
-function goToPage(page, fallbackSelf = false) {
+function setButtonToLoadingState(buttonElement) {
+    const originalButtonElement = buttonElement.cloneNode(true);
+
+    buttonElement.textContent = "";
+    buttonElement.appendChild(createIconLabelElement(buttonElement.dataset.labelLoading));
+
+    return originalButtonElement;
+}
+
+/**
+ * Restore the button to its original state.
+ *
+ * @param {Element} buttonElement The button element to restore.
+ * @param {Element} originalButtonElement The original button element to restore from.
+ * @returns {void}
+ */
+function restoreButtonState(buttonElement, originalButtonElement) {
+    buttonElement.textContent = "";
+    buttonElement.appendChild(originalButtonElement);
+}
+
+/**
+ * Set the button to a saved state.
+ *
+ * @param {Element} buttonElement The button element to set to saved state.
+ */
+function setButtonToSavedState(buttonElement) {
+    buttonElement.dataset.completed = "true";
+    setIconAndLabelElement(buttonElement, "save", buttonElement.dataset.labelDone);
+}
+
+/**
+ * Set the bookmark button state.
+ *
+ * @param {Element} buttonElement - The button element to update.
+ * @param {string} newState - The new state to set ("star" or "unstar").
+ */
+function setBookmarkButtonState(buttonElement, newState) {
+    buttonElement.dataset.value = newState;
+    const iconType = newState === "star" ? "unstar" : "star";
+    setIconAndLabelElement(buttonElement, iconType, buttonElement.dataset[newState === "star" ? "labelUnstar" : "labelStar"]);
+}
+
+/**
+ * Set the read status button state.
+ *
+ * @param {Element} buttonElement - The button element to update.
+ * @param {string} newState - The new state to set ("read" or "unread").
+ */
+function setReadStatusButtonState(buttonElement, newState) {
+    buttonElement.dataset.value = newState;
+    const iconType = newState === "read" ? "unread" : "read";
+    setIconAndLabelElement(buttonElement, iconType, buttonElement.dataset[newState === "read" ? "labelUnread" : "labelRead"]);
+}
+
+/**
+ * Show a toast notification.
+ *
+ * @param {string} iconType - The type of icon to display.
+ * @param {string} notificationMessage - The message to display in the toast.
+ * @returns {void}
+ */
+function showToastNotification(iconType, notificationMessage) {
+    const toastMsgElement = document.createElement("span");
+    toastMsgElement.id = "toast-msg";
+
+    setIconAndLabelElement(toastMsgElement, iconType, notificationMessage);
+
+    const toastElementWrapper = document.createElement("div");
+    toastElementWrapper.id = "toast-wrapper";
+    toastElementWrapper.setAttribute("role", "alert");
+    toastElementWrapper.setAttribute("aria-live", "assertive");
+    toastElementWrapper.setAttribute("aria-atomic", "true");
+    toastElementWrapper.appendChild(toastMsgElement);
+    toastElementWrapper.addEventListener("animationend", () => {
+        toastElementWrapper.remove();
+    });
+
+    document.body.appendChild(toastElementWrapper);
+
+    setTimeout(() => toastElementWrapper.classList.add("toast-animate"), 100);
+}
+
+/**
+ * Navigate to a specific page.
+ *
+ * @param {string} page - The page to navigate to.
+ * @param {boolean} reloadOnFail - If true, reload the current page if the target page is not found.
+ */
+function goToPage(page, reloadOnFail = false) {
     const element = document.querySelector(":is(a, button)[data-page=" + page + "]");
 
     if (element) {
         document.location.href = element.href;
-    } else if (fallbackSelf) {
+    } else if (reloadOnFail) {
         window.location.reload();
     }
 }
 
 /**
+ * Navigate to the previous page.
  *
- * @param {(number|event)} offset - many items to jump for focus.
+ * If the offset is a KeyboardEvent, it will navigate to the previous item in the list.
+ * If the offset is a number, it will jump that many items in the list.
+ * If the offset is TOP, it will jump to the first item in the list.
+ * If the offset is BOTTOM, it will jump to the last item in the list.
+ * If the current view is an entry view, it will redirect to the previous page.
+ *
+ * @param {number|KeyboardEvent} offset - How many items to jump for focus.
  */
-function goToPrevious(offset) {
-    if (offset instanceof KeyboardEvent) {
-        offset = -1;
-    }
+function goToPreviousPage(offset) {
+    if (offset instanceof KeyboardEvent) offset = -1;
     if (isListView()) {
         goToListItem(offset);
     } else {
@@ -498,13 +303,18 @@ function goToPrevious(offset) {
 }
 
 /**
+ * Navigate to the next page.
  *
- * @param {(number|event)} offset - How many items to jump for focus.
+ * If the offset is a KeyboardEvent, it will navigate to the next item in the list.
+ * If the offset is a number, it will jump that many items in the list.
+ * If the offset is TOP, it will jump to the first item in the list.
+ * If the offset is BOTTOM, it will jump to the last item in the list.
+ * If the current view is an entry view, it will redirect to the next page.
+ *
+ * @param {number|KeyboardEvent} offset - How many items to jump for focus.
  */
-function goToNext(offset) {
-    if (offset instanceof KeyboardEvent) {
-        offset = 1;
-    }
+function goToNextPage(offset) {
+    if (offset instanceof KeyboardEvent) offset = 1;
     if (isListView()) {
         goToListItem(offset);
     } else {
@@ -512,16 +322,29 @@ function goToNext(offset) {
     }
 }
 
-function goToFeedOrFeeds() {
-    if (isEntry()) {
-        goToFeed();
+/**
+ * Navigate to the individual feed or feeds page.
+ *
+ * If the current view is an entry view, it will redirect to the feed link of the entry.
+ * If the current view is a list view, it will redirect to the feeds page.
+ */
+function goToFeedOrFeedsPage() {
+    if (isEntryView()) {
+        goToFeedPage();
     } else {
-        goToPage('feeds');
+        goToPage("feeds");
     }
 }
 
-function goToFeed() {
-    if (isEntry()) {
+/**
+ * Navigate to the feed page of the current entry.
+ *
+ * If the current view is an entry view, it will redirect to the feed link of the entry.
+ * If the current view is a list view, it will redirect to the feed link of the currently selected item.
+ * If no feed link is available, it will do nothing.
+ */
+function goToFeedPage() {
+    if (isEntryView()) {
         const feedAnchor = document.querySelector("span.entry-website a");
         if (feedAnchor !== null) {
             window.location.href = feedAnchor.href;
@@ -534,104 +357,550 @@ function goToFeed() {
     }
 }
 
-// Sentinel values for specific list navigation
-const TOP = 9999;
-const BOTTOM = -9999;
+/**
+ * Navigate to the add subscription page.
+ *
+ * @returns {void}
+ */
+function goToAddSubscriptionPage() {
+    window.location.href = document.body.dataset.addSubscriptionUrl;
+}
 
 /**
- * @param {number} offset How many items to jump for focus.
+ * Navigate to the next or previous item in the list.
+ *
+ * If the offset is TOP, it will jump to the first item in the list.
+ * If the offset is BOTTOM, it will jump to the last item in the list.
+ * If the offset is a number, it will jump that many items in the list.
+ * If the current view is an entry view, it will redirect to the next or previous page.
+ *
+ * @param {number} offset - How many items to jump for focus.
+ * @return {void}
  */
 function goToListItem(offset) {
-    const items = getVisibleElements(".items .item");
+    const items = getVisibleEntries();
     if (items.length === 0) {
         return;
     }
 
-    if (document.querySelector(".current-item") === null) {
+    const currentItem = document.querySelector(".current-item");
+
+    // If no current item exists, select the first item
+    if (!currentItem) {
         items[0].classList.add("current-item");
         items[0].focus();
+        scrollPageTo(items[0]);
         return;
     }
 
-    for (let i = 0; i < items.length; i++) {
-        if (items[i].classList.contains("current-item")) {
-            items[i].classList.remove("current-item");
+    // Find the index of the current item
+    const currentIndex = items.indexOf(currentItem);
+    if (currentIndex === -1) {
+        // Current item not found in visible items, select first item
+        currentItem.classList.remove("current-item");
+        items[0].classList.add("current-item");
+        items[0].focus();
+        scrollPageTo(items[0]);
+        return;
+    }
 
-            // By default adjust selection by offset
-            let itemOffset = (i + offset + items.length) % items.length;
-            // Allow jumping to top or bottom
-            if (offset === TOP) {
-                itemOffset = 0;
-            } else if (offset === BOTTOM) {
-                itemOffset = items.length - 1;
-            }
-            const item = items[itemOffset];
+    // Calculate the new item index
+    let newIndex;
+    if (offset === TOP) {
+        newIndex = 0;
+    } else if (offset === BOTTOM) {
+        newIndex = items.length - 1;
+    } else {
+        newIndex = (currentIndex + offset + items.length) % items.length;
+    }
 
-            item.classList.add("current-item");
-            scrollPageTo(item);
-            item.focus();
+    // Update selection if moving to a different item
+    if (newIndex !== currentIndex) {
+        const newItem = items[newIndex];
 
-            break;
+        currentItem.classList.remove("current-item");
+        newItem.classList.add("current-item");
+        newItem.focus();
+        scrollPageTo(newItem);
+    }
+}
+
+/**
+ * Handle the share action for the entry.
+ *
+ * If the share status is "shared", it will trigger the Web Share API.
+ * If the share status is "share", it will send an Ajax request to fetch the share URL and then trigger the Web Share API.
+ * If the Web Share API is not supported, it will redirect to the entry URL.
+ */
+async function handleEntryShareAction() {
+    const link = document.querySelector(':is(a, button)[data-share-status]');
+    if (link.dataset.shareStatus === "shared") {
+        const title = document.querySelector(".entry-header > h1 > a");
+        const url = link.href;
+
+        if (!navigator.canShare) {
+            console.error("Your browser doesn't support the Web Share API.");
+            window.location = url;
+            return;
+        }
+        try {
+            await navigator.share({
+                title: title ? title.textContent : url,
+                url: url
+            });
+        } catch (err) {
+            console.error(err);
         }
     }
 }
 
-function scrollToCurrentItem() {
+/**
+ * Toggle the ARIA attributes on the main menu based on the viewport width.
+ */
+function toggleAriaAttributesOnMainMenu() {
+    const logoElement = document.querySelector(".logo");
+    const homePageLinkElement = document.querySelector(".logo > a");
+
+    if (!logoElement || !homePageLinkElement) return;
+
+    const isMobile = document.documentElement.clientWidth < 650;
+
+    if (isMobile) {
+        const navMenuElement = document.getElementById("header-menu");
+        const isExpanded = navMenuElement?.classList.contains("js-menu-show") ?? false;
+        const toggleButtonLabel = logoElement.getAttribute("data-toggle-button-label");
+
+        // Set mobile menu button attributes
+        Object.assign(logoElement, {
+            role: "button",
+            tabIndex: 0,
+            ariaLabel: toggleButtonLabel,
+            ariaExpanded: isExpanded.toString()
+        });
+        homePageLinkElement.tabIndex = -1;
+    } else {
+        // Remove mobile menu button attributes
+        ["role", "tabindex", "aria-expanded", "aria-label"].forEach(attr =>
+            logoElement.removeAttribute(attr)
+        );
+        homePageLinkElement.removeAttribute("tabindex");
+    }
+}
+
+/**
+ * Toggle the main menu dropdown.
+ *
+ * @param {Event} event - The event object.
+ */
+function toggleMainMenuDropdown(event) {
+    // Only handle Enter, Space, or click events
+    if (event.type === "keydown" && !["Enter", " "].includes(event.key)) {
+        return;
+    }
+
+    // Prevent default only if element has role attribute (mobile menu button)
+    if (event.currentTarget.getAttribute("role")) {
+        event.preventDefault();
+    }
+
+    const navigationMenu = document.querySelector(".header nav ul");
+    const menuToggleButton = document.querySelector(".logo");
+
+    if (!navigationMenu || !menuToggleButton) {
+        return;
+    }
+
+    const isShowing = navigationMenu.classList.toggle("js-menu-show");
+    menuToggleButton.setAttribute("aria-expanded", isShowing.toString());
+}
+
+/**
+ * Initialize the main menu handlers.
+ */
+function initializeMainMenuHandlers() {
+    toggleAriaAttributesOnMainMenu();
+    window.addEventListener("resize", toggleAriaAttributesOnMainMenu, { passive: true });
+
+    const logoElement = document.querySelector(".logo");
+    if (logoElement) {
+        logoElement.addEventListener("click", toggleMainMenuDropdown);
+        logoElement.addEventListener("keydown", toggleMainMenuDropdown);
+    }
+
+    onClick(".header nav li", (event) => {
+        const linkElement = event.target.closest("a") || event.target.querySelector("a");
+        if (linkElement) {
+            window.location.href = linkElement.getAttribute("href");
+        }
+    });
+}
+
+/**
+ * This function changes the button label to the loading state and disables the button.
+ *
+ * @returns {void}
+ */
+function initializeFormHandlers() {
+    document.querySelectorAll("form").forEach((element) => {
+        element.onsubmit = () => {
+            const buttons = element.querySelectorAll("button[type=submit]");
+            buttons.forEach((button) => {
+                if (button.dataset.labelLoading) {
+                    button.textContent = button.dataset.labelLoading;
+                }
+                button.disabled = true;
+            });
+        };
+    });
+}
+
+/**
+ * Show the keyboard shortcuts modal.
+ */
+function showKeyboardShortcutsAction() {
+    const template = document.getElementById("keyboard-shortcuts");
+    ModalHandler.open(template.content, "dialog-title");
+}
+
+/**
+ * Mark all visible entries on the current page as read.
+ */
+function markPageAsReadAction() {
+    const items = getVisibleEntries();
+    if (items.length === 0) return;
+
+    const entryIDs = items.map((element) => {
+        element.classList.add("item-status-read");
+        return parseInt(element.dataset.id, 10);
+    });
+
+    updateEntriesStatus(entryIDs, "read", () => {
+        const element = document.querySelector(":is(a, button)[data-action=markPageAsRead]");
+        const showOnlyUnread = element?.dataset.showOnlyUnread || false;
+
+        if (showOnlyUnread) {
+            window.location.reload();
+        } else {
+            goToPage("next", true);
+        }
+    });
+}
+
+/**
+ * Handle entry status changes from the list view and entry view.
+ * Focus the next or the previous entry if it exists.
+ *
+ * @param {string} navigationDirection Navigation direction: "previous" or "next".
+ * @param {Element} element Element that triggered the action.
+ * @param {boolean} setToRead If true, set the entry to read instead of toggling the status.
+ * @returns {void}
+ */
+function handleEntryStatus(navigationDirection, element, setToRead) {
+    const currentEntry = findEntry(element);
+
+    if (currentEntry) {
+        if (!setToRead || currentEntry.querySelector(":is(a, button)[data-toggle-status]").dataset.value === "unread") {
+            toggleEntryStatus(currentEntry, isEntryView());
+        }
+        if (isListView() && currentEntry.classList.contains('current-item')) {
+            switch (navigationDirection) {
+            case "previous":
+                goToListItem(-1);
+                break;
+            case "next":
+                goToListItem(1);
+                break;
+            }
+        }
+    }
+}
+
+/**
+ * Toggle the entry status between "read" and "unread".
+ *
+ * @param {Element} element The entry element to toggle the status for.
+ * @param {boolean} toasting If true, show a toast notification after toggling the status.
+ */
+function toggleEntryStatus(element, toasting) {
+    const entryID = parseInt(element.dataset.id, 10);
+    const buttonElement = element.querySelector(":is(a, button)[data-toggle-status]");
+    if (!buttonElement) return;
+
+    const currentStatus = buttonElement.dataset.value;
+    const newStatus = currentStatus === "read" ? "unread" : "read";
+
+    setButtonToLoadingState(buttonElement);
+
+    updateEntriesStatus([entryID], newStatus, () => {
+        setReadStatusButtonState(buttonElement, newStatus);
+
+        if (toasting) {
+            showToastNotification(newStatus, currentStatus === "read" ? buttonElement.dataset.toastUnread : buttonElement.dataset.toastRead);
+        }
+
+        if (element.classList.contains("item-status-" + currentStatus)) {
+            element.classList.remove("item-status-" + currentStatus);
+            element.classList.add("item-status-" + newStatus);
+        }
+
+        if (isListView() && getVisibleEntries().length === 0) {
+            window.location.reload();
+        }
+    });
+}
+
+/**
+ * Handle the refresh of all feeds.
+ *
+ * This function redirects the user to the URL specified in the data-refresh-all-feeds-url attribute of the body element.
+ */
+function handleRefreshAllFeedsAction() {
+    const refreshAllFeedsUrl = document.body.dataset.refreshAllFeedsUrl;
+    if (refreshAllFeedsUrl) {
+        window.location.href = refreshAllFeedsUrl;
+    }
+}
+
+/**
+ * Update the status of multiple entries.
+ *
+ * @param {Array<number>} entryIDs - The IDs of the entries to update.
+ * @param {string} status - The new status to set for the entries (e.g., "read", "unread").
+ */
+function updateEntriesStatus(entryIDs, status, callback) {
+    const url = document.body.dataset.entriesStatusUrl;
+    sendPOSTRequest(url, { entry_ids: entryIDs, status: status }).then((resp) => {
+        resp.json().then(count => {
+            if (callback) {
+                callback(resp);
+            }
+            updateUnreadCounterValue(status === "read" ? -count : count);
+        });
+    });
+}
+
+/**
+ * Handle save entry from list view and entry view.
+ *
+ * @param {Element|null} element - The element that triggered the save action (optional).
+ */
+function handleSaveEntryAction(element = null) {
+    const currentEntry = findEntry(element);
+    if (!currentEntry) return;
+
+    const buttonElement = currentEntry.querySelector(":is(a, button)[data-save-entry]");
+    if (!buttonElement || buttonElement.dataset.completed) return;
+
+    setButtonToLoadingState(buttonElement);
+
+    sendPOSTRequest(buttonElement.dataset.saveUrl).then(() => {
+        setButtonToSavedState(buttonElement);
+        if (isEntryView()) {
+            showToastNotification("save", buttonElement.dataset.toastDone);
+        }
+    });
+}
+
+/**
+ * Handle bookmarking an entry.
+ *
+ * @param {Element} element - The element that triggered the bookmark action.
+ */
+function handleBookmarkAction(element) {
+    const currentEntry = findEntry(element);
+    if (!currentEntry) return;
+
+    const buttonElement = currentEntry.querySelector(":is(a, button)[data-toggle-bookmark]");
+    if (!buttonElement) return;
+
+    setButtonToLoadingState(buttonElement);
+
+    sendPOSTRequest(buttonElement.dataset.bookmarkUrl).then(() => {
+        const currentState = buttonElement.dataset.value;
+        const isStarred = currentState === "star";
+        const newStarStatus = isStarred ? "unstar" : "star";
+
+        setBookmarkButtonState(buttonElement, newStarStatus);
+
+        if (isEntryView()) {
+            showToastNotification(currentState, buttonElement.dataset[isStarred ? "toastUnstar" : "toastStar"]);
+        }
+    });
+}
+
+/**
+ * Handle fetching the original content of an entry.
+ *
+ * @returns {void}
+ */
+function handleFetchOriginalContentAction() {
+    if (isListView()) return;
+
+    const buttonElement = document.querySelector(":is(a, button)[data-fetch-content-entry]");
+    if (!buttonElement) return;
+
+    const originalButtonElement = setButtonToLoadingState(buttonElement);
+
+    sendPOSTRequest(buttonElement.dataset.fetchContentUrl).then((response) => {
+        restoreButtonState(buttonElement, originalButtonElement);
+
+        response.json().then((data) => {
+            if (data.content && data.reading_time) {
+                document.querySelector(".entry-content").innerHTML = ttpolicy.createHTML(data.content);
+                const entryReadingtimeElement = document.querySelector(".entry-reading-time");
+                if (entryReadingtimeElement) {
+                    entryReadingtimeElement.textContent = data.reading_time;
+                }
+            }
+        });
+    });
+}
+
+/**
+ * Open the original link of an entry.
+ *
+ * @param {boolean} openLinkInCurrentTab - Whether to open the link in the current tab.
+ * @returns {void}
+ */
+function openOriginalLinkAction(openLinkInCurrentTab) {
+    if (isEntryView()) {
+        openOriginalLinkFromEntryView(openLinkInCurrentTab);
+    } else if (isListView()) {
+        openOriginalLinkFromListView();
+    }
+}
+
+/**
+ * Open the original link from entry view.
+ *
+ * @param {boolean} openLinkInCurrentTab - Whether to open the link in the current tab.
+ * @returns {void}
+ */
+function openOriginalLinkFromEntryView(openLinkInCurrentTab) {
+    const entryLink = document.querySelector(".entry h1 a");
+    if (!entryLink) return;
+
+    const url = entryLink.getAttribute("href");
+    if (openLinkInCurrentTab) {
+        window.location.href = url;
+    } else {
+        openNewTab(url);
+    }
+}
+
+/**
+ * Open the original link from list view.
+ *
+ * @returns {void}
+ */
+function openOriginalLinkFromListView() {
     const currentItem = document.querySelector(".current-item");
-    if (currentItem !== null) {
+    const originalLink = currentItem?.querySelector(":is(a, button)[data-original-link]");
+
+    if (!currentItem || !originalLink) return;
+
+    // Open the link
+    openNewTab(originalLink.getAttribute("href"));
+
+    // Don't navigate or mark as read on starred page
+    const isStarredPage = document.location.href === document.querySelector(':is(a, button)[data-page=starred]').href;
+    if (isStarredPage) return;
+
+    // Navigate to next item
+    goToListItem(1);
+
+    // Mark as read if currently unread
+    if (currentItem.classList.contains("item-status-unread")) {
+        currentItem.classList.remove("item-status-unread");
+        currentItem.classList.add("item-status-read");
+
+        const entryID = parseInt(currentItem.dataset.id, 10);
+        updateEntriesStatus([entryID], "read");
+    }
+}
+
+/**
+ * Open the comments link of an entry.
+ *
+ * @param {boolean} openLinkInCurrentTab - Whether to open the link in the current tab.
+ * @returns {void}
+ */
+function openCommentLinkAction(openLinkInCurrentTab) {
+    const entryLink = document.querySelector(isListView() ? ".current-item :is(a, button)[data-comments-link]" : ":is(a, button)[data-comments-link]");
+
+    if (entryLink) {
+        if (openLinkInCurrentTab) {
+            window.location.href = entryLink.getAttribute("href");
+        } else {
+            openNewTab(entryLink.getAttribute("href"));
+        }
+    }
+}
+
+/**
+ * Open the selected item in the current view.
+ *
+ * If the current view is a list view, it will navigate to the link of the currently selected item.
+ * If the current view is an entry view, it will navigate to the link of the entry.
+ */
+function openSelectedItemAction() {
+    const currentItemLink = document.querySelector(".current-item .item-title a");
+    if (currentItemLink) {
+        window.location.href = currentItemLink.getAttribute("href");
+    }
+}
+
+/**
+ * Unsubscribe from the feed of the currently selected item.
+ */
+function handleRemoveFeedAction() {
+    const unsubscribeLink = document.querySelector("[data-action=remove-feed]");
+    if (unsubscribeLink) {
+        sendPOSTRequest(unsubscribeLink.dataset.url).then(() => {
+            window.location.href = unsubscribeLink.dataset.redirectUrl || window.location.href;
+        });
+    }
+}
+
+/**
+ * Scroll the page to the currently selected item.
+ */
+function scrollToCurrentItemAction() {
+    const currentItem = document.querySelector(".current-item");
+    if (currentItem) {
         scrollPageTo(currentItem, true);
     }
 }
 
-function decrementUnreadCounter(n) {
-    updateUnreadCounterValue((current) => {
-        return current - n;
-    });
-}
-
-function incrementUnreadCounter(n) {
-    updateUnreadCounterValue((current) => {
-        return current + n;
-    });
-}
-
-function updateUnreadCounterValue(callback) {
+/**
+ * Update the unread counter value.
+ *
+ * @param {number} delta - The amount to change the counter by.
+ */
+function updateUnreadCounterValue(delta) {
     document.querySelectorAll("span.unread-counter").forEach((element) => {
         const oldValue = parseInt(element.textContent, 10);
-        element.textContent = callback(oldValue);
+        element.textContent = oldValue + delta;
     });
 
     if (window.location.href.endsWith('/unread')) {
         const oldValue = parseInt(document.title.split('(')[1], 10);
-        const newValue = callback(oldValue);
-
-        document.title = document.title.replace(
-            /(.*?)\(\d+\)(.*?)/,
-            function (match, prefix, suffix, offset, string) {
-                return prefix + '(' + newValue + ')' + suffix;
-            }
-        );
+        const newValue = oldValue + delta;
+        document.title = document.title.replace(/(.*?)\(\d+\)(.*?)/, `$1(${newValue})$2`);
     }
 }
 
-function isEntry() {
-    return document.querySelector("section.entry") !== null;
-}
-
-function isListView() {
-    return document.querySelector(".items") !== null;
-}
-
-function findEntry(element) {
-    if (isListView()) {
-        if (element) {
-            return element.closest(".item");
-        }
-        return document.querySelector(".current-item");
-    }
-    return document.querySelector(".entry");
-}
-
+/**
+ * Handle confirmation messages for actions that require user confirmation.
+ *
+ * This function modifies the link element to show a confirmation question with "Yes" and "No" buttons.
+ * If the user clicks "Yes", it calls the provided callback with the URL and redirect URL.
+ * If the user clicks "No", it either redirects to a no-action URL or restores the link element.
+ *
+ * @param {Element} linkElement - The link or button element that triggered the confirmation.
+ * @param {function} callback - The callback function to execute if the user confirms the action.
+ * @returns {void}
+ */
 function handleConfirmationMessage(linkElement, callback) {
     if (linkElement.tagName !== 'A' && linkElement.tagName !== "BUTTON") {
         linkElement = linkElement.parentNode;
@@ -686,48 +955,46 @@ function handleConfirmationMessage(linkElement, callback) {
     containerElement.appendChild(questionElement);
 }
 
-function showToast(label, iconElement) {
-    if (!label || !iconElement) {
-        return;
-    }
-
-    const toastMsgElement = document.getElementById("toast-msg");
-    toastMsgElement.replaceChildren(iconElement.content.cloneNode(true));
-    appendIconLabel(toastMsgElement, label);
-
-    const toastElementWrapper = document.getElementById("toast-wrapper");
-    toastElementWrapper.classList.remove('toast-animate');
-    setTimeout(() => {
-        toastElementWrapper.classList.add('toast-animate');
-    }, 100);
-}
-
-/** Navigate to the new subscription page. */
-function goToAddSubscription() {
-    window.location.href = document.body.dataset.addSubscriptionUrl;
+/**
+ * Check if the player is actually playing a media
+ *
+ * @param mediaElement the player element itself
+ * @returns {boolean}
+ */
+function isPlayerPlaying(mediaElement) {
+    return mediaElement &&
+        mediaElement.currentTime > 0 &&
+        !mediaElement.paused &&
+        !mediaElement.ended &&
+        mediaElement.readyState > 2; // https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/readyState
 }
 
 /**
- * save player position to allow to resume playback later
- * @param {Element} playerElement
+ * Handle player progression save and mark as read on completion.
+ *
+ * This function is triggered on the `timeupdate` event of the media player.
+ * It saves the current playback position and marks the entry as read if the completion percentage is reached.
+ *
+ * @param {Element} playerElement The media player element (audio or video).
  */
 function handlePlayerProgressionSaveAndMarkAsReadOnCompletion(playerElement) {
     if (!isPlayerPlaying(playerElement)) {
-        return; //If the player is not playing, we do not want to save the progression and mark as read on completion
+        return;
     }
-    const currentPositionInSeconds = Math.floor(playerElement.currentTime); // we do not need a precise value
+
+    const currentPositionInSeconds = Math.floor(playerElement.currentTime);
     const lastKnownPositionInSeconds = parseInt(playerElement.dataset.lastPosition, 10);
-    const markAsReadOnCompletion = parseFloat(playerElement.dataset.markReadOnCompletion); //completion percentage to mark as read
+    const markAsReadOnCompletion = parseFloat(playerElement.dataset.markReadOnCompletion);
     const recordInterval = 10;
 
-    // we limit the number of update to only one by interval. Otherwise, we would have multiple update per seconds
+    // We limit the number of update to only one by interval. Otherwise, we would have multiple update per seconds
     if (currentPositionInSeconds >= (lastKnownPositionInSeconds + recordInterval) ||
         currentPositionInSeconds <= (lastKnownPositionInSeconds - recordInterval)
     ) {
         playerElement.dataset.lastPosition = currentPositionInSeconds.toString();
-        const request = new RequestBuilder(playerElement.dataset.saveUrl);
-        request.withBody({ progression: currentPositionInSeconds });
-        request.execute();
+
+        sendPOSTRequest(playerElement.dataset.saveUrl, { progression: currentPositionInSeconds });
+
         // Handle the mark as read on completion
         if (markAsReadOnCompletion >= 0 && playerElement.duration > 0) {
             const completion =  currentPositionInSeconds / playerElement.duration;
@@ -739,102 +1006,274 @@ function handlePlayerProgressionSaveAndMarkAsReadOnCompletion(playerElement) {
 }
 
 /**
- * Check if the player is actually playing a media
- * @param element the player element itself
- * @returns {boolean}
+ * Handle media control actions like seeking and changing playback speed.
+ *
+ * This function is triggered by clicking on media control buttons.
+ * It adjusts the playback position or speed of media elements with the same enclosure ID.
+ *
+ * @param {Element} mediaPlayerButtonElement
  */
-function isPlayerPlaying(element) {
-    return element &&
-        element.currentTime > 0 &&
-        !element.paused &&
-        !element.ended &&
-        element.readyState > 2; //https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/readyState
-}
-
-/**
- * handle new share entires and already shared entries
- */
-async function handleShare() {
-    const link = document.querySelector(':is(a, button)[data-share-status]');
-    const title = document.querySelector(".entry-header > h1 > a");
-    if (link.dataset.shareStatus === "shared") {
-        await checkShareAPI(title, link.href);
-    }
-    if (link.dataset.shareStatus === "share") {
-        const request = new RequestBuilder(link.href);
-        request.withCallback((r) => {
-            checkShareAPI(title, r.url);
-        });
-        request.withHttpMethod("GET");
-        request.execute();
-    }
-}
-
-/**
-* wrapper for Web Share API
-*/
-async function checkShareAPI(title, url) {
-    if (!navigator.canShare) {
-        console.error("Your browser doesn't support the Web Share API.");
-        window.location = url;
-        return;
-    }
-    try {
-        await navigator.share({
-            title: title ? title.textContent : url,
-            url: url
-        });
-    } catch (err) {
-        console.error(err);
-    }
-    window.location.reload();
-}
-
-function getCsrfToken() {
-    const element = document.querySelector("body[data-csrf-token]");
-    if (element !== null) {
-        return element.dataset.csrfToken;
-    }
-
-    return "";
-}
-
-/**
- * Handle all clicks on media player controls button on enclosures.
- * Will change the current speed and position of the player accordingly.
- * Will not save anything, all is done client-side, however, changing the position
- * will trigger the handlePlayerProgressionSave and save the new position backends side.
- * @param {Element} button
- */
-function handleMediaControl(button) {
-    const action = button.dataset.enclosureAction;
-    const value = parseFloat(button.dataset.actionValue);
-    const targetEnclosureId = button.dataset.enclosureId;
-    const enclosures = document.querySelectorAll(`audio[data-enclosure-id="${targetEnclosureId}"],video[data-enclosure-id="${targetEnclosureId}"]`);
-    const speedIndicator = document.querySelectorAll(`span.speed-indicator[data-enclosure-id="${targetEnclosureId}"]`);
-    enclosures.forEach((enclosure) => {
-        switch (action) {
+function handleMediaControlButtonClick(mediaPlayerButtonElement) {
+    const actionType = mediaPlayerButtonElement.dataset.enclosureAction;
+    const actionValue = parseFloat(mediaPlayerButtonElement.dataset.actionValue);
+    const enclosureID = mediaPlayerButtonElement.dataset.enclosureId;
+    const mediaElements = document.querySelectorAll(`audio[data-enclosure-id="${enclosureID}"],video[data-enclosure-id="${enclosureID}"]`);
+    const speedIndicatorElements = document.querySelectorAll(`span.speed-indicator[data-enclosure-id="${enclosureID}"]`);
+    mediaElements.forEach((mediaElement) => {
+        switch (actionType) {
         case "seek":
-            enclosure.currentTime = Math.max(enclosure.currentTime + value, 0);
+            mediaElement.currentTime = Math.max(mediaElement.currentTime + actionValue, 0);
             break;
         case "speed":
-            // I set a floor speed of 0.25 to avoid too slow speed where it gives the impression it stopped.
-            // 0.25 was chosen because it will allow to get back to 1x in two "faster" click, and lower value with same property would be 0.
-            enclosure.playbackRate = Math.max(0.25, enclosure.playbackRate + value);
-            speedIndicator.forEach((speedI) => {
-                // Two digit precision to ensure we always have the same number of characters (4) to avoid controls moving when clicking buttons because of more or less characters.
-                // The trick only work on rate less than 10, but it feels an acceptable tread of considering the feature
-                speedI.innerText = `${enclosure.playbackRate.toFixed(2)}x`;
+            // 0.25 was chosen because it will allow to get back to 1x in two "faster" clicks.
+            // A lower value would result in a playback rate of 0, effectively pausing playback.
+            mediaElement.playbackRate = Math.max(0.25, mediaElement.playbackRate + actionValue);
+            speedIndicatorElements.forEach((speedIndicatorElement) => {
+                speedIndicatorElement.innerText = `${mediaElement.playbackRate.toFixed(2)}x`;
             });
             break;
         case "speed-reset":
-            enclosure.playbackRate = value ;
-            speedIndicator.forEach((speedI) => {
+            mediaElement.playbackRate = actionValue ;
+            speedIndicatorElements.forEach((speedIndicatorElement) => {
                 // Two digit precision to ensure we always have the same number of characters (4) to avoid controls moving when clicking buttons because of more or less characters.
-                // The trick only work on rate less than 10, but it feels an acceptable tread of considering the feature
-                speedI.innerText = `${enclosure.playbackRate.toFixed(2)}x`;
+                // The trick only works on rates less than 10, but it feels an acceptable trade-off considering the feature
+                speedIndicatorElement.innerText = `${mediaElement.playbackRate.toFixed(2)}x`;
             });
             break;
         }
     });
 }
+
+/**
+ * Initialize media player event handlers.
+ */
+function initializeMediaPlayerHandlers() {
+    document.querySelectorAll("button[data-enclosure-action]").forEach((element) => {
+        element.addEventListener("click", () => handleMediaControlButtonClick(element));
+    });
+
+    // Set playback from the last position if available
+    document.querySelectorAll("audio[data-last-position],video[data-last-position]").forEach((element) => {
+        if (element.dataset.lastPosition) {
+            element.currentTime = element.dataset.lastPosition;
+        }
+        element.ontimeupdate = () => handlePlayerProgressionSaveAndMarkAsReadOnCompletion(element);
+    });
+
+    // Set playback speed from the data attribute if available
+    document.querySelectorAll("audio[data-playback-rate],video[data-playback-rate]").forEach((element) => {
+        if (element.dataset.playbackRate) {
+            element.playbackRate = element.dataset.playbackRate;
+            if (element.dataset.enclosureId) {
+                document.querySelectorAll(`span.speed-indicator[data-enclosure-id="${element.dataset.enclosureId}"]`).forEach((speedIndicatorElement) => {
+                    speedIndicatorElement.innerText = `${parseFloat(element.dataset.playbackRate).toFixed(2)}x`;
+                });
+            }
+        }
+    });
+}
+
+/**
+ * Initialize the service worker and PWA installation prompt.
+ */
+function initializeServiceWorker() {
+    // Register service worker if supported
+    if ("serviceWorker" in navigator) {
+        const serviceWorkerURL = document.body.dataset.serviceWorkerUrl;
+        if (serviceWorkerURL) {
+            navigator.serviceWorker.register(ttpolicy.createScriptURL(serviceWorkerURL), {
+                type: "module"
+            }).catch((error) => {
+                console.error("Service Worker registration failed:", error);
+            });
+        }
+    }
+
+    // PWA installation prompt handling
+    window.addEventListener("beforeinstallprompt", (event) => {
+        let deferredPrompt = event;
+        const promptHomeScreen = document.getElementById("prompt-home-screen");
+        const btnAddToHomeScreen = document.getElementById("btn-add-to-home-screen");
+
+        if (!promptHomeScreen || !btnAddToHomeScreen) return;
+
+        promptHomeScreen.style.display = "block";
+
+        btnAddToHomeScreen.addEventListener("click", (event) => {
+            event.preventDefault();
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(() => {
+                deferredPrompt = null;
+                promptHomeScreen.style.display = "none";
+            });
+        });
+    });
+}
+
+/**
+ * Initialize WebAuthn handlers if supported.
+ */
+function initializeWebAuthn() {
+    if (typeof WebAuthnHandler !== 'function') return;
+    if (!WebAuthnHandler.isWebAuthnSupported()) return;
+
+    const webauthnHandler = new WebAuthnHandler();
+
+    // Setup delete credentials handler
+    onClick("#webauthn-delete", () => { webauthnHandler.removeAllCredentials(); });
+
+    // Setup registration
+    const registerButton = document.getElementById("webauthn-register");
+    if (registerButton) {
+        registerButton.disabled = false;
+        onClick("#webauthn-register", () => {
+            webauthnHandler.register().catch((err) => WebAuthnHandler.showErrorMessage(err));
+        });
+    }
+
+    // Setup login
+    const loginButton = document.getElementById("webauthn-login");
+    const usernameField = document.getElementById("form-username");
+
+    if (loginButton && usernameField) {
+        const abortController = new AbortController();
+        loginButton.disabled = false;
+
+        onClick("#webauthn-login", () => {
+            abortController.abort();
+            webauthnHandler.login(usernameField.value).catch(err => WebAuthnHandler.showErrorMessage(err));
+        });
+
+        webauthnHandler.conditionalLogin(abortController).catch(err => WebAuthnHandler.showErrorMessage(err));
+    }
+}
+
+/**
+ * Initialize keyboard shortcuts for navigation and actions.
+ */
+function initializeKeyboardShortcuts() {
+    if (document.querySelector("body[data-disable-keyboard-shortcuts=true]")) return;
+
+    const keyboardHandler = new KeyboardHandler();
+
+    // Navigation shortcuts
+    keyboardHandler.on("g u", () => goToPage("unread"));
+    keyboardHandler.on("g b", () => goToPage("starred"));
+    keyboardHandler.on("g h", () => goToPage("history"));
+    keyboardHandler.on("g f", goToFeedOrFeedsPage);
+    keyboardHandler.on("g c", () => goToPage("categories"));
+    keyboardHandler.on("g s", () => goToPage("settings"));
+    keyboardHandler.on("g g", () => goToPreviousPage(TOP));
+    keyboardHandler.on("G", () => goToNextPage(BOTTOM));
+    keyboardHandler.on("/", () => goToPage("search"));
+
+    // Item navigation
+    keyboardHandler.on("ArrowLeft", goToPreviousPage);
+    keyboardHandler.on("ArrowRight", goToNextPage);
+    keyboardHandler.on("k", goToPreviousPage);
+    keyboardHandler.on("p", goToPreviousPage);
+    keyboardHandler.on("j", goToNextPage);
+    keyboardHandler.on("n", goToNextPage);
+    keyboardHandler.on("h", () => goToPage("previous"));
+    keyboardHandler.on("l", () => goToPage("next"));
+    keyboardHandler.on("z t", scrollToCurrentItemAction);
+
+    // Item actions
+    keyboardHandler.on("o", openSelectedItemAction);
+    keyboardHandler.on("Enter", () => openSelectedItemAction());
+    keyboardHandler.on("v", () => openOriginalLinkAction(false));
+    keyboardHandler.on("V", () => openOriginalLinkAction(true));
+    keyboardHandler.on("c", () => openCommentLinkAction(false));
+    keyboardHandler.on("C", () => openCommentLinkAction(true));
+
+    // Entry management
+    keyboardHandler.on("m", () => handleEntryStatus("next"));
+    keyboardHandler.on("M", () => handleEntryStatus("previous"));
+    keyboardHandler.on("A", markPageAsReadAction);
+    keyboardHandler.on("s", () => handleSaveEntryAction());
+    keyboardHandler.on("d", handleFetchOriginalContentAction);
+    keyboardHandler.on("f", () => handleBookmarkAction());
+
+    // Feed actions
+    keyboardHandler.on("F", goToFeedPage);
+    keyboardHandler.on("R", handleRefreshAllFeedsAction);
+    keyboardHandler.on("+", goToAddSubscriptionPage);
+    keyboardHandler.on("#", handleRemoveFeedAction);
+
+    // UI actions
+    keyboardHandler.on("?", showKeyboardShortcutsAction);
+    keyboardHandler.on("Escape", () => ModalHandler.close());
+    keyboardHandler.on("a", () => {
+        const enclosureElement = document.querySelector('.entry-enclosures');
+        if (enclosureElement) {
+            enclosureElement.toggleAttribute('open');
+        }
+    });
+
+    keyboardHandler.listen();
+}
+
+/**
+ * Initialize touch handler for mobile devices.
+ */
+function initializeTouchHandler() {
+    const touchHandler = new TouchHandler();
+    touchHandler.listen();
+}
+
+/**
+ * Initialize click handlers for various UI elements.
+ */
+function initializeClickHandlers() {
+    // Entry actions
+    onClick(":is(a, button)[data-save-entry]", (event) => handleSaveEntryAction(event.target));
+    onClick(":is(a, button)[data-toggle-bookmark]", (event) => handleBookmarkAction(event.target));
+    onClick(":is(a, button)[data-toggle-status]", (event) => handleEntryStatus("next", event.target));
+    onClick(":is(a, button)[data-fetch-content-entry]", handleFetchOriginalContentAction);
+    onClick(":is(a, button)[data-share-status]", handleEntryShareAction);
+
+    // Page actions with confirmation
+    onClick(":is(a, button)[data-action=markPageAsRead]", (event) => handleConfirmationMessage(event.target, markPageAsReadAction));
+
+    // Generic confirmation handler
+    onClick(":is(a, button)[data-confirm]", (event) => {
+        handleConfirmationMessage(event.target, (url, redirectURL) => {
+            sendPOSTRequest(url).then((response) => {
+                if (redirectURL) {
+                    window.location.href = redirectURL;
+                } else if (response?.redirected && response.url) {
+                    window.location.href = response.url;
+                } else {
+                    window.location.reload();
+                }
+            });
+        });
+    });
+
+    // Original link handlers (both click and middle-click)
+    const handleOriginalLink = (event) => handleEntryStatus("next", event.target, true);
+
+    onClick("a[data-original-link='true']", handleOriginalLink, true);
+    onAuxClick("a[data-original-link='true']", (event) => {
+        if (event.button === 1) {
+            handleOriginalLink(event);
+        }
+    }, true);
+}
+
+// Initialize application handlers
+initializeMainMenuHandlers();
+initializeFormHandlers();
+initializeMediaPlayerHandlers();
+initializeWebAuthn();
+initializeKeyboardShortcuts();
+initializeTouchHandler();
+initializeClickHandlers();
+initializeServiceWorker();
+
+// Reload the page if it was restored from the back-forward cache and mark entries as read is enabled.
+window.addEventListener("pageshow", (event) => {
+    if (event.persisted && document.body.dataset.markAsReadOnView === "true") {
+        location.reload();
+    }
+});

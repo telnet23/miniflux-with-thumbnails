@@ -25,6 +25,7 @@ func refreshFeeds(store *storage.Storage) {
 	batchBuilder.WithErrorLimit(config.Opts.PollingParsingErrorLimit())
 	batchBuilder.WithoutDisabledFeeds()
 	batchBuilder.WithNextCheckExpired()
+	batchBuilder.WithLimitPerHost(config.Opts.PollingLimitPerHost())
 
 	jobs, err := batchBuilder.FetchJobs()
 	if err != nil {
@@ -32,13 +33,9 @@ func refreshFeeds(store *storage.Storage) {
 		return
 	}
 
+	slog.Debug("Feed URLs in this batch", slog.Any("feed_urls", jobs.FeedURLs()))
+
 	nbJobs := len(jobs)
-
-	slog.Info("Created a batch of feeds",
-		slog.Int("nb_jobs", nbJobs),
-		slog.Int("batch_size", config.Opts.BatchSize()),
-	)
-
 	var jobQueue = make(chan model.Job, nbJobs)
 
 	slog.Info("Starting a pool of workers",
