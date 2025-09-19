@@ -12,7 +12,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"miniflux.app/v2/internal/api"
 	"miniflux.app/v2/internal/config"
@@ -61,15 +60,15 @@ func StartWebServer(store *storage.Storage, pool *worker.Pool) []*http.Server {
 				slog.Error("ACME HTTP challenge server failed", slog.Any("error", err))
 			}
 		}()
-		config.Opts.HTTPS = true
+		config.Opts.SetHTTPSValue(true)
 		httpServers = append(httpServers, challengeServer)
 	}
 
 	for i, listenAddr := range listenAddresses {
 		server := &http.Server{
-			ReadTimeout:  time.Duration(config.Opts.HTTPServerTimeout()) * time.Second,
-			WriteTimeout: time.Duration(config.Opts.HTTPServerTimeout()) * time.Second,
-			IdleTimeout:  time.Duration(config.Opts.HTTPServerTimeout()) * time.Second,
+			ReadTimeout:  config.Opts.HTTPServerTimeout(),
+			WriteTimeout: config.Opts.HTTPServerTimeout(),
+			IdleTimeout:  config.Opts.HTTPServerTimeout(),
 			Handler:      setupHandler(store, pool),
 		}
 
@@ -96,7 +95,7 @@ func StartWebServer(store *storage.Storage, pool *worker.Pool) []*http.Server {
 		case certFile != "" && keyFile != "":
 			server.Addr = listenAddr
 			startTLSServer(server, certFile, keyFile)
-			config.Opts.HTTPS = true
+			config.Opts.SetHTTPSValue(true)
 		default:
 			server.Addr = listenAddr
 			startHTTPServer(server)
@@ -149,7 +148,7 @@ func startUnixSocketServer(server *http.Server, socketFile string) {
 				slog.String("key_file", keyFile),
 			)
 			// Ensure HTTPS is marked as true if any listener uses TLS
-			config.Opts.HTTPS = true
+			config.Opts.SetHTTPSValue(true)
 			if err := server.ServeTLS(listener, certFile, keyFile); err != http.ErrServerClosed {
 				printErrorAndExit("TLS Unix socket server failed to start on %s: %v", socketFile, err)
 			}

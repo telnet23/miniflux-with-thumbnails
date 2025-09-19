@@ -145,7 +145,7 @@ func (h *handler) handleFeeds(w http.ResponseWriter, r *http.Request) {
 	var result feedsResponse
 	result.Feeds = make([]feed, 0)
 	for _, f := range feeds {
-		subscripion := feed{
+		subscription := feed{
 			ID:          f.ID,
 			Title:       f.Title,
 			URL:         f.FeedURL,
@@ -155,10 +155,10 @@ func (h *handler) handleFeeds(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if f.Icon != nil {
-			subscripion.FaviconID = f.Icon.IconID
+			subscription.FaviconID = f.Icon.IconID
 		}
 
-		result.Feeds = append(result.Feeds, subscripion)
+		result.Feeds = append(result.Feeds, subscription)
 	}
 
 	result.FeedsGroups = h.buildFeedGroups(feeds)
@@ -455,7 +455,7 @@ func (h *handler) handleWriteItems(w http.ResponseWriter, r *http.Request) {
 			slog.Int64("user_id", userID),
 			slog.Int64("entry_id", entryID),
 		)
-		if err := h.store.ToggleBookmark(userID, entryID); err != nil {
+		if err := h.store.ToggleStarred(userID, entryID); err != nil {
 			json.ServerError(w, r, err)
 			return
 		}
@@ -474,7 +474,7 @@ func (h *handler) handleWriteItems(w http.ResponseWriter, r *http.Request) {
 			slog.Int64("user_id", userID),
 			slog.Int64("entry_id", entryID),
 		)
-		if err := h.store.ToggleBookmark(userID, entryID); err != nil {
+		if err := h.store.ToggleStarred(userID, entryID); err != nil {
 			json.ServerError(w, r, err)
 			return
 		}

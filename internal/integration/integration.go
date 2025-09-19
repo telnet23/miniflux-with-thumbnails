@@ -15,6 +15,7 @@ import (
 	"miniflux.app/v2/internal/integration/karakeep"
 	"miniflux.app/v2/internal/integration/linkace"
 	"miniflux.app/v2/internal/integration/linkding"
+	"miniflux.app/v2/internal/integration/linktaco"
 	"miniflux.app/v2/internal/integration/linkwarden"
 	"miniflux.app/v2/internal/integration/matrixbot"
 	"miniflux.app/v2/internal/integration/notion"
@@ -107,6 +108,7 @@ func SendEntry(entry *model.Entry, userIntegrations *model.Integration) {
 	if userIntegrations.WallabagEnabled {
 		slog.Debug("Sending entry to Wallabag",
 			slog.Int64("user_id", userIntegrations.UserID),
+			slog.String("user_tags", userIntegrations.WallabagTags),
 			slog.Int64("entry_id", entry.ID),
 			slog.String("entry_url", entry.URL),
 		)
@@ -117,12 +119,14 @@ func SendEntry(entry *model.Entry, userIntegrations *model.Integration) {
 			userIntegrations.WallabagClientSecret,
 			userIntegrations.WallabagUsername,
 			userIntegrations.WallabagPassword,
+			userIntegrations.WallabagTags,
 			userIntegrations.WallabagOnlyURL,
 		)
 
 		if err := client.CreateEntry(entry.URL, entry.Title, entry.Content); err != nil {
 			slog.Error("Unable to send entry to Wallabag",
 				slog.Int64("user_id", userIntegrations.UserID),
+				slog.String("user_tags", userIntegrations.WallabagTags),
 				slog.Int64("entry_id", entry.ID),
 				slog.String("entry_url", entry.URL),
 				slog.Any("error", err),
@@ -234,6 +238,29 @@ func SendEntry(entry *model.Entry, userIntegrations *model.Integration) {
 		)
 		if err := client.CreateBookmark(entry.URL, entry.Title); err != nil {
 			slog.Error("Unable to send entry to Linkding",
+				slog.Int64("user_id", userIntegrations.UserID),
+				slog.Int64("entry_id", entry.ID),
+				slog.String("entry_url", entry.URL),
+				slog.Any("error", err),
+			)
+		}
+	}
+
+	if userIntegrations.LinktacoEnabled {
+		slog.Debug("Sending entry to LinkTaco",
+			slog.Int64("user_id", userIntegrations.UserID),
+			slog.Int64("entry_id", entry.ID),
+			slog.String("entry_url", entry.URL),
+		)
+
+		client := linktaco.NewClient(
+			userIntegrations.LinktacoAPIToken,
+			userIntegrations.LinktacoOrgSlug,
+			userIntegrations.LinktacoTags,
+			userIntegrations.LinktacoVisibility,
+		)
+		if err := client.CreateBookmark(entry.URL, entry.Title, entry.Content); err != nil {
+			slog.Error("Unable to send entry to LinkTaco",
 				slog.Int64("user_id", userIntegrations.UserID),
 				slog.Int64("entry_id", entry.ID),
 				slog.String("entry_url", entry.URL),

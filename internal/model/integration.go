@@ -29,6 +29,7 @@ type Integration struct {
 	WallabagClientSecret             string
 	WallabagUsername                 string
 	WallabagPassword                 string
+	WallabagTags                     string
 	NunuxKeeperEnabled               bool
 	NunuxKeeperURL                   string
 	NunuxKeeperAPIKey                string
@@ -59,6 +60,11 @@ type Integration struct {
 	LinkdingAPIKey                   string
 	LinkdingTags                     string
 	LinkdingMarkAsUnread             bool
+	LinktacoEnabled                  bool
+	LinktacoAPIToken                 string
+	LinktacoOrgSlug                  string
+	LinktacoTags                     string
+	LinktacoVisibility               string
 	LinkwardenEnabled                bool
 	LinkwardenURL                    string
 	LinkwardenAPIKey                 string

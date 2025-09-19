@@ -357,7 +357,7 @@ func (h *handler) editTagHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(unstarredEntryIDs) > 0 {
-		err = h.store.SetEntriesBookmarkedState(userID, unstarredEntryIDs, false)
+		err = h.store.SetEntriesStarredState(userID, unstarredEntryIDs, false)
 		if err != nil {
 			json.ServerError(w, r, err)
 			return
@@ -365,7 +365,7 @@ func (h *handler) editTagHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(starredEntryIDs) > 0 {
-		err = h.store.SetEntriesBookmarkedState(userID, starredEntryIDs, true)
+		err = h.store.SetEntriesStarredState(userID, starredEntryIDs, true)
 		if err != nil {
 			json.ServerError(w, r, err)
 			return
@@ -793,7 +793,7 @@ func (h *handler) streamItemContentsHandler(w http.ResponseWriter, r *http.Reque
 				Content:   entry.Content,
 			},
 			Origin: contentItemOrigin{
-				StreamID: fmt.Sprintf("feed/%d", entry.FeedID),
+				StreamID: fmt.Sprintf(feedPrefix+"%d", entry.FeedID),
 				Title:    entry.Feed.Title,
 				HTMLUrl:  entry.Feed.SiteURL,
 			},

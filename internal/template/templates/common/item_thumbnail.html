@@ -1,8 +1,0 @@
-{{ define "item_thumbnail" }}
-{{ range .Enclosures }}
-{{ if eq .MimeType "image/*" }}
-    <img class="item-thumbnail" src="{{ .URL }}">
-    {{ break }}
-{{ end }}
-{{ end }}
-{{ end }}

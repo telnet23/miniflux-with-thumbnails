@@ -10,6 +10,8 @@
         {{ end }}
     </div>
 
+    <a href="#" class="elevator">{{ icon "up" }}{{ t "page.footer.elevator" }}</a>
+
     <div class="pagination-next {{ if not .nextEntry }}disabled{{end}}">
         {{ if .nextEntry }}
             <a href="{{ .nextEntryRoute }}{{ if .searchQuery }}?q={{ .searchQuery }}{{ end }}" title="{{ .nextEntry.Title }}" data-page="next" rel="next">{{ t "pagination.next" }}</a>
@@ -64,15 +66,15 @@
                 <li>
                     <button
                         class="page-button"
-                        data-toggle-bookmark="true"
-                        data-bookmark-url="{{ route "toggleBookmark" "entryID" .entry.ID }}"
+                        data-toggle-starred="true"
+                        data-star-url="{{ route "toggleStarred" "entryID" .entry.ID }}"
                         data-label-loading="{{ t "entry.state.saving" }}"
-                        data-label-star="{{ t "entry.bookmark.toggle.on" }}"
-                        data-label-unstar="{{ t "entry.bookmark.toggle.off" }}"
-                        data-toast-star="{{ t "entry.bookmark.toast.on" }}"
-                        data-toast-unstar="{{ t "entry.bookmark.toast.off" }}"
+                        data-label-star="{{ t "entry.starred.toggle.on" }}"
+                        data-label-unstar="{{ t "entry.starred.toggle.off" }}"
+                        data-toast-star="{{ t "entry.starred.toast.on" }}"
+                        data-toast-unstar="{{ t "entry.starred.toast.off" }}"
                         data-value="{{ if .entry.Starred }}star{{ else }}unstar{{ end }}"
-                        >{{ if .entry.Starred }}{{ icon "unstar" }}{{ else }}{{ icon "star" }}{{ end }}<span class="icon-label">{{ if .entry.Starred }}{{ t "entry.bookmark.toggle.off" }}{{ else }}{{ t "entry.bookmark.toggle.on" }}{{ end }}</span></button>
+                        >{{ if .entry.Starred }}{{ icon "unstar" }}{{ else }}{{ icon "star" }}{{ end }}<span class="icon-label">{{ if .entry.Starred }}{{ t "entry.starred.toggle.off" }}{{ else }}{{ t "entry.starred.toggle.on" }}{{ end }}</span></button>
                 </li>
                 {{ if .hasSaveEntry }}
                 <li>
@@ -280,9 +282,9 @@
     {{ end }}
 
     {{ if .user }}
-        {{ noescape (proxyFilter .entry.Content) }}
+        {{ safeHTML (proxyFilter .entry.Content) }}
     {{ else }}
-        {{ noescape .entry.Content }}
+        {{ safeHTML .entry.Content }}
     {{ end }}
 </article>
 {{ if .entry.Enclosures }}

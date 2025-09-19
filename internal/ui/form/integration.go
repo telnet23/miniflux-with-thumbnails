@@ -32,6 +32,7 @@ type IntegrationForm struct {
 	WallabagClientSecret             string
 	WallabagUsername                 string
 	WallabagPassword                 string
+	WallabagTags                     string
 	NotionEnabled                    bool
 	NotionPageID                     string
 	NotionToken                      string
@@ -62,6 +63,11 @@ type IntegrationForm struct {
 	LinkdingAPIKey                   string
 	LinkdingTags                     string
 	LinkdingMarkAsUnread             bool
+	LinktacoEnabled                  bool
+	LinktacoAPIToken                 string
+	LinktacoOrgSlug                  string
+	LinktacoTags                     string
+	LinktacoVisibility               string
 	LinkwardenEnabled                bool
 	LinkwardenURL                    string
 	LinkwardenAPIKey                 string
@@ -145,6 +151,7 @@ func (i IntegrationForm) Merge(integration *model.Integration) {
 	integration.WallabagClientSecret = i.WallabagClientSecret
 	integration.WallabagUsername = i.WallabagUsername
 	integration.WallabagPassword = i.WallabagPassword
+	integration.WallabagTags = i.WallabagTags
 	integration.NotionEnabled = i.NotionEnabled
 	integration.NotionPageID = i.NotionPageID
 	integration.NotionToken = i.NotionToken
@@ -175,6 +182,11 @@ func (i IntegrationForm) Merge(integration *model.Integration) {
 	integration.LinkdingAPIKey = i.LinkdingAPIKey
 	integration.LinkdingTags = i.LinkdingTags
 	integration.LinkdingMarkAsUnread = i.LinkdingMarkAsUnread
+	integration.LinktacoEnabled = i.LinktacoEnabled
+	integration.LinktacoAPIToken = i.LinktacoAPIToken
+	integration.LinktacoOrgSlug = i.LinktacoOrgSlug
+	integration.LinktacoTags = i.LinktacoTags
+	integration.LinktacoVisibility = i.LinktacoVisibility
 	integration.LinkwardenEnabled = i.LinkwardenEnabled
 	integration.LinkwardenURL = i.LinkwardenURL
 	integration.LinkwardenAPIKey = i.LinkwardenAPIKey
@@ -260,6 +272,7 @@ func NewIntegrationForm(r *http.Request) *IntegrationForm {
 		WallabagClientSecret:             r.FormValue("wallabag_client_secret"),
 		WallabagUsername:                 r.FormValue("wallabag_username"),
 		WallabagPassword:                 r.FormValue("wallabag_password"),
+		WallabagTags:                     r.FormValue("wallabag_tags"),
 		NotionEnabled:                    r.FormValue("notion_enabled") == "1",
 		NotionPageID:                     r.FormValue("notion_page_id"),
 		NotionToken:                      r.FormValue("notion_token"),
@@ -290,6 +303,11 @@ func NewIntegrationForm(r *http.Request) *IntegrationForm {
 		LinkdingAPIKey:                   r.FormValue("linkding_api_key"),
 		LinkdingTags:                     r.FormValue("linkding_tags"),
 		LinkdingMarkAsUnread:             r.FormValue("linkding_mark_as_unread") == "1",
+		LinktacoEnabled:                  r.FormValue("linktaco_enabled") == "1",
+		LinktacoAPIToken:                 r.FormValue("linktaco_api_token"),
+		LinktacoOrgSlug:                  r.FormValue("linktaco_org_slug"),
+		LinktacoTags:                     r.FormValue("linktaco_tags"),
+		LinktacoVisibility:               r.FormValue("linktaco_visibility"),
 		LinkwardenEnabled:                r.FormValue("linkwarden_enabled") == "1",
 		LinkwardenURL:                    r.FormValue("linkwarden_url"),
 		LinkwardenAPIKey:                 r.FormValue("linkwarden_api_key"),

@@ -5,45 +5,42 @@
     <meta charset="utf-8">
     <title>{{template "title" .}} - Miniflux</title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Miniflux">
-    <link rel="manifest" href="{{ route "webManifest" }}" crossorigin="use-credentials">
-
-    <meta name="robots" content="noindex,nofollow">
+    <meta name="googlebot" content="notranslate">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="referrer" content="no-referrer">
-    <meta name="google" content="notranslate">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="{{ theme_color .theme "light" }}" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="{{ theme_color .theme "dark" }}" media="(prefers-color-scheme: dark)">
+
+    <link rel="manifest" href="{{ route "webManifest" }}" crossorigin="use-credentials">
 
     <link rel="icon" type="image/png" sizes="16x16" href="{{ route "appIcon" "filename" "icon-16.png" }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ route "appIcon" "filename" "icon-32.png" }}">
     <link rel="icon" type="image/png" sizes="128x128" href="{{ route "appIcon" "filename" "icon-128.png" }}">
     <link rel="icon" type="image/png" sizes="192x192" href="{{ route "appIcon" "filename" "icon-192.png" }}">
-
-    <!-- iOS icons -->
     <link rel="apple-touch-icon" sizes="120x120" href="{{ route "appIcon" "filename" "icon-120.png" }}">
     <link rel="apple-touch-icon" sizes="152x152" href="{{ route "appIcon" "filename" "icon-152.png" }}">
     <link rel="apple-touch-icon" sizes="167x167" href="{{ route "appIcon" "filename" "icon-167.png" }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ route "appIcon" "filename" "icon-180.png" }}">
 
-    <meta name="theme-color" content="{{ theme_color .theme "light" }}" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="{{ theme_color .theme "dark" }}" media="(prefers-color-scheme: dark)">
-
     <link rel="stylesheet" type="text/css" href="{{ route "stylesheet" "name" .theme "checksum" .theme_checksum }}">
 
     {{ if .user }}
         {{ $cspNonce := nonce }}
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data:; media-src *; frame-src *; {{ if .user.ExternalFontHosts }}font-src {{ .user.ExternalFontHosts }}; {{ end }}style-src 'self'{{ if .user.Stylesheet }}{{ if .user.ExternalFontHosts }} {{ .user.ExternalFontHosts }}{{ end }} 'nonce-{{ $cspNonce }}'{{ end }}{{ if .user.CustomJS }}; script-src 'self' 'nonce-{{ $cspNonce }}'{{ end }}; require-trusted-types-for 'script'; trusted-types ttpolicy;">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data:; media-src *; frame-src *; {{ if .user.ExternalFontHosts }}font-src {{ .user.ExternalFontHosts }}; {{ end }}style-src 'self'{{ if .user.Stylesheet }}{{ if .user.ExternalFontHosts }} {{ .user.ExternalFontHosts }}{{ end }} 'nonce-{{ $cspNonce }}'{{ end }}{{ if .user.CustomJS }}; script-src 'self' 'nonce-{{ $cspNonce }}'{{ end }}; require-trusted-types-for 'script'; trusted-types html url;">
 
-        {{ if .user.Stylesheet }}
+        {{ if .user.Stylesheet -}}
         <style nonce="{{ $cspNonce }}">{{ .user.Stylesheet | safeCSS }}</style>
-        {{ end }}
+        {{ end -}}
 
-        {{ if .user.CustomJS }}
+        {{ if .user.CustomJS -}}
         <script type="module" nonce="{{ $cspNonce }}">{{ .user.CustomJS | safeJS }}</script>
-        {{ end }}
-    {{ else }}
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data:; media-src *; frame-src *; require-trusted-types-for 'script'; trusted-types ttpolicy;">
-    {{ end }}
+        {{ end -}}
+    {{ else -}}
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data:; media-src *; frame-src *; require-trusted-types-for 'script'; trusted-types html url;">
+    {{ end -}}
 
     <script src="{{ route "javascript" "name" "app" "checksum" .app_js_checksum }}" type="module"></script>
 </head>
@@ -73,9 +70,7 @@
                 <a aria-label="{{ t "menu.home_page" }}" href="{{ route .user.DefaultHomePage }}">
                     Mini<span>flux</span>
                 </a>
-                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/>
-                </svg>
+                {{ icon "chevron-down"}}
             </div>
             <ul id="header-menu">
                 <li {{ if eq .menu "unread" }}class="active"{{ end }} title="{{ t "tooltip.keyboard_shortcuts" "g u" }}">
@@ -181,7 +176,7 @@
                     <li>{{ t "page.keyboard_shortcuts.toggle_read_status_prev" }} = <strong>M</strong></li>
                     <li>{{ t "page.keyboard_shortcuts.mark_page_as_read" }} = <strong>A</strong></li>
                     <li>{{ t "page.keyboard_shortcuts.download_content" }} = <strong>d</strong></li>
-                    <li>{{ t "page.keyboard_shortcuts.toggle_bookmark_status" }} = <strong>f</strong></li>
+                    <li>{{ t "page.keyboard_shortcuts.toggle_star_status" }} = <strong>f</strong></li>
                     <li>{{ t "page.keyboard_shortcuts.save_article" }} = <strong>s</strong></li>
                     <li>{{ t "page.keyboard_shortcuts.toggle_entry_attachments" }} = <strong>a</strong></li>
                     <li>{{ t "page.keyboard_shortcuts.scroll_item_to_top" }} = <strong>z + t</strong></li>

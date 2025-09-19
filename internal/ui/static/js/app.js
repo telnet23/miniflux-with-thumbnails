@@ -2,6 +2,17 @@
 const TOP = 9999;
 const BOTTOM = -9999;
 
+// Simple Polyfill for browsers that don't support Trusted Types
+// See https://caniuse.com/?search=trusted%20types
+if (!window.trustedTypes || !trustedTypes.createPolicy) {
+    window.trustedTypes = {
+        createPolicy: (name, policy) => ({
+            createScriptURL: src => src,
+            createHTML: html => html,
+        })
+    };
+}
+
 /**
  * Send a POST request to the specified URL with the given body.
  *
@@ -215,12 +226,12 @@ function setButtonToSavedState(buttonElement) {
 }
 
 /**
- * Set the bookmark button state.
+ * Set the star button state.
  *
  * @param {Element} buttonElement - The button element to update.
  * @param {string} newState - The new state to set ("star" or "unstar").
  */
-function setBookmarkButtonState(buttonElement, newState) {
+function setStarredButtonState(buttonElement, newState) {
     buttonElement.dataset.value = newState;
     const iconType = newState === "star" ? "unstar" : "star";
     setIconAndLabelElement(buttonElement, iconType, buttonElement.dataset[newState === "star" ? "labelUnstar" : "labelStar"]);
@@ -559,7 +570,7 @@ function initializeFormHandlers() {
  */
 function showKeyboardShortcutsAction() {
     const template = document.getElementById("keyboard-shortcuts");
-    ModalHandler.open(template.content, "dialog-title");
+    KeyboardModalHandler.open(template.content, "dialog-title");
 }
 
 /**
@@ -702,25 +713,25 @@ function handleSaveEntryAction(element = null) {
 }
 
 /**
- * Handle bookmarking an entry.
+ * Handle starring an entry.
  *
- * @param {Element} element - The element that triggered the bookmark action.
+ * @param {Element} element - The element that triggered the star action.
  */
-function handleBookmarkAction(element) {
+function handleStarAction(element) {
     const currentEntry = findEntry(element);
     if (!currentEntry) return;
 
-    const buttonElement = currentEntry.querySelector(":is(a, button)[data-toggle-bookmark]");
+    const buttonElement = currentEntry.querySelector(":is(a, button)[data-toggle-starred]");
     if (!buttonElement) return;
 
     setButtonToLoadingState(buttonElement);
 
-    sendPOSTRequest(buttonElement.dataset.bookmarkUrl).then(() => {
+    sendPOSTRequest(buttonElement.dataset.starUrl).then(() => {
         const currentState = buttonElement.dataset.value;
         const isStarred = currentState === "star";
         const newStarStatus = isStarred ? "unstar" : "star";
 
-        setBookmarkButtonState(buttonElement, newStarStatus);
+        setStarredButtonState(buttonElement, newStarStatus);
 
         if (isEntryView()) {
             showToastNotification(currentState, buttonElement.dataset[isStarred ? "toastUnstar" : "toastStar"]);
@@ -746,6 +757,7 @@ function handleFetchOriginalContentAction() {
 
         response.json().then((data) => {
             if (data.content && data.reading_time) {
+                const ttpolicy = trustedTypes.createPolicy('html', {createHTML: html => html});
                 document.querySelector(".entry-content").innerHTML = ttpolicy.createHTML(data.content);
                 const entryReadingtimeElement = document.querySelector(".entry-reading-time");
                 if (entryReadingtimeElement) {
@@ -1081,6 +1093,7 @@ function initializeServiceWorker() {
     if ("serviceWorker" in navigator) {
         const serviceWorkerURL = document.body.dataset.serviceWorkerUrl;
         if (serviceWorkerURL) {
+            const ttpolicy = trustedTypes.createPolicy('url', {createScriptURL: src => src});
             navigator.serviceWorker.register(ttpolicy.createScriptURL(serviceWorkerURL), {
                 type: "module"
             }).catch((error) => {
@@ -1192,7 +1205,7 @@ function initializeKeyboardShortcuts() {
     keyboardHandler.on("A", markPageAsReadAction);
     keyboardHandler.on("s", () => handleSaveEntryAction());
     keyboardHandler.on("d", handleFetchOriginalContentAction);
-    keyboardHandler.on("f", () => handleBookmarkAction());
+    keyboardHandler.on("f", () => handleStarAction());
 
     // Feed actions
     keyboardHandler.on("F", goToFeedPage);
@@ -1202,7 +1215,7 @@ function initializeKeyboardShortcuts() {
 
     // UI actions
     keyboardHandler.on("?", showKeyboardShortcutsAction);
-    keyboardHandler.on("Escape", () => ModalHandler.close());
+    keyboardHandler.on("Escape", () => KeyboardModalHandler.close());
     keyboardHandler.on("a", () => {
         const enclosureElement = document.querySelector('.entry-enclosures');
         if (enclosureElement) {
@@ -1217,8 +1230,10 @@ function initializeKeyboardShortcuts() {
  * Initialize touch handler for mobile devices.
  */
 function initializeTouchHandler() {
-    const touchHandler = new TouchHandler();
-    touchHandler.listen();
+    if ( "ontouchstart" in window || navigator.maxTouchPoints > 0) {
+        const touchHandler = new TouchHandler();
+        touchHandler.listen();
+    }
 }
 
 /**
@@ -1227,7 +1242,7 @@ function initializeTouchHandler() {
 function initializeClickHandlers() {
     // Entry actions
     onClick(":is(a, button)[data-save-entry]", (event) => handleSaveEntryAction(event.target));
-    onClick(":is(a, button)[data-toggle-bookmark]", (event) => handleBookmarkAction(event.target));
+    onClick(":is(a, button)[data-toggle-starred]", (event) => handleStarAction(event.target));
     onClick(":is(a, button)[data-toggle-status]", (event) => handleEntryStatus("next", event.target));
     onClick(":is(a, button)[data-fetch-content-entry]", handleFetchOriginalContentAction);
     onClick(":is(a, button)[data-share-status]", handleEntryShareAction);
