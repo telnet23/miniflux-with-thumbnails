@@ -138,46 +138,51 @@ var (
 		"linkedin.com/shareArticle",
 	}
 
-	validURISchemes = map[string]struct{}{
-		"apt":       {},
-		"bitcoin":   {},
-		"callto":    {},
-		"dav":       {},
-		"davs":      {},
-		"ed2k":      {},
-		"facetime":  {},
-		"feed":      {},
-		"ftp":       {},
-		"geo":       {},
-		"git":       {},
-		"gopher":    {},
-		"http":      {},
-		"https":     {},
-		"irc":       {},
-		"irc6":      {},
-		"ircs":      {},
-		"itms-apps": {},
-		"itms":      {},
-		"magnet":    {},
-		"mailto":    {},
-		"news":      {},
-		"nntp":      {},
-		"rtmp":      {},
-		"sftp":      {},
-		"sip":       {},
-		"sips":      {},
-		"skype":     {},
-		"spotify":   {},
-		"ssh":       {},
-		"steam":     {},
-		"svn":       {},
-		"svn+ssh":   {},
-		"tel":       {},
-		"webcal":    {},
-		"xmpp":      {},
+	// See https://www.iana.org/assignments/uri-schemes/uri-schemes.xhtml
+	validURISchemes = []string{
+		// Most commong schemes on top.
+		"https:",
+		"http:",
+
+		// Then the rest.
+		"apt:",
+		"bitcoin:",
+		"callto:",
+		"dav:",
+		"davs:",
+		"ed2k:",
+		"facetime:",
+		"feed:",
+		"ftp:",
+		"geo:",
+		"git:",
+		"gopher:",
+		"irc:",
+		"irc6:",
+		"ircs:",
+		"itms-apps:",
+		"itms:",
+		"magnet:",
+		"mailto:",
+		"news:",
+		"nntp:",
+		"rtmp:",
+		"sftp:",
+		"sip:",
+		"sips:",
+		"skype:",
+		"spotify:",
+		"ssh:",
+		"steam:",
+		"svn:",
+		"svn+ssh:",
+		"tel:",
+		"webcal:",
+		"xmpp:",
+
 		// iOS Apps
-		"opener": {}, // https://www.opener.link
-		"hack":   {}, // https://apps.apple.com/it/app/hack-for-hacker-news-reader/id1464477788?l=en-GB
+		"opener:", // https://www.opener.link
+		"hack:",   // https://apps.apple.com/it/app/hack-for-hacker-news-reader/id1464477788?l=en-GB
 	}
 
 	dataAttributeAllowedPrefixes = []string{
@@ -300,7 +305,8 @@ func SanitizeHTML(baseURL, rawHTML string, sanitizerOptions *SanitizerOptions) s
 }
 
 func sanitizeAttributes(parsedBaseUrl *url.URL, tagName string, attributes []html.Attribute, sanitizerOptions *SanitizerOptions) ([]string, string) {
-	var htmlAttrs, attrNames []string
+	htmlAttrs := make([]string, 0, len(attributes))
+	attrNames := make([]string, 0, len(attributes))
 	var err error
 	var isAnchorLink bool
 
@@ -461,29 +467,33 @@ func hasRequiredAttributes(tagName string, attributes []string) bool {
 	case "iframe":
 		return slices.Contains(attributes, "src")
 	case "source", "img":
-		return slices.Contains(attributes, "src") || slices.Contains(attributes, "srcset")
+		for _, attribute := range attributes {
+			if attribute == "src" || attribute == "srcset" {
+				return true
+			}
+		}
+		return false
 	default:
 		return true
 	}
 }
 
-// See https://www.iana.org/assignments/uri-schemes/uri-schemes.xhtml
 func hasValidURIScheme(absoluteURL string) bool {
-	colonIndex := strings.IndexByte(absoluteURL, ':')
-	// Scheme must exist (colonIndex > 0). An empty scheme (e.g. ":foo") is not allowed.
-	if colonIndex <= 0 {
-		return false
+	for _, scheme := range validURISchemes {
+		if strings.HasPrefix(absoluteURL, scheme) {
+			return true
+		}
 	}
-
-	scheme := absoluteURL[:colonIndex]
-	_, ok := validURISchemes[strings.ToLower(scheme)]
-	return ok
+	return false
 }
 
 func isBlockedResource(absoluteURL string) bool {
-	return slices.ContainsFunc(blockedResourceURLSubstrings, func(element string) bool {
-		return strings.Contains(absoluteURL, element)
-	})
+	for _, blockedURL := range blockedResourceURLSubstrings {
+		if strings.Contains(absoluteURL, blockedURL) {
+			return true
+		}
+	}
+	return false
 }
 
 func isValidIframeSource(iframeSourceURL string) bool {

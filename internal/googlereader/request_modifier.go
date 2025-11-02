@@ -29,19 +29,19 @@ func (r RequestModifiers) String() string {
 
 	results = append(results, fmt.Sprintf("UserID: %d", r.UserID))
 
-	var streamStr []string
+	streamStr := make([]string, 0, len(r.Streams))
 	for _, s := range r.Streams {
 		streamStr = append(streamStr, s.String())
 	}
 	results = append(results, fmt.Sprintf("Streams: [%s]", strings.Join(streamStr, ", ")))
 
-	var exclusions []string
+	exclusions := make([]string, 0, len(r.ExcludeTargets))
 	for _, s := range r.ExcludeTargets {
 		exclusions = append(exclusions, s.String())
 	}
 	results = append(results, fmt.Sprintf("Exclusions: [%s]", strings.Join(exclusions, ", ")))
 
-	var filters []string
+	filters := make([]string, 0, len(r.FilterTargets))
 	for _, s := range r.FilterTargets {
 		filters = append(filters, s.String())
 	}
@@ -49,8 +49,8 @@ func (r RequestModifiers) String() string {
 
 	results = append(results, fmt.Sprintf("Count: %d", r.Count))
 	results = append(results, fmt.Sprintf("Offset: %d", r.Offset))
-	results = append(results, fmt.Sprintf("Sort Direction: %s", r.SortDirection))
-	results = append(results, fmt.Sprintf("Continuation Token: %s", r.ContinuationToken))
+	results = append(results, "Sort Direction: "+r.SortDirection)
+	results = append(results, "Continuation Token: "+r.ContinuationToken)
 	results = append(results, fmt.Sprintf("Start Time: %d", r.StartTime))
 	results = append(results, fmt.Sprintf("Stop Time: %d", r.StopTime))
 

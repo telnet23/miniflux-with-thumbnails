@@ -1,8 +1,12 @@
-package linkace
+// SPDX-FileCopyrightText: Copyright The Miniflux Authors. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+package linkace // import "miniflux.app/v2/internal/integration/linkace"
 
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -28,7 +32,7 @@ func NewClient(baseURL, apiKey, tags string, private bool, checkDisabled bool) *
 
 func (c *Client) AddURL(entryURL, entryTitle string) error {
 	if c.baseURL == "" || c.apiKey == "" {
-		return fmt.Errorf("linkace: missing base URL or API key")
+		return errors.New("linkace: missing base URL or API key")
 	}
 
 	tagsSplitFn := func(c rune) bool {

@@ -4,6 +4,7 @@
 package template // import "miniflux.app/v2/internal/template"
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"math"
@@ -33,6 +34,7 @@ type funcMap struct {
 func (f *funcMap) Map() template.FuncMap {
 	return template.FuncMap{
 		"contains":         strings.Contains,
+		"csp":              csp,
 		"startsWith":       strings.HasPrefix,
 		"formatFileSize":   formatFileSize,
 		"dict":             dict,
@@ -116,15 +118,49 @@ func (f *funcMap) Map() template.FuncMap {
 	}
 }
 
+func csp(user *model.User, nonce string) string {
+	policies := map[string]string{
+		"default-src":               "'none'",
+		"frame-src":                 "*",
+		"img-src":                   "* data:",
+		"manifest-src":              "'self'",
+		"media-src":                 "*",
+		"require-trusted-types-for": "'script'",
+		"script-src":                "'nonce-" + nonce + "' 'strict-dynamic'",
+		"style-src":                 "'nonce-" + nonce + "'",
+		"trusted-types":             "html url",
+		"connect-src":               "'self'",
+	}
+
+	if user != nil {
+		if user.ExternalFontHosts != "" {
+			policies["font-src"] = user.ExternalFontHosts
+			if user.Stylesheet != "" {
+				policies["style-src"] += " " + user.ExternalFontHosts
+			}
+		}
+	}
+
+	var policy strings.Builder
+	for key, value := range policies {
+		policy.WriteString(key)
+		policy.WriteString(" ")
+		policy.WriteString(value)
+		policy.WriteString("; ")
+	}
+
+	return `<meta http-equiv="Content-Security-Policy" content="` + policy.String() + `">`
+}
+
 func dict(values ...any) (map[string]any, error) {
 	if len(values)%2 != 0 {
-		return nil, fmt.Errorf("dict expects an even number of arguments")
+		return nil, errors.New("dict expects an even number of arguments")
 	}
 	dict := make(map[string]any, len(values)/2)
 	for i := 0; i < len(values); i += 2 {
 		key, ok := values[i].(string)
 		if !ok {
-			return nil, fmt.Errorf("dict keys must be strings")
+			return nil, errors.New("dict keys must be strings")
 		}
 		dict[key] = values[i+1]
 	}

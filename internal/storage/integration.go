@@ -222,11 +222,13 @@ func (s *Storage) Integration(userID int64) (*model.Integration, error) {
 			karakeep_enabled,
 			karakeep_api_key,
 			karakeep_url,
+			karakeep_tags,
 			linktaco_enabled,
 			linktaco_api_token,
 			linktaco_org_slug,
 			linktaco_tags,
-			linktaco_visibility
+			linktaco_visibility,
+			archiveorg_enabled
 		FROM
 			integrations
 		WHERE
@@ -347,11 +349,13 @@ func (s *Storage) Integration(userID int64) (*model.Integration, error) {
 		&integration.KarakeepEnabled,
 		&integration.KarakeepAPIKey,
 		&integration.KarakeepURL,
+		&integration.KarakeepTags,
 		&integration.LinktacoEnabled,
 		&integration.LinktacoAPIToken,
 		&integration.LinktacoOrgSlug,
 		&integration.LinktacoTags,
 		&integration.LinktacoVisibility,
+		&integration.ArchiveorgEnabled,
 	)
 	switch {
 	case err == sql.ErrNoRows:
@@ -481,13 +485,15 @@ func (s *Storage) UpdateIntegration(integration *model.Integration) error {
 			karakeep_enabled=$110,
 			karakeep_api_key=$111,
 			karakeep_url=$112,
-			linktaco_enabled=$113,
-			linktaco_api_token=$114,
-			linktaco_org_slug=$115,
-			linktaco_tags=$116,
-			linktaco_visibility=$117
+			karakeep_tags=$113,
+			linktaco_enabled=$114,
+			linktaco_api_token=$115,
+			linktaco_org_slug=$116,
+			linktaco_tags=$117,
+			linktaco_visibility=$118,
+			archiveorg_enabled=$119
 		WHERE
-			user_id=$118
+			user_id=$120
 	`
 	_, err := s.db.Exec(
 		query,
@@ -603,11 +609,13 @@ func (s *Storage) UpdateIntegration(integration *model.Integration) error {
 		integration.KarakeepEnabled,
 		integration.KarakeepAPIKey,
 		integration.KarakeepURL,
+		integration.KarakeepTags,
 		integration.LinktacoEnabled,
 		integration.LinktacoAPIToken,
 		integration.LinktacoOrgSlug,
 		integration.LinktacoTags,
 		integration.LinktacoVisibility,
+		integration.ArchiveorgEnabled,
 		integration.UserID,
 	)
 
@@ -651,7 +659,8 @@ func (s *Storage) HasSaveEntry(userID int64) (result bool) {
 				betula_enabled='t' OR
 				cubox_enabled='t' OR
 				discord_enabled='t' OR
-				slack_enabled='t'
+				slack_enabled='t' OR
+				archiveorg_enabled='t'
 			)
 	`
 	if err := s.db.QueryRow(query, userID).Scan(&result); err != nil {

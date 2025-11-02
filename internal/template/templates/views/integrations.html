@@ -15,6 +15,18 @@
         <div role="alert" class="alert alert-error">{{ .errorMessage }}</div>
     {{ end }}
 
+    <details {{ if .form.ArchiveorgEnabled }}open{{ end }}>
+        <summary>Archive.org</summary>
+        <div class="form-section">
+            <label>
+                <input type="checkbox" name="archiveorg_enabled" value="1" {{ if .form.ArchiveorgEnabled }}checked{{ end }}> {{ t "form.integration.archiveorg_activate" }}
+            </label>
+            <div class="buttons">
+                <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>
+            </div>
+        </div>
+    </details>
+
     <details {{ if .form.AppriseEnabled }}open{{ end }}>
         <summary>Apprise</summary>
         <div class="form-section">
@@ -407,6 +419,9 @@
 
             <label for="form-karakeep-url">{{ t "form.integration.karakeep_url" }}</label>
             <input type="url" name="karakeep_url" id="form-karakeep-url" value="{{ .form.KarakeepURL }}" placeholder="https://try.karakeep.app/api/v1/bookmarks" spellcheck="false">
+
+            <label for="form-karakeep-tags">{{ t "form.integration.karakeep_tags" }}</label>
+            <input type="text" name="karakeep_tags" id="form-karakeep-tags" value="{{ .form.KarakeepTags }}" placeholder="miniflux, new" spellcheck="false">
 
             <div class="buttons">
                 <button type="submit" class="button button-primary" data-label-loading="{{ t "form.submit.saving" }}">{{ t "action.update" }}</button>

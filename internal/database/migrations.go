@@ -20,7 +20,7 @@ var migrations = [...]func(tx *sql.Tx) error{
 			);
 
 			CREATE TABLE users (
-				id serial not null,
+				id SERIAL,
 				username text not null unique,
 				password text,
 				is_admin bool default 'f',
@@ -32,7 +32,7 @@ var migrations = [...]func(tx *sql.Tx) error{
 			);
 
 			CREATE TABLE sessions (
-				id serial not null,
+				id SERIAL,
 				user_id int not null,
 				token text not null unique,
 				created_at timestamp with time zone default now(),
@@ -44,7 +44,7 @@ var migrations = [...]func(tx *sql.Tx) error{
 			);
 
 			CREATE TABLE categories (
-				id serial not null,
+				id SERIAL,
 				user_id int not null,
 				title text not null,
 				primary key (id),
@@ -53,7 +53,7 @@ var migrations = [...]func(tx *sql.Tx) error{
 			);
 
 			CREATE TABLE feeds (
-				id bigserial not null,
+				id BIGSERIAL,
 				user_id int not null,
 				category_id int not null,
 				title text not null,
@@ -73,7 +73,7 @@ var migrations = [...]func(tx *sql.Tx) error{
 			CREATE TYPE entry_status as enum('unread', 'read', 'removed');
 
 			CREATE TABLE entries (
-				id bigserial not null,
+				id BIGSERIAL,
 				user_id int not null,
 				feed_id bigint not null,
 				hash text not null,
@@ -92,7 +92,7 @@ var migrations = [...]func(tx *sql.Tx) error{
 			CREATE INDEX entries_feed_idx on entries using btree(feed_id);
 
 			CREATE TABLE enclosures (
-				id bigserial not null,
+				id BIGSERIAL,
 				user_id int not null,
 				entry_id bigint not null,
 				url text not null,
@@ -104,7 +104,7 @@ var migrations = [...]func(tx *sql.Tx) error{
 			);
 
 			CREATE TABLE icons (
-				id bigserial not null,
+				id BIGSERIAL,
 				hash text not null unique,
 				mime_type text not null,
 				content bytea not null,
@@ -123,13 +123,9 @@ var migrations = [...]func(tx *sql.Tx) error{
 		return err
 	},
 	func(tx *sql.Tx) (err error) {
-		sql := `
-			CREATE EXTENSION IF NOT EXISTS hstore;
-			ALTER TABLE users ADD COLUMN extra hstore;
-			CREATE INDEX users_extra_idx ON users using gin(extra);
-			`
-		_, err = tx.Exec(sql)
-		return err
+		// This used to create a HSTORE `extra` column in the table `users`,
+		// which hasn't been used since Miniflux 2.0.27.
+		return nil
 	},
 	func(tx *sql.Tx) (err error) {
 		sql := `
@@ -334,7 +330,7 @@ var migrations = [...]func(tx *sql.Tx) error{
 	func(tx *sql.Tx) (err error) {
 		sql := `
 			CREATE TABLE api_keys (
-				id serial not null,
+				id SERIAL,
 				user_id int not null references users(id) on delete cascade,
 				token text not null unique,
 				description text not null,
@@ -436,6 +432,18 @@ var migrations = [...]func(tx *sql.Tx) error{
 		return err
 	},
 	func(tx *sql.Tx) (err error) {
+
+		hasExtra := false
+		if err := tx.QueryRow(`
+			SELECT true 
+			FROM information_schema.columns
+			WHERE
+				table_name='users' AND
+				column_name='extra';
+			`).Scan(&hasExtra); err != nil && err != sql.ErrNoRows {
+			return err
+		}
+
 		_, err = tx.Exec(`
 			ALTER TABLE users
 				ADD column stylesheet text not null default '',
@@ -444,6 +452,11 @@ var migrations = [...]func(tx *sql.Tx) error{
 		`)
 		if err != nil {
 			return err
+		}
+
+		if !hasExtra {
+			// No need to migrate things from the `extra` column if it's not present
+			return nil
 		}
 
 		_, err = tx.Exec(`
@@ -495,7 +508,7 @@ var migrations = [...]func(tx *sql.Tx) error{
 		return err
 	},
 	func(tx *sql.Tx) (err error) {
-		if _, err = tx.Exec(`ALTER TABLE users DROP COLUMN extra;`); err != nil {
+		if _, err = tx.Exec(`ALTER TABLE users DROP COLUMN IF EXISTS extra;`); err != nil {
 			return err
 		}
 		_, err = tx.Exec(`
@@ -1340,5 +1353,24 @@ var migrations = [...]func(tx *sql.Tx) error{
 		}
 
 		return nil
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `
+			ALTER TABLE integrations ADD COLUMN archiveorg_enabled bool default 'f'
+		`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `DROP EXTENSION IF EXISTS hstore;`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `
+			ALTER TABLE integrations ADD COLUMN karakeep_tags text default '';
+		`
+		_, err = tx.Exec(sql)
+		return err
 	},
 }

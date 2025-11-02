@@ -619,22 +619,11 @@ template {
     display: none;
 }
 
-#modal-left {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 380px;
-    overflow: auto;
-    color: var(--modal-color);
-    background: var(--modal-background);
-    box-shadow: var(--modal-box-shadow);
-    padding: 30px 5px 5px;
-}
-
-#modal-left h3 {
-    font-weight: 400;
-    margin: 0;
+dialog {
+    max-height: none;
+    height: 100vh;
+    border: none;
+    padding: 1%;
 }
 
 .btn-close-modal {
@@ -1242,6 +1231,7 @@ details.entry-enclosures {
     font-size: 0.8em;
     margin-top: 10px;
     margin-bottom: 10px;
+    word-wrap: break-word;
 }
 
 /* Confirmation */
