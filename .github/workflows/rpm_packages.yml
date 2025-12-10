@@ -11,17 +11,18 @@ on:
     branches: [ main ]
     paths:
       - 'packaging/rpm/**' # Only run on changes to the rpm packaging files
+      - '.github/workflows/rpm_packages.yml'
 jobs:
   test-package:
     if: github.event_name == 'schedule' || github.event_name == 'pull_request'
     name: Test Packages
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
           fetch-depth: 0
     - name: Build RPM Package
-      run: make rpm
+      run: make rpm VERSION=2.2.x_dev
     - name: List generated files
       run: ls -l *.rpm
   build-package-manually:
@@ -29,13 +30,13 @@ jobs:
     name: Build Packages Manually
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
           fetch-depth: 0
     - name: Build RPM Package
       run: make rpm
     - name: Upload package
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: packages
         path: "*.rpm"
@@ -46,7 +47,7 @@ jobs:
     name: Publish Packages
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
           fetch-depth: 0
     - name: Build RPM Package

@@ -68,6 +68,7 @@ type Integration struct {
 	LinkwardenEnabled                bool
 	LinkwardenURL                    string
 	LinkwardenAPIKey                 string
+	LinkwardenCollectionID           *int64
 	MatrixBotEnabled                 bool
 	MatrixBotUser                    string
 	MatrixBotPassword                string

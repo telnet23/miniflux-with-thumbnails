@@ -17,7 +17,7 @@ jobs:
     name: Test Packages
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
           fetch-depth: 0
     - name: Set up QEMU
@@ -38,7 +38,7 @@ jobs:
     name: Build Packages Manually
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
           fetch-depth: 0
     - name: Set up QEMU
@@ -53,7 +53,7 @@ jobs:
     - name: Build Debian Packages
       run: make debian-packages
     - name: Upload package
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: packages
         path: "*.deb"
@@ -64,7 +64,7 @@ jobs:
     name: Publish Packages
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
           fetch-depth: 0
     - name: Set up QEMU
