@@ -3,7 +3,10 @@
 
 package config // import "miniflux.app/v2/internal/config"
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func TestBaseURLOptionParsing(t *testing.T) {
 	configParser := NewConfigParser()
@@ -1364,6 +1367,30 @@ func TestHTTPClientTimeoutOptionParsing(t *testing.T) {
 	}
 }
 
+func TestIconFetchAllowPrivateNetworksOptionParsing(t *testing.T) {
+	configParser := NewConfigParser()
+
+	if configParser.options.IconFetchAllowPrivateNetworks() {
+		t.Fatalf("Expected ICON_FETCH_ALLOW_PRIVATE_NETWORKS to be disabled by default")
+	}
+
+	if err := configParser.parseLines([]string{"ICON_FETCH_ALLOW_PRIVATE_NETWORKS=1"}); err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if !configParser.options.IconFetchAllowPrivateNetworks() {
+		t.Fatalf("Expected ICON_FETCH_ALLOW_PRIVATE_NETWORKS to be enabled")
+	}
+
+	if err := configParser.parseLines([]string{"ICON_FETCH_ALLOW_PRIVATE_NETWORKS=0"}); err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if configParser.options.IconFetchAllowPrivateNetworks() {
+		t.Fatalf("Expected ICON_FETCH_ALLOW_PRIVATE_NETWORKS to be disabled")
+	}
+}
+
 func TestHTTPServerTimeoutOptionParsing(t *testing.T) {
 	configParser := NewConfigParser()
 
@@ -1428,6 +1455,30 @@ func TestMediaProxyHTTPClientTimeoutOptionParsing(t *testing.T) {
 
 	if configParser.options.MediaProxyHTTPClientTimeout().Seconds() != 60 {
 		t.Fatalf("Expected MEDIA_PROXY_HTTP_CLIENT_TIMEOUT to be 60 seconds")
+	}
+}
+
+func TestMediaProxyAllowPrivateNetworksOptionParsing(t *testing.T) {
+	configParser := NewConfigParser()
+
+	if configParser.options.MediaProxyAllowPrivateNetworks() {
+		t.Fatalf("Expected MEDIA_PROXY_ALLOW_PRIVATE_NETWORKS to be disabled by default")
+	}
+
+	if err := configParser.parseLines([]string{"MEDIA_PROXY_ALLOW_PRIVATE_NETWORKS=1"}); err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if !configParser.options.MediaProxyAllowPrivateNetworks() {
+		t.Fatalf("Expected MEDIA_PROXY_ALLOW_PRIVATE_NETWORKS to be enabled")
+	}
+
+	if err := configParser.parseLines([]string{"MEDIA_PROXY_ALLOW_PRIVATE_NETWORKS=0"}); err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if configParser.options.MediaProxyAllowPrivateNetworks() {
+		t.Fatalf("Expected MEDIA_PROXY_ALLOW_PRIVATE_NETWORKS to be disabled")
 	}
 }
 
@@ -1584,6 +1635,32 @@ func TestSchedulerRoundRobinMinIntervalOptionParsing(t *testing.T) {
 	}
 }
 
+func TestTrustedReverseProxyNetworksOptionParsing(t *testing.T) {
+	configParser := NewConfigParser()
+
+	// Test default value
+	defaultNetworks := configParser.options.TrustedReverseProxyNetworks()
+	if len(defaultNetworks) != 0 {
+		t.Fatalf("Expected 0 allowed networks by default, got %d", len(defaultNetworks))
+	}
+
+	// Test valid value
+	if err := configParser.parseLines([]string{"TRUSTED_REVERSE_PROXY_NETWORKS=10.0.0.0/8,192.168.1.0/24"}); err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	allowedNetworks := configParser.options.TrustedReverseProxyNetworks()
+	if len(allowedNetworks) != 2 {
+		t.Fatalf("Expected 2 allowed networks, got %d", len(allowedNetworks))
+	}
+	if !slices.Contains(allowedNetworks, "10.0.0.0/8") {
+		t.Errorf("Expected 10.0.0.0/8 in allowed networks")
+	}
+	if !slices.Contains(allowedNetworks, "192.168.1.0/24") {
+		t.Errorf("Expected 192.168.1.0/24 in allowed networks")
+	}
+}
+
 func TestYouTubeEmbedDomainOptionParsing(t *testing.T) {
 	configParser := NewConfigParser()
 
@@ -1614,8 +1691,8 @@ func TestSetLogLevelFunction(t *testing.T) {
 	if configParser.options.LogLevel() != "debug" {
 		t.Fatalf("Expected LOG_LEVEL to be 'debug' after SetLogLevel('debug'), got '%s'", configParser.options.LogLevel())
 	}
-	if configParser.options.options["LOG_LEVEL"].RawValue != "debug" {
-		t.Fatalf("Expected LOG_LEVEL RawValue to be 'debug', got '%s'", configParser.options.options["LOG_LEVEL"].RawValue)
+	if configParser.options.options["LOG_LEVEL"].rawValue != "debug" {
+		t.Fatalf("Expected LOG_LEVEL RawValue to be 'debug', got '%s'", configParser.options.options["LOG_LEVEL"].rawValue)
 	}
 
 	// Test setting log level to warning
@@ -1623,8 +1700,8 @@ func TestSetLogLevelFunction(t *testing.T) {
 	if configParser.options.LogLevel() != "warning" {
 		t.Fatalf("Expected LOG_LEVEL to be 'warning' after SetLogLevel('warning'), got '%s'", configParser.options.LogLevel())
 	}
-	if configParser.options.options["LOG_LEVEL"].RawValue != "warning" {
-		t.Fatalf("Expected LOG_LEVEL RawValue to be 'warning', got '%s'", configParser.options.options["LOG_LEVEL"].RawValue)
+	if configParser.options.options["LOG_LEVEL"].rawValue != "warning" {
+		t.Fatalf("Expected LOG_LEVEL RawValue to be 'warning', got '%s'", configParser.options.options["LOG_LEVEL"].rawValue)
 	}
 }
 
