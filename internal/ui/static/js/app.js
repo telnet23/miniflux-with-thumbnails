@@ -42,10 +42,8 @@ function sendPOSTRequest(url, body = null) {
  * @param {string} url
  */
 function openNewTab(url) {
-    const win = window.open("");
-    win.opener = null;
-    win.location = url;
-    win.focus();
+    const win = window.open(url, "_blank", "noreferrer");
+    if (win) win.focus();
 }
 
 /**
@@ -284,7 +282,7 @@ function showToastNotification(iconType, notificationMessage) {
  * @param {boolean} reloadOnFail - If true, reload the current page if the target page is not found.
  */
 function goToPage(page, reloadOnFail = false) {
-    const element = document.querySelector(":is(a, button)[data-page=" + page + "]");
+    const element = document.querySelector(`:is(a, button)[data-page=${page}]`);
 
     if (element) {
         document.location.href = element.href;
@@ -491,9 +489,9 @@ function toggleAriaAttributesOnMainMenu() {
         homePageLinkElement.tabIndex = -1;
     } else {
         // Remove mobile menu button attributes
-        ["role", "tabindex", "aria-expanded", "aria-label"].forEach(attr =>
-            logoElement.removeAttribute(attr)
-        );
+        ["role", "tabindex", "aria-expanded", "aria-label"].forEach(attr => {
+            logoElement.removeAttribute(attr);
+        });
         homePageLinkElement.removeAttribute("tabindex");
     }
 }
@@ -540,10 +538,11 @@ function initializeMainMenuHandlers() {
 
     onClick(".header nav li", (event) => {
         const linkElement = event.target.closest("a") || event.target.querySelector("a");
-        if (linkElement) {
+        if (linkElement && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
+            event.preventDefault();
             window.location.href = linkElement.getAttribute("href");
         }
-    });
+    }, true);
 }
 
 /**
@@ -648,7 +647,7 @@ function toggleEntryStatus(element, toasting) {
             showToastNotification(newStatus, currentStatus === "read" ? buttonElement.dataset.toastUnread : buttonElement.dataset.toastRead);
         }
 
-        element.classList.replace("item-status-" + currentStatus, "item-status-" + newStatus);
+        element.classList.replace(`item-status-${currentStatus}`, `item-status-${newStatus}`);
 
         if (isListView() && getVisibleEntries().length === 0) {
             window.location.reload();
@@ -952,7 +951,7 @@ function handleConfirmationMessage(linkElement, callback) {
     };
 
     questionElement.className = "confirm";
-    questionElement.appendChild(document.createTextNode(linkElement.dataset.labelQuestion + " "));
+    questionElement.appendChild(document.createTextNode(`${linkElement.dataset.labelQuestion} `));
     questionElement.appendChild(yesElement);
     questionElement.appendChild(document.createTextNode(", "));
     questionElement.appendChild(noElement);

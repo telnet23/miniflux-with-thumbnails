@@ -41,11 +41,11 @@ func (j *JSONAdapter) BuildFeed(baseURL string) *model.Feed {
 		feed.SiteURL = feed.FeedURL
 	}
 
-	if feedURL, err := urllib.AbsoluteURL(baseURL, feed.FeedURL); err == nil {
+	if feedURL, err := urllib.ResolveToAbsoluteURL(baseURL, feed.FeedURL); err == nil {
 		feed.FeedURL = feedURL
 	}
 
-	if siteURL, err := urllib.AbsoluteURL(baseURL, feed.SiteURL); err == nil {
+	if siteURL, err := urllib.ResolveToAbsoluteURL(baseURL, feed.SiteURL); err == nil {
 		feed.SiteURL = siteURL
 	}
 
@@ -58,7 +58,7 @@ func (j *JSONAdapter) BuildFeed(baseURL string) *model.Feed {
 	for _, iconURL := range []string{j.jsonFeed.FaviconURL, j.jsonFeed.IconURL} {
 		iconURL = strings.TrimSpace(iconURL)
 		if iconURL != "" {
-			if absoluteIconURL, err := urllib.AbsoluteURL(feed.SiteURL, iconURL); err == nil {
+			if absoluteIconURL, err := urllib.ResolveToAbsoluteURL(feed.SiteURL, iconURL); err == nil {
 				feed.IconURL = absoluteIconURL
 				break
 			}
@@ -73,7 +73,7 @@ func (j *JSONAdapter) BuildFeed(baseURL string) *model.Feed {
 			itemURL = strings.TrimSpace(itemURL)
 			if itemURL != "" {
 				// Make sure the entry URL is absolute.
-				if entryURL, err := urllib.AbsoluteURL(feed.SiteURL, itemURL); err == nil {
+				if entryURL, err := urllib.ResolveToAbsoluteURL(feed.SiteURL, itemURL); err == nil {
 					entry.URL = entryURL
 				}
 				break
@@ -83,8 +83,10 @@ func (j *JSONAdapter) BuildFeed(baseURL string) *model.Feed {
 		// The entry title is optional, so we need to find a fallback.
 		if entry.Title == "" {
 			for _, value := range []string{item.Summary, item.ContentText, item.ContentHTML} {
+				value = strings.TrimSpace(value)
 				if value != "" {
 					entry.Title = sanitizer.TruncateHTML(value, 100)
+					break
 				}
 			}
 		}
@@ -144,7 +146,7 @@ func (j *JSONAdapter) BuildFeed(baseURL string) *model.Feed {
 		for _, attachment := range item.Attachments {
 			attachmentURL := strings.TrimSpace(attachment.URL)
 			if attachmentURL != "" {
-				if absoluteAttachmentURL, err := urllib.AbsoluteURL(feed.SiteURL, attachmentURL); err == nil {
+				if absoluteAttachmentURL, err := urllib.ResolveToAbsoluteURL(feed.SiteURL, attachmentURL); err == nil {
 					entry.Enclosures = append(entry.Enclosures, &model.Enclosure{
 						URL:      absoluteAttachmentURL,
 						MimeType: attachment.MimeType,
@@ -167,7 +169,7 @@ func (j *JSONAdapter) BuildFeed(baseURL string) *model.Feed {
 		entry.Tags = slices.Compact(entry.Tags)
 
 		// Generate a hash for the entry.
-		for _, value := range []string{item.ID, item.URL, item.ContentText + item.ContentHTML + item.Summary} {
+		for _, value := range []string{item.ID, item.URL, item.ExternalURL, item.ContentText + item.ContentHTML + item.Summary} {
 			value = strings.TrimSpace(value)
 			if value != "" {
 				entry.Hash = crypto.SHA256(value)

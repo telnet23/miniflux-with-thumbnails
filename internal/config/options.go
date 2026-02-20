@@ -5,6 +5,7 @@ package config // import "miniflux.app/v2/internal/config"
 
 import (
 	"maps"
+	"net"
 	"net/url"
 	"slices"
 	"strings"
@@ -237,14 +238,6 @@ func NewConfigOptions() *configOptions {
 				parsedBoolValue: false,
 				rawValue:        "0",
 				valueType:       boolType,
-			},
-			"FILTER_ENTRY_MAX_AGE_DAYS": {
-				parsedIntValue: 0,
-				rawValue:       "0",
-				valueType:      intType,
-				validator: func(rawValue string) error {
-					return validateGreaterOrEqualThan(rawValue, 0)
-				},
 			},
 			"FORCE_REFRESH_INTERVAL": {
 				parsedDuration: 30 * time.Minute,
@@ -572,6 +565,15 @@ func NewConfigOptions() *configOptions {
 				parsedStringList: []string{},
 				rawValue:         "",
 				valueType:        stringListType,
+				validator: func(rawValue string) error {
+					for ip := range strings.SplitSeq(rawValue, ",") {
+						if _, _, err := net.ParseCIDR(ip); err != nil {
+							return err
+						}
+					}
+
+					return nil
+				},
 			},
 			"WATCHDOG": {
 				parsedBoolValue: true,
@@ -716,10 +718,6 @@ func (c *configOptions) FetchOdyseeWatchTime() bool {
 
 func (c *configOptions) FetchYouTubeWatchTime() bool {
 	return c.options["FETCH_YOUTUBE_WATCH_TIME"].parsedBoolValue
-}
-
-func (c *configOptions) FilterEntryMaxAgeDays() int {
-	return c.options["FILTER_ENTRY_MAX_AGE_DAYS"].parsedIntValue
 }
 
 func (c *configOptions) ForceRefreshInterval() time.Duration {

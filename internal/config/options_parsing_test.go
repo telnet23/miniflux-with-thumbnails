@@ -1273,22 +1273,6 @@ func TestDatabaseConnectionLifetimeOptionParsing(t *testing.T) {
 	}
 }
 
-func TestFilterEntryMaxAgeDaysOptionParsing(t *testing.T) {
-	configParser := NewConfigParser()
-
-	if configParser.options.FilterEntryMaxAgeDays() != 0 {
-		t.Fatalf("Expected FILTER_ENTRY_MAX_AGE_DAYS to be 0 by default")
-	}
-
-	if err := configParser.parseLines([]string{"FILTER_ENTRY_MAX_AGE_DAYS=7"}); err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	if configParser.options.FilterEntryMaxAgeDays() != 7 {
-		t.Fatalf("Expected FILTER_ENTRY_MAX_AGE_DAYS to be 7 days")
-	}
-}
-
 func TestForceRefreshIntervalOptionParsing(t *testing.T) {
 	configParser := NewConfigParser()
 
@@ -1658,6 +1642,11 @@ func TestTrustedReverseProxyNetworksOptionParsing(t *testing.T) {
 	}
 	if !slices.Contains(allowedNetworks, "192.168.1.0/24") {
 		t.Errorf("Expected 192.168.1.0/24 in allowed networks")
+	}
+
+	// Test invalid value
+	if err := configParser.parseLines([]string{"TRUSTED_REVERSE_PROXY_NETWORKS=127.0.0.1"}); err == nil {
+		t.Fatal("Expected error when parsing invalid CIDR notation IP 127.0.0.1, got nil")
 	}
 }
 

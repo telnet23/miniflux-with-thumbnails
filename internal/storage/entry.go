@@ -237,55 +237,55 @@ func (s *Storage) entryExists(tx *sql.Tx, entry *model.Entry) (bool, error) {
 }
 
 func (s *Storage) getEntryIDByHash(tx *sql.Tx, feedID int64, entryHash string) (int64, error) {
-    var entryID int64
+	var entryID int64
 
-    err := tx.QueryRow(
-        `SELECT id FROM entries WHERE feed_id=$1 AND hash=$2 LIMIT 1`,
-        feedID,
-        entryHash,
-    ).Scan(&entryID)
+	err := tx.QueryRow(
+		`SELECT id FROM entries WHERE feed_id=$1 AND hash=$2 LIMIT 1`,
+		feedID,
+		entryHash,
+	).Scan(&entryID)
 
-    if err != nil {
-        return 0, fmt.Errorf(`store: unable to fetch entry ID: %v`, err)
-    }
+	if err != nil {
+		return 0, fmt.Errorf(`store: unable to fetch entry ID: %v`, err)
+	}
 
-    return entryID, nil
+	return entryID, nil
 }
 
 // InsertEntryForFeed inserts a single entry into a feed, optionally updating if it already exists.
 // Returns true if a new entry was created, false if an existing one was reused.
 func (s *Storage) InsertEntryForFeed(userID, feedID int64, entry *model.Entry) (bool, error) {
 	entry.UserID = userID
-    entry.FeedID = feedID
+	entry.FeedID = feedID
 
-    tx, err := s.db.Begin()
-    if err != nil {
-        return false, fmt.Errorf("store: unable to start transaction: %v", err)
-    }
+	tx, err := s.db.Begin()
+	if err != nil {
+		return false, fmt.Errorf("store: unable to start transaction: %v", err)
+	}
 	defer tx.Rollback()
 
 	exists, err := s.entryExists(tx, entry)
 	if err != nil {
-    	return false, err
+		return false, err
 	}
 
 	if exists {
-    	entryID, err := s.getEntryIDByHash(tx, entry.FeedID, entry.Hash)
-    	if err != nil {
-        	return false, err
-    	}
-    	entry.ID = entryID
+		entryID, err := s.getEntryIDByHash(tx, entry.FeedID, entry.Hash)
+		if err != nil {
+			return false, err
+		}
+		entry.ID = entryID
 	} else {
-    	if err := s.createEntry(tx, entry); err != nil {
-        	return false, err
-    	}
+		if err := s.createEntry(tx, entry); err != nil {
+			return false, err
+		}
 	}
 
-    if err := tx.Commit(); err != nil {
-        return false, err
-    }
+	if err := tx.Commit(); err != nil {
+		return false, err
+	}
 
-    return !exists, nil
+	return !exists, nil
 }
 
 func (s *Storage) IsNewEntry(feedID int64, entryHash string) bool {
@@ -315,44 +315,34 @@ func (s *Storage) GetReadTime(feedID int64, entryHash string) int {
 
 // cleanupRemovedEntriesNotInFeed deletes from the database entries marked as "removed" and not visible anymore in the feed.
 func (s *Storage) cleanupRemovedEntriesNotInFeed(feedID int64, entryHashes []string) error {
+	// Acquire locks in id order and skip already-locked rows to avoid deadlocks with
+	// ClearRemovedEntriesContent, which also updates removed entries concurrently.
 	query := `
-		DELETE FROM
-			entries
-		WHERE
-			feed_id=$1 AND
-			status=$2 AND
-			NOT (hash=ANY($3))
+		WITH to_delete AS (
+			SELECT id
+			FROM entries
+			WHERE
+				feed_id=$1 AND
+				status=$2 AND
+				NOT (hash=ANY($3))
+			ORDER BY id
+			FOR UPDATE SKIP LOCKED
+		)
+		DELETE FROM entries
+		USING to_delete
+		WHERE entries.id = to_delete.id
 	`
 	if _, err := s.db.Exec(query, feedID, model.EntryStatusRemoved, pq.Array(entryHashes)); err != nil {
-		return fmt.Errorf(`store: unable to cleanup entries: %v`, err)
+		return fmt.Errorf(`store: unable to remove entries not in feed: %v`, err)
 	}
 
 	return nil
 }
 
-// DeleteRemovedEntriesEnclosures deletes enclosures associated with entries marked as "removed".
-func (s *Storage) DeleteRemovedEntriesEnclosures() (int64, error) {
-	query := `
-		DELETE FROM
-			enclosures
-		WHERE
-		 	enclosures.entry_id IN (SELECT id FROM entries WHERE status=$1)
-	`
-	result, err := s.db.Exec(query, model.EntryStatusRemoved)
-	if err != nil {
-		return 0, fmt.Errorf(`store: unable to delete enclosures from removed entries: %v`, err)
-	}
-
-	count, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf(`store: unable to get the number of rows affected while deleting enclosures from removed entries: %v`, err)
-	}
-
-	return count, nil
-}
-
 // ClearRemovedEntriesContent clears the content fields of entries marked as "removed", keeping only their metadata.
 func (s *Storage) ClearRemovedEntriesContent(limit int) (int64, error) {
+	// Skip locked rows so this batch scrubber doesn't block or deadlock with the
+	// concurrent cleanup that deletes removed entries in the same table.
 	query := `
 		UPDATE
 			entries
@@ -368,6 +358,7 @@ func (s *Storage) ClearRemovedEntriesContent(limit int) (int64, error) {
 			FROM entries
 			WHERE status = $1 AND content IS NOT NULL
 			ORDER BY id ASC
+			FOR UPDATE SKIP LOCKED
 			LIMIT $2
 		)
 	`

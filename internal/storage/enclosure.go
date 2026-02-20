@@ -176,6 +176,18 @@ func (s *Storage) createEnclosure(tx *sql.Tx, enclosure *model.Enclosure) error 
 
 func (s *Storage) updateEnclosures(tx *sql.Tx, entry *model.Entry) error {
 	if len(entry.Enclosures) == 0 {
+		// Do not keep any old enclosures if there is none in the updated entry.
+		query := `
+			DELETE FROM
+				enclosures
+			WHERE
+				user_id=$1 AND entry_id=$2
+		`
+
+		_, err := tx.Exec(query, entry.UserID, entry.ID)
+		if err != nil {
+			return fmt.Errorf(`store: unable to delete old enclosures: %v`, err)
+		}
 		return nil
 	}
 
@@ -232,4 +244,25 @@ func (s *Storage) UpdateEnclosure(enclosure *model.Enclosure) error {
 	}
 
 	return nil
+}
+
+// DeleteEnclosuresOfRemovedEntries deletes enclosures associated with entries marked as "removed".
+func (s *Storage) DeleteEnclosuresOfRemovedEntries() (int64, error) {
+	query := `
+		DELETE FROM
+			enclosures
+		WHERE
+			enclosures.entry_id IN (SELECT id FROM entries WHERE status=$1)
+	`
+	result, err := s.db.Exec(query, model.EntryStatusRemoved)
+	if err != nil {
+		return 0, fmt.Errorf(`store: unable to delete enclosures from removed entries: %v`, err)
+	}
+
+	count, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf(`store: unable to get the number of rows affected while deleting enclosures from removed entries: %v`, err)
+	}
+
+	return count, nil
 }

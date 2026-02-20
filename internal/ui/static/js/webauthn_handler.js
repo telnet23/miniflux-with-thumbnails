@@ -48,7 +48,7 @@ class WebAuthnHandler {
     async post(urlKey, username, data) {
         let url = document.body.dataset[urlKey];
         if (username) {
-            url += "?username=" + encodeURIComponent(username);
+            url += `?username=${encodeURIComponent(username)}`;
         }
 
         return sendPOSTRequest(url, data);
@@ -57,7 +57,7 @@ class WebAuthnHandler {
     async get(urlKey, username) {
         let url = document.body.dataset[urlKey];
         if (username) {
-            url += "?username=" + encodeURIComponent(username);
+            url += `?username=${encodeURIComponent(username)}`;
         }
         return fetch(url);
     }
@@ -93,7 +93,9 @@ class WebAuthnHandler {
         credentialCreationOptions.publicKey.challenge = this.decodeBuffer(credentialCreationOptions.publicKey.challenge);
         credentialCreationOptions.publicKey.user.id = this.decodeBuffer(credentialCreationOptions.publicKey.user.id);
         if (Object.hasOwn(credentialCreationOptions.publicKey, 'excludeCredentials')) {
-            credentialCreationOptions.publicKey.excludeCredentials.forEach((credential) => credential.id = this.decodeBuffer(credential.id));
+            credentialCreationOptions.publicKey.excludeCredentials.forEach((credential) => {
+                credential.id = this.decodeBuffer(credential.id);
+            });
         }
 
         let attestation;
@@ -121,7 +123,7 @@ class WebAuthnHandler {
         }
 
         if (!registrationFinishResponse.ok) {
-            throw new Error("Registration failed with HTTP status code " + registrationFinishResponse.status);
+            throw new Error(`Registration failed with HTTP status code ${registrationFinishResponse.status}`);
         }
 
         const jsonData = await registrationFinishResponse.json();
@@ -148,7 +150,9 @@ class WebAuthnHandler {
         credentialRequestOptions.publicKey.challenge = this.decodeBuffer(credentialRequestOptions.publicKey.challenge);
 
         if (Object.hasOwn(credentialRequestOptions.publicKey, 'allowCredentials')) {
-            credentialRequestOptions.publicKey.allowCredentials.forEach((credential) => credential.id = this.decodeBuffer(credential.id));
+            credentialRequestOptions.publicKey.allowCredentials.forEach((credential) => {
+                credential.id = this.decodeBuffer(credential.id);
+            });
         }
 
         if (abortController) {
@@ -192,7 +196,7 @@ class WebAuthnHandler {
         }
 
         if (!loginFinishResponse.ok) {
-            throw new Error("Login failed with HTTP status code " + loginFinishResponse.status);
+            throw new Error(`Login failed with HTTP status code ${loginFinishResponse.status}`);
         }
 
         window.location.reload();

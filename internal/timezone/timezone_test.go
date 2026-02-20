@@ -4,6 +4,7 @@
 package timezone // import "miniflux.app/v2/internal/timezone"
 
 import (
+	"slices"
 	"testing"
 	"time"
 
@@ -87,5 +88,42 @@ func TestConvertPostgresDateTimeWithNegativeTimezoneOffset(t *testing.T) {
 
 	if year := output.Year(); year != 0 {
 		t.Fatalf(`Unexpected year, got %d instead of 0`, year)
+	}
+}
+
+func TestIsValid(t *testing.T) {
+	validTZ := []string{
+		"Antarctica/Davis",
+		"GMT",
+		"UTC",
+	}
+
+	for _, tz := range validTZ {
+		if !IsValid(tz) {
+			t.Fatalf(`Timezone %q should be valid an it's not`, tz)
+		}
+	}
+
+	invalidTZ := []string{
+		"MAP",
+		"Europe/Fronce",
+	}
+
+	for _, tz := range invalidTZ {
+		if IsValid(tz) {
+			t.Fatalf(`Timezone %q should be invalid an it's not`, tz)
+		}
+	}
+}
+
+func TestAvailableTimezones(t *testing.T) {
+	var got []string
+
+	for tz := range AvailableTimezones() {
+		got = append(got, tz)
+	}
+
+	if !slices.Equal(got, timezones) {
+		t.Fatalf("available timezones differ from source slice: expected %d entries, got %d", len(timezones), len(got))
 	}
 }

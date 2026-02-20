@@ -8,6 +8,7 @@ package scraper // import "miniflux.app/v2/internal/reader/scraper"
 var predefinedRules = map[string]string{
 	"arstechnica.com":      "div.post-content",
 	"bbc.co.uk":            "div.vxp-column--single, div.story-body__inner, ul.gallery-images__list",
+	"bleepingcomputer.com": ".articleBody",
 	"blog.cloudflare.com":  "div.post-content",
 	"cbc.ca":               ".story-content",
 	"darkreading.com":      "div.ArticleBase-Body",
@@ -51,6 +52,7 @@ var predefinedRules = map[string]string{
 	"turnoff.us":           "article.post-content",
 	"universfreebox.com":   "#corps_corps",
 	"version2.dk":          "section.body",
+	"vnexpress.net":        ".detail-new p.description, article.fck_detail",
 	"wdwnt.com":            "div.entry-content",
 	"webtoons.com":         ".viewer_img,p.author_text",
 	"wired.com":            "main figure, article",

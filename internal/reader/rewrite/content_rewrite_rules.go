@@ -10,6 +10,7 @@ package rewrite // import "miniflux.app/v2/internal/reader/rewrite"
 var predefinedRules = map[string]string{
 	"abstrusegoose.com":      "add_image_title",
 	"amazingsuperpowers.com": "add_image_title",
+	"bleepingcomputer.com":   `add_dynamic_image, remove(".ia_ad, .cz-related-article-wrapp, div[align]")`,
 	"blog.cloudflare.com":    `add_image_title,remove("figure.kg-image-card figure.kg-image + img")`,
 	"cowbirdsinlove.com":     "add_image_title",
 	"drawingboardcomic.com":  "add_image_title",
@@ -35,6 +36,7 @@ var predefinedRules = map[string]string{
 	"thedoghousediaries.com": "add_image_title",
 	"theverge.com":           `add_dynamic_image, remove("div.duet--recirculation--related-list, .hidden")`,
 	"treelobsters.com":       "add_image_title",
+	"vnexpress.net":          `add_dynamic_image, remove("h1.title-detail, .box-tinlienquanv2, .thumb-above-video, .parser_title, table[border=\"0\"], p.Normal:has(strong:only-child a), ul.link_content.ul-temp, ul.list-news, div.box-wg-guicauhoi")`,
 	"xkcd.com":               "add_image_title",
 	"youtube.com":            "add_youtube_video",
 }
