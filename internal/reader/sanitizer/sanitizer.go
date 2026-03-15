@@ -294,12 +294,13 @@ func filterAndRenderHTML(buf *strings.Builder, n *html.Node, parsedBaseUrl *url.
 			// The tag doesn't have every required attributes but we're still interested in its content
 			return filterAndRenderHTMLChildren(buf, n, parsedBaseUrl, sanitizerOptions, depth-1)
 		}
-		buf.WriteString("<")
+		buf.WriteByte('<')
 		buf.WriteString(n.Data)
-		if len(htmlAttributes) > 0 {
-			buf.WriteString(" " + htmlAttributes)
+		if htmlAttributes != "" {
+			buf.WriteByte(' ')
+			buf.WriteString(htmlAttributes)
 		}
-		buf.WriteString(">")
+		buf.WriteByte('>')
 
 		if isSelfContainedTag(tag) {
 			return nil
@@ -312,7 +313,7 @@ func filterAndRenderHTML(buf *strings.Builder, n *html.Node, parsedBaseUrl *url.
 
 		buf.WriteString("</")
 		buf.WriteString(n.Data)
-		buf.WriteString(">")
+		buf.WriteByte('>')
 	default:
 	}
 	return nil
@@ -327,49 +328,16 @@ func filterAndRenderHTMLChildren(buf *strings.Builder, n *html.Node, parsedBaseU
 	return nil
 }
 
-func getExtraAttributes(tagName string, isYouTubeEmbed bool, sanitizerOptions *SanitizerOptions) []string {
+func hasRequiredAttributes(s *mandatoryAttributesStruct, tagName string) bool {
 	switch tagName {
 	case "a":
-		htmlAttributes := []string{`rel="noopener noreferrer"`, `referrerpolicy="no-referrer"`}
-		if sanitizerOptions.OpenLinksInNewTab {
-			htmlAttributes = append(htmlAttributes, `target="_blank"`)
-		}
-		return htmlAttributes
-	case "video", "audio":
-		return []string{"controls"}
+		return s.href
 	case "iframe":
-		extraHTMLAttributes := []string{`sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"`, `loading="lazy"`}
-
-		// Note: the referrerpolicy seems to be required to avoid YouTube error 153 video player configuration error
-		// See https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
-		if isYouTubeEmbed {
-			extraHTMLAttributes = append(extraHTMLAttributes, `referrerpolicy="strict-origin-when-cross-origin"`)
-		}
-
-		return extraHTMLAttributes
-	case "img":
-		return []string{`loading="lazy"`}
-	default:
-		return nil
-	}
-}
-
-func hasRequiredAttributes(tagName string, attributes []string) bool {
-	switch tagName {
-	case "a":
-		return slices.Contains(attributes, "href")
-	case "iframe":
-		return slices.Contains(attributes, "src")
+		return s.src
 	case "source", "img":
-		for _, attribute := range attributes {
-			if attribute == "src" || attribute == "srcset" {
-				return true
-			}
-		}
-		return false
-	default:
-		return true
+		return s.src || s.srcset
 	}
+	return true
 }
 
 func hasValidURIScheme(absoluteURL string) bool {
@@ -508,9 +476,28 @@ func rewriteIframeURL(link string) string {
 	return link
 }
 
+type mandatoryAttributesStruct struct {
+	href   bool
+	src    bool
+	srcset bool
+}
+
+func trackAttributes(s *mandatoryAttributesStruct, attributeName string) {
+	switch attributeName {
+	case "href":
+		s.href = true
+	case "src":
+		s.src = true
+	case "srcset":
+		s.srcset = true
+	}
+}
+
 func sanitizeAttributes(parsedBaseUrl *url.URL, tagName string, attributes []html.Attribute, sanitizerOptions *SanitizerOptions) (string, bool) {
 	htmlAttrs := make([]string, 0, len(attributes))
-	attrNames := make([]string, 0, len(attributes))
+
+	// Keep track of mandatory attributes for some tags
+	mandatoryAttributes := mandatoryAttributesStruct{false, false, false}
 
 	var isAnchorLink bool
 	var isYouTubeEmbed bool
@@ -566,7 +553,7 @@ func sanitizeAttributes(parsedBaseUrl *url.URL, tagName string, attributes []htm
 			case tagName == "iframe":
 				iframeSourceDomain, trustedIframeDomain := findAllowedIframeSourceDomain(attribute.Val)
 				if !trustedIframeDomain {
-					continue
+					return "", false
 				}
 
 				value = rewriteIframeURL(attribute.Val)
@@ -581,7 +568,7 @@ func sanitizeAttributes(parsedBaseUrl *url.URL, tagName string, attributes []htm
 				isAnchorLink = true
 			default:
 				if isBlockedResource(value) {
-					continue
+					return "", false
 				}
 
 				var err error
@@ -602,16 +589,35 @@ func sanitizeAttributes(parsedBaseUrl *url.URL, tagName string, attributes []htm
 			}
 		}
 
-		attrNames = append(attrNames, attribute.Key)
+		trackAttributes(&mandatoryAttributes, attribute.Key)
 		htmlAttrs = append(htmlAttrs, attribute.Key+`="`+html.EscapeString(value)+`"`)
 	}
 
-	if !hasRequiredAttributes(tagName, attrNames) {
+	if !hasRequiredAttributes(&mandatoryAttributes, tagName) {
 		return "", false
 	}
 
 	if !isAnchorLink {
-		htmlAttrs = append(htmlAttrs, getExtraAttributes(tagName, isYouTubeEmbed, sanitizerOptions)...)
+		switch tagName {
+		case "a":
+			htmlAttrs = append(htmlAttrs, `rel="noopener noreferrer"`, `referrerpolicy="no-referrer"`)
+			if sanitizerOptions.OpenLinksInNewTab {
+				htmlAttrs = append(htmlAttrs, `target="_blank"`)
+			}
+		case "video", "audio":
+			htmlAttrs = append(htmlAttrs, "controls")
+		case "iframe":
+			htmlAttrs = append(htmlAttrs, `sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"`, `loading="lazy"`)
+
+			// Note: the referrerpolicy seems to be required to avoid YouTube error 153 video player configuration error
+			// See https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
+			if isYouTubeEmbed {
+				htmlAttrs = append(htmlAttrs, `referrerpolicy="strict-origin-when-cross-origin"`)
+			}
+
+		case "img":
+			htmlAttrs = append(htmlAttrs, `loading="lazy"`)
+		}
 	}
 
 	return strings.Join(htmlAttrs, " "), true

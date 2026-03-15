@@ -99,12 +99,14 @@ func TestMissingTranslations(t *testing.T) {
 
 func TestTranslationFilePluralForms(t *testing.T) {
 	var numberOfPluralFormsPerLanguage = map[string]int{
+		"ar_SA":            6,
 		"de_DE":            2,
 		"el_EL":            2,
 		"en_US":            2,
 		"es_ES":            2,
 		"fi_FI":            2,
 		"fr_FR":            2,
+		"gl_ES":            2,
 		"hi_IN":            2,
 		"id_ID":            1,
 		"it_IT":            2,

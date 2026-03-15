@@ -66,7 +66,11 @@ func (f *iconFinder) findIcon() (*model.Icon, error) {
 
 	// Try the website URL first, then fall back to the root URL if no icon is found.
 	// The website URL may include a subdirectory (e.g., https://example.org/subfolder/), and icons can be referenced relative to that path.
-	for _, documentURL := range []string{f.websiteURL, urllib.RootURL(f.websiteURL)} {
+	urls := []string{f.websiteURL}
+	if rootURL := urllib.RootURL(f.websiteURL); rootURL != urls[0] {
+		urls = []string{f.websiteURL, rootURL}
+	}
+	for _, documentURL := range urls {
 		if icon, err := f.fetchIconsFromHTMLDocument(documentURL); err != nil {
 			slog.Debug("Unable to fetch icons from HTML document",
 				slog.String("document_url", documentURL),
@@ -155,10 +159,6 @@ func (f *iconFinder) downloadIcon(iconURL string) (*model.Icon, error) {
 		slog.String("website_url", f.websiteURL),
 		slog.String("icon_url", iconURL),
 	)
-
-	if err := ensureRemoteIconURLAllowed(iconURL, config.Opts.IconFetchAllowPrivateNetworks()); err != nil {
-		return nil, err
-	}
 
 	responseHandler := fetcher.NewResponseHandler(f.requestBuilder.ExecuteRequest(iconURL))
 	defer responseHandler.Close()
@@ -257,34 +257,30 @@ func findIconURLsFromHTMLDocument(documentURL string, body io.Reader, contentTyp
 		return nil, fmt.Errorf("icon: unable to read document: %v", err)
 	}
 
-	queries := [...]string{
-		"link[rel='icon' i][href]",
-		"link[rel='shortcut icon' i][href]",
-		"link[rel='icon shortcut' i][href]",
-		"link[rel='apple-touch-icon'][href]",
-	}
+	query := `link[rel='icon' i][href],
+		link[rel='shortcut icon' i][href],
+		link[rel='icon shortcut' i][href],
+		link[rel='apple-touch-icon'][href]`
 
 	var iconURLs []string
-	for _, query := range queries {
-		slog.Debug("Searching icon URL in HTML document", slog.String("query", query))
+	slog.Debug("Searching icon URL in HTML document", slog.String("query", query))
 
-		for _, s := range doc.Find(query).EachIter() {
-			href, _ := s.Attr("href")
-			href = strings.TrimSpace(href)
-			if href == "" {
-				continue
-			}
+	for _, s := range doc.Find(query).EachIter() {
+		href, _ := s.Attr("href")
+		href = strings.TrimSpace(href)
+		if href == "" {
+			continue
+		}
 
-			if absoluteIconURL, err := urllib.ResolveToAbsoluteURL(documentURL, href); err != nil {
-				slog.Warn("Unable to convert icon URL to absolute URL", slog.Any("error", err), slog.String("icon_href", href))
-			} else {
-				iconURLs = append(iconURLs, absoluteIconURL)
-				slog.Debug("Found icon URL in HTML document",
-					slog.String("query", query),
-					slog.String("icon_href", href),
-					slog.String("absolute_icon_url", absoluteIconURL),
-				)
-			}
+		if absoluteIconURL, err := urllib.ResolveToAbsoluteURL(documentURL, href); err != nil {
+			slog.Warn("Unable to convert icon URL to absolute URL", slog.Any("error", err), slog.String("icon_href", href))
+		} else {
+			iconURLs = append(iconURLs, absoluteIconURL)
+			slog.Debug("Found icon URL in HTML document",
+				slog.String("query", query),
+				slog.String("icon_href", href),
+				slog.String("absolute_icon_url", absoluteIconURL),
+			)
 		}
 	}
 
@@ -333,40 +329,4 @@ func parseImageDataURL(value string) (*model.Icon, error) {
 		Content:  blob,
 		MimeType: mediaType,
 	}, nil
-}
-
-func ensureRemoteIconURLAllowed(iconURL string, allowPrivateNetworks bool) error {
-	parsedURL, err := url.Parse(iconURL)
-	if err != nil {
-		return fmt.Errorf("icon: invalid icon URL %q: %w", iconURL, err)
-	}
-
-	if !parsedURL.IsAbs() {
-		return fmt.Errorf("icon: icon URL %q must be absolute", iconURL)
-	}
-
-	scheme := strings.ToLower(parsedURL.Scheme)
-	if scheme != "http" && scheme != "https" {
-		return fmt.Errorf("icon: unsupported icon URL scheme %q", parsedURL.Scheme)
-	}
-
-	hostname := parsedURL.Hostname()
-	if hostname == "" {
-		return fmt.Errorf("icon: icon URL %q has no hostname", iconURL)
-	}
-
-	if allowPrivateNetworks {
-		return nil
-	}
-
-	isPrivate, err := urllib.ResolvesToPrivateIP(hostname)
-	if err != nil {
-		return fmt.Errorf("icon: unable to resolve icon hostname %q: %w", hostname, err)
-	}
-
-	if isPrivate {
-		return fmt.Errorf("icon: refusing to download icon from private network host %q", hostname)
-	}
-
-	return nil
 }

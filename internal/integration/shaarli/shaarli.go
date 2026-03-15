@@ -14,6 +14,8 @@ import (
 	"net/http"
 	"time"
 
+	"miniflux.app/v2/internal/config"
+	"miniflux.app/v2/internal/http/client"
 	"miniflux.app/v2/internal/urllib"
 	"miniflux.app/v2/internal/version"
 )
@@ -59,7 +61,7 @@ func (c *Client) CreateLink(entryURL, entryTitle string) error {
 	request.Header.Set("User-Agent", "Miniflux/"+version.Version)
 	request.Header.Set("Authorization", "Bearer "+c.generateBearerToken())
 
-	httpClient := &http.Client{Timeout: defaultClientTimeout}
+	httpClient := client.NewClientWithOptions(client.Options{Timeout: defaultClientTimeout, BlockPrivateNetworks: !config.Opts.IntegrationAllowPrivateNetworks()})
 	response, err := httpClient.Do(request)
 	if err != nil {
 		return fmt.Errorf("shaarli: unable to send request: %v", err)
@@ -75,7 +77,7 @@ func (c *Client) CreateLink(entryURL, entryTitle string) error {
 
 func (c *Client) generateBearerToken() string {
 	header := base64.RawURLEncoding.EncodeToString([]byte(`{"typ":"JWT","alg":"HS512"}`))
-	payload := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf(`{"iat":%d}`, time.Now().Unix())))
+	payload := base64.RawURLEncoding.EncodeToString(fmt.Appendf(nil, `{"iat":%d}`, time.Now().Unix()))
 	data := header + "." + payload
 
 	mac := hmac.New(sha512.New, []byte(c.apiSecret))

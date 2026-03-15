@@ -246,12 +246,10 @@ func TestFindIconURLsFromHTMLDocument_DataURLs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// The function processes queries in order: rel="icon", then rel="shortcut icon", etc.
-	// So both rel="icon" links are found first, then the rel="shortcut icon" link
 	expected := []string{
 		"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAGAhGAQ+QAAAABJRU5ErkJggg==",
-		"https://example.org/regular-icon.ico",
 		"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'></svg>",
+		"https://example.org/regular-icon.ico",
 	}
 
 	if len(iconURLs) != len(expected) {
@@ -397,24 +395,6 @@ func TestResizeIconWebp(t *testing.T) {
 
 	if !bytes.Equal(icon.Content, resizeIcon(&icon).Content) {
 		t.Fatalf("Converted webp smaller than 16x16")
-	}
-}
-
-func TestEnsureRemoteIconURLAllowedRejectsPrivateNetworks(t *testing.T) {
-	if err := ensureRemoteIconURLAllowed("http://192.168.0.1/favicon.ico", false); err == nil {
-		t.Fatal("Expected private network hosts to be rejected")
-	}
-}
-
-func TestEnsureRemoteIconURLAllowedAllowsPublicNetworks(t *testing.T) {
-	if err := ensureRemoteIconURLAllowed("https://1.1.1.1/favicon.ico", false); err != nil {
-		t.Fatalf("Expected public network hosts to be allowed: %v", err)
-	}
-}
-
-func TestEnsureRemoteIconURLAllowedAllowsPrivateWhenEnabled(t *testing.T) {
-	if err := ensureRemoteIconURLAllowed("http://10.0.0.5/icon.png", true); err != nil {
-		t.Fatalf("Expected private network hosts to be allowed when explicitly enabled: %v", err)
 	}
 }
 
