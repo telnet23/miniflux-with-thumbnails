@@ -1103,6 +1103,10 @@ article.category-has-unread {
     max-width: 100%;
 }
 
+.entry-content iframe {
+    display: block;
+}
+
 .entry-content img {
     height: auto;
 }
