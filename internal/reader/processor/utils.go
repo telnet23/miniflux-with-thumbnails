@@ -14,6 +14,20 @@ import (
 	"github.com/tdewolff/minify/v2/html"
 )
 
+var htmlMinifier = newHTMLMinifier()
+
+func newHTMLMinifier() *minify.M {
+	m := minify.New()
+	m.Add("text/html", &html.Minifier{
+		KeepEndTags:         true,
+		KeepQuotes:          true,
+		KeepComments:        false,
+		KeepSpecialComments: false,
+		KeepDefaultAttrVals: false,
+	})
+	return m
+}
+
 // parseISO8601Duration parses a subset of ISO8601 durations, mainly for youtube video.
 func parseISO8601Duration(duration string) (time.Duration, error) {
 	after, ok := strings.CutPrefix(duration, "PT")
@@ -22,58 +36,38 @@ func parseISO8601Duration(duration string) (time.Duration, error) {
 	}
 
 	var d time.Duration
-	num := ""
+	start := 0
 
-	for _, char := range after {
-		var val int
-		var err error
+	for i := 0; i < len(after); i++ {
+		var unit time.Duration
 
-		switch char {
+		switch after[i] {
 		case 'Y', 'W', 'D':
-			return 0, fmt.Errorf("the '%c' specifier isn't supported", char)
+			return 0, fmt.Errorf("the '%c' specifier isn't supported", after[i])
 		case 'H':
-			if val, err = strconv.Atoi(num); err != nil {
-				return 0, err
-			}
-			d += time.Duration(val) * time.Hour
-			num = ""
+			unit = time.Hour
 		case 'M':
-			if val, err = strconv.Atoi(num); err != nil {
-				return 0, err
-			}
-			d += time.Duration(val) * time.Minute
-			num = ""
+			unit = time.Minute
 		case 'S':
-			if val, err = strconv.Atoi(num); err != nil {
-				return 0, err
-			}
-			d += time.Duration(val) * time.Second
-			num = ""
+			unit = time.Second
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-			num += string(char)
 			continue
 		default:
 			return 0, errors.New("invalid character in the period")
 		}
+
+		val, err := strconv.Atoi(after[start:i])
+		if err != nil {
+			return 0, err
+		}
+		d += time.Duration(val) * unit
+		start = i + 1
 	}
 	return d, nil
 }
 
 func minifyContent(content string) string {
-	m := minify.New()
-
-	// Options required to avoid breaking the HTML content.
-	m.Add("text/html", &html.Minifier{
-		KeepEndTags:         true,
-		KeepQuotes:          true,
-		KeepComments:        false,
-		KeepSpecialComments: false,
-		KeepDefaultAttrVals: false,
-	})
-
-	if minifiedHTML, err := m.String("text/html", content); err == nil {
-		content = minifiedHTML
-	}
-
-	return content
+	// when an error occurs, String returns the original content.
+	ret, _ := htmlMinifier.String("text/html", content)
+	return ret
 }

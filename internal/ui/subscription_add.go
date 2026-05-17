@@ -10,7 +10,6 @@ import (
 	"miniflux.app/v2/internal/http/request"
 	"miniflux.app/v2/internal/http/response"
 	"miniflux.app/v2/internal/ui/form"
-	"miniflux.app/v2/internal/ui/session"
 	"miniflux.app/v2/internal/ui/view"
 )
 
@@ -27,13 +26,13 @@ func (h *handler) showAddSubscriptionPage(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	sess := session.New(h.store, request.SessionID(r))
-	view := view.New(h.tpl, r, sess)
+	view := view.New(h.tpl, r)
 	view.Set("categories", categories)
 	view.Set("menu", "feeds")
 	view.Set("user", user)
-	view.Set("countUnread", h.store.CountUnreadEntries(user.ID))
-	view.Set("countErrorFeeds", h.store.CountUserFeedsWithErrors(user.ID))
+	navMetadata, _ := h.store.GetNavMetadata(user.ID)
+	view.Set("countUnread", navMetadata.CountUnread)
+	view.Set("countErrorFeeds", navMetadata.CountErrorFeeds)
 	view.Set("defaultUserAgent", config.Opts.HTTPClientUserAgent())
 	view.Set("form", &form.SubscriptionForm{CategoryID: 0})
 	view.Set("hasProxyConfigured", config.Opts.HasHTTPClientProxyURLConfigured())

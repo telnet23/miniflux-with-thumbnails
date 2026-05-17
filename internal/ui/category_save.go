@@ -10,7 +10,6 @@ import (
 	"miniflux.app/v2/internal/http/response"
 	"miniflux.app/v2/internal/model"
 	"miniflux.app/v2/internal/ui/form"
-	"miniflux.app/v2/internal/ui/session"
 	"miniflux.app/v2/internal/ui/view"
 	"miniflux.app/v2/internal/validator"
 )
@@ -24,13 +23,13 @@ func (h *handler) saveCategory(w http.ResponseWriter, r *http.Request) {
 
 	categoryForm := form.NewCategoryForm(r)
 
-	sess := session.New(h.store, request.SessionID(r))
-	view := view.New(h.tpl, r, sess)
+	view := view.New(h.tpl, r)
 	view.Set("form", categoryForm)
 	view.Set("menu", "categories")
 	view.Set("user", user)
-	view.Set("countUnread", h.store.CountUnreadEntries(user.ID))
-	view.Set("countErrorFeeds", h.store.CountUserFeedsWithErrors(user.ID))
+	navMetadata, _ := h.store.GetNavMetadata(user.ID)
+	view.Set("countUnread", navMetadata.CountUnread)
+	view.Set("countErrorFeeds", navMetadata.CountErrorFeeds)
 
 	categoryCreationRequest := &model.CategoryCreationRequest{Title: categoryForm.Title}
 

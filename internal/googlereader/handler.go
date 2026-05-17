@@ -238,7 +238,6 @@ func (h *greaderHandler) editTagHandler(w http.ResponseWriter, r *http.Request) 
 
 	builder := h.store.NewEntryQueryBuilder(userID)
 	builder.WithEntryIDs(itemIDs)
-	builder.WithoutStatus(model.EntryStatusRemoved)
 
 	entries, err := builder.GetEntries()
 	if err != nil {
@@ -255,7 +254,7 @@ func (h *greaderHandler) editTagHandler(w http.ResponseWriter, r *http.Request) 
 		if read, exists := tags[ReadStream]; exists {
 			if read && entry.Status == model.EntryStatusUnread {
 				readEntryIDs = append(readEntryIDs, entry.ID)
-			} else if entry.Status == model.EntryStatusRead {
+			} else if !read && entry.Status == model.EntryStatusRead {
 				unreadEntryIDs = append(unreadEntryIDs, entry.ID)
 			}
 		}
@@ -265,7 +264,7 @@ func (h *greaderHandler) editTagHandler(w http.ResponseWriter, r *http.Request) 
 				// filter the original array
 				entries[n] = entry
 				n++
-			} else if entry.Starred {
+			} else if !starred && entry.Starred {
 				unstarredEntryIDs = append(unstarredEntryIDs, entry.ID)
 			}
 		}
@@ -652,7 +651,6 @@ func (h *greaderHandler) streamItemContentsHandler(w http.ResponseWriter, r *htt
 
 	builder := h.store.NewEntryQueryBuilder(userID)
 	builder.WithEnclosures()
-	builder.WithoutStatus(model.EntryStatusRemoved)
 	builder.WithEntryIDs(itemIDs)
 	builder.WithSorting(model.DefaultSortingOrder, requestModifiers.SortDirection)
 
@@ -1029,7 +1027,6 @@ func (h *greaderHandler) handleReadingListStreamHandler(w http.ResponseWriter, r
 		}
 	}
 
-	builder.WithoutStatus(model.EntryStatusRemoved)
 	builder.WithLimit(rm.Count)
 	builder.WithOffset(rm.Offset)
 	builder.WithSorting(model.DefaultSortingOrder, rm.SortDirection)
@@ -1050,7 +1047,6 @@ func (h *greaderHandler) handleReadingListStreamHandler(w http.ResponseWriter, r
 
 func (h *greaderHandler) handleStarredStreamHandler(w http.ResponseWriter, r *http.Request, rm requestModifiers) {
 	builder := h.store.NewEntryQueryBuilder(rm.UserID)
-	builder.WithoutStatus(model.EntryStatusRemoved)
 	builder.WithStarred(true)
 	builder.WithLimit(rm.Count)
 	builder.WithOffset(rm.Offset)
@@ -1071,7 +1067,6 @@ func (h *greaderHandler) handleStarredStreamHandler(w http.ResponseWriter, r *ht
 
 func (h *greaderHandler) handleReadStreamHandler(w http.ResponseWriter, r *http.Request, rm requestModifiers) {
 	builder := h.store.NewEntryQueryBuilder(rm.UserID)
-	builder.WithoutStatus(model.EntryStatusRemoved)
 	builder.WithStatus(model.EntryStatusRead)
 	builder.WithLimit(rm.Count)
 	builder.WithOffset(rm.Offset)
@@ -1121,7 +1116,6 @@ func (h *greaderHandler) handleFeedStreamHandler(w http.ResponseWriter, r *http.
 	}
 
 	builder := h.store.NewEntryQueryBuilder(rm.UserID)
-	builder.WithoutStatus(model.EntryStatusRemoved)
 	builder.WithFeedID(feedID)
 	builder.WithLimit(rm.Count)
 	builder.WithOffset(rm.Offset)

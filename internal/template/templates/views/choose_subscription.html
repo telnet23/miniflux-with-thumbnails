@@ -3,7 +3,7 @@
 {{ define "page_header"}}
 <section class="page-header" aria-labelledby="page-header-title">
     <h1 id="page-header-title">{{ t "page.add_feed.title" }}</h1>
-    {{ template "feed_menu" }}
+    {{ template "feed_menu" dict "csrf" .csrf }}
 </section>
 {{ end }}
 
@@ -43,8 +43,8 @@
 
     {{ range .subscriptions }}
         <div class="radio-group">
-            <label title="{{ .URL | safeURL  }}"><input type="radio" name="url" value="{{ .URL | safeURL  }}"> {{ .Title }}</label> ({{ .Type }})
-            <small title="Type = {{ .Type }}"><a href="{{ .URL | safeURL  }}" {{ if $.user.OpenExternalLinksInNewTab }}target="_blank"{{ else }}rel="noopener"{{ end }}>{{ .URL | safeURL  }}</a></small>
+            <label title="{{ .URL }}"><input type="radio" name="url" value="{{ .URL }}"> {{ .Title }}</label> ({{ .Type }})
+            <small title="Type = {{ .Type }}"><a href="{{ .URL }}" {{ if $.user.OpenExternalLinksInNewTab }}target="_blank"{{ else }}rel="noopener"{{ end }}>{{ .URL }}</a></small>
         </div>
     {{ end }}
 

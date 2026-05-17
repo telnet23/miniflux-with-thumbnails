@@ -189,6 +189,10 @@ func (r *ResponseHandler) LocalizedError() *locale.LocalizedErrorWrapper {
 		}
 	}
 
+	if r.isCloudflareChallenge() {
+		return locale.NewLocalizedErrorWrapper(fmt.Errorf("fetcher: blocked by Cloudflare challenge (%d status code)", r.httpResponse.StatusCode), "error.http_cloudflare_challenge")
+	}
+
 	switch r.httpResponse.StatusCode {
 	case http.StatusUnauthorized:
 		return locale.NewLocalizedErrorWrapper(errors.New("fetcher: access unauthorized (401 status code)"), "error.http_not_authorized")
@@ -224,31 +228,48 @@ func (r *ResponseHandler) LocalizedError() *locale.LocalizedErrorWrapper {
 	return nil
 }
 
+// isCloudflareChallenge reports whether the response looks like a Cloudflare
+// bot/captcha interstitial rather than a genuine error from the origin. It
+// relies on response headers only (no body read) to keep the check cheap and
+// to run before ReadBody is called.
+func (r *ResponseHandler) isCloudflareChallenge() bool {
+	if r.httpResponse == nil {
+		return false
+	}
+
+	return r.httpResponse.StatusCode == http.StatusForbidden &&
+		strings.EqualFold(r.httpResponse.Header.Get("cf-mitigated"), "challenge") &&
+		strings.HasPrefix(strings.ToLower(r.ContentType()), "text/html")
+}
+
 func isNetworkError(err error) bool {
-	if _, ok := err.(*url.Error); ok {
+	if _, ok := errors.AsType[*url.Error](err); ok {
 		return true
 	}
-	if err == io.EOF {
+
+	if errors.Is(err, io.EOF) {
 		return true
 	}
-	var opErr *net.OpError
-	if ok := errors.As(err, &opErr); ok {
+
+	if _, ok := errors.AsType[*net.OpError](err); ok {
 		return true
 	}
+
 	return false
 }
 
 func isSSLError(err error) bool {
-	var certErr x509.UnknownAuthorityError
-	if errors.As(err, &certErr) {
+	if _, ok := errors.AsType[x509.UnknownAuthorityError](err); ok {
 		return true
 	}
 
-	var hostErr x509.HostnameError
-	if errors.As(err, &hostErr) {
+	if _, ok := errors.AsType[x509.HostnameError](err); ok {
 		return true
 	}
 
-	var algErr x509.InsecureAlgorithmError
-	return errors.As(err, &algErr)
+	if _, ok := errors.AsType[x509.InsecureAlgorithmError](err); ok {
+		return true
+	}
+
+	return false
 }

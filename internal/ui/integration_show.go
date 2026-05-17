@@ -9,7 +9,6 @@ import (
 	"miniflux.app/v2/internal/http/request"
 	"miniflux.app/v2/internal/http/response"
 	"miniflux.app/v2/internal/ui/form"
-	"miniflux.app/v2/internal/ui/session"
 	"miniflux.app/v2/internal/ui/view"
 )
 
@@ -148,13 +147,13 @@ func (h *handler) showIntegrationPage(w http.ResponseWriter, r *http.Request) {
 		ArchiveorgEnabled:                integration.ArchiveorgEnabled,
 	}
 
-	sess := session.New(h.store, request.SessionID(r))
-	view := view.New(h.tpl, r, sess)
+	view := view.New(h.tpl, r)
 	view.Set("form", integrationForm)
 	view.Set("menu", "settings")
 	view.Set("user", user)
-	view.Set("countUnread", h.store.CountUnreadEntries(user.ID))
-	view.Set("countErrorFeeds", h.store.CountUserFeedsWithErrors(user.ID))
+	navMetadata, _ := h.store.GetNavMetadata(user.ID)
+	view.Set("countUnread", navMetadata.CountUnread)
+	view.Set("countErrorFeeds", navMetadata.CountErrorFeeds)
 
 	response.HTML(w, r, view.Render("integrations"))
 }

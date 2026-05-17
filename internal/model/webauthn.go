@@ -4,40 +4,11 @@
 package model // import "miniflux.app/v2/internal/model"
 
 import (
-	"database/sql/driver"
 	"encoding/hex"
-	"encoding/json"
-	"errors"
-	"fmt"
 	"time"
 
 	"github.com/go-webauthn/webauthn/webauthn"
 )
-
-// WebAuthnSession handles marshalling / unmarshalling session data
-type WebAuthnSession struct {
-	*webauthn.SessionData
-}
-
-func (s WebAuthnSession) Value() (driver.Value, error) {
-	return json.Marshal(s)
-}
-
-func (s *WebAuthnSession) Scan(value any) error {
-	b, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
-
-	return json.Unmarshal(b, &s)
-}
-
-func (s WebAuthnSession) String() string {
-	if s.SessionData == nil {
-		return "{}"
-	}
-	return fmt.Sprintf("{Challenge: %s, UserID: %x}", s.Challenge, s.UserID)
-}
 
 type WebAuthnCredential struct {
 	Credential webauthn.Credential
@@ -45,6 +16,9 @@ type WebAuthnCredential struct {
 	AddedOn    *time.Time
 	LastSeenOn *time.Time
 	Handle     []byte
+
+	// False for rows predating the backup_eligible column; the login handler backfills from the assertion on first use.
+	BackupEligibleKnown bool
 }
 
 func (s WebAuthnCredential) HandleEncoded() string {

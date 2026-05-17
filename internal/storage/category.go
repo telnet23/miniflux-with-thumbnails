@@ -44,7 +44,7 @@ func (s *Storage) Category(userID, categoryID int64) (*model.Category, error) {
 	err := s.db.QueryRow(query, userID, categoryID).Scan(&category.ID, &category.UserID, &category.Title, &category.HideGlobally)
 
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		return nil, nil
 	case err != nil:
 		return nil, fmt.Errorf(`store: unable to fetch category: %v`, err)
@@ -61,7 +61,7 @@ func (s *Storage) FirstCategory(userID int64) (*model.Category, error) {
 	err := s.db.QueryRow(query, userID).Scan(&category.ID, &category.UserID, &category.Title, &category.HideGlobally)
 
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		return nil, nil
 	case err != nil:
 		return nil, fmt.Errorf(`store: unable to fetch category: %v`, err)
@@ -78,7 +78,7 @@ func (s *Storage) CategoryByTitle(userID int64, title string) (*model.Category, 
 	err := s.db.QueryRow(query, userID, title).Scan(&category.ID, &category.UserID, &category.Title, &category.HideGlobally)
 
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		return nil, nil
 	case err != nil:
 		return nil, fmt.Errorf(`store: unable to fetch category: %v`, err)
@@ -109,13 +109,8 @@ func (s *Storage) Categories(userID int64) (model.Categories, error) {
 	return categories, nil
 }
 
-// CategoriesWithFeedCount returns all categories with the number of feeds.
-func (s *Storage) CategoriesWithFeedCount(userID int64) (model.Categories, error) {
-	user, err := s.UserByID(userID)
-	if err != nil {
-		return nil, err
-	}
-
+// CategoriesWithFeedCount returns all categories with the number of feeds, sorted according to sortOrder.
+func (s *Storage) CategoriesWithFeedCount(userID int64, sortOrder string) (model.Categories, error) {
 	query := `
 		SELECT
 			c.id,
@@ -132,7 +127,7 @@ func (s *Storage) CategoriesWithFeedCount(userID int64) (model.Categories, error
 			user_id=$2
 	`
 
-	if user.CategoriesSortingOrder == "alphabetical" {
+	if sortOrder == "alphabetical" {
 		query += `
 			ORDER BY
 				c.title ASC

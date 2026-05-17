@@ -16,7 +16,6 @@ import (
 	feedHandler "miniflux.app/v2/internal/reader/handler"
 	"miniflux.app/v2/internal/reader/subscription"
 	"miniflux.app/v2/internal/ui/form"
-	"miniflux.app/v2/internal/ui/session"
 	"miniflux.app/v2/internal/ui/view"
 )
 
@@ -33,13 +32,13 @@ func (h *handler) submitSubscription(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess := session.New(h.store, request.SessionID(r))
-	v := view.New(h.tpl, r, sess)
+	v := view.New(h.tpl, r)
 	v.Set("categories", categories)
 	v.Set("menu", "feeds")
 	v.Set("user", user)
-	v.Set("countUnread", h.store.CountUnreadEntries(user.ID))
-	v.Set("countErrorFeeds", h.store.CountUserFeedsWithErrors(user.ID))
+	navMetadata, _ := h.store.GetNavMetadata(user.ID)
+	v.Set("countUnread", navMetadata.CountUnread)
+	v.Set("countErrorFeeds", navMetadata.CountErrorFeeds)
 	v.Set("defaultUserAgent", config.Opts.HTTPClientUserAgent())
 	v.Set("hasProxyConfigured", config.Opts.HasHTTPClientProxyURLConfigured())
 
@@ -155,13 +154,14 @@ func (h *handler) submitSubscription(w http.ResponseWriter, r *http.Request) {
 
 		response.HTMLRedirect(w, r, h.routePath("/feed/%d/entries", feed.ID))
 	case n > 1:
-		view := view.New(h.tpl, r, sess)
+		view := view.New(h.tpl, r)
 		view.Set("subscriptions", subscriptions)
 		view.Set("form", subscriptionForm)
 		view.Set("menu", "feeds")
 		view.Set("user", user)
-		view.Set("countUnread", h.store.CountUnreadEntries(user.ID))
-		view.Set("countErrorFeeds", h.store.CountUserFeedsWithErrors(user.ID))
+		navMetadata, _ := h.store.GetNavMetadata(user.ID)
+		view.Set("countUnread", navMetadata.CountUnread)
+		view.Set("countErrorFeeds", navMetadata.CountErrorFeeds)
 		view.Set("hasProxyConfigured", config.Opts.HasHTTPClientProxyURLConfigured())
 
 		response.HTML(w, r, view.Render("choose_subscription"))

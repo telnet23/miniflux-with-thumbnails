@@ -5,6 +5,7 @@ package storage // import "miniflux.app/v2/internal/storage"
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -119,7 +120,6 @@ func (s *Storage) GetEnclosure(enclosureID int64) (*model.Enclosure, error) {
 			enclosures
 		WHERE
 			id = $1
-		ORDER BY id ASC
 	`
 
 	row := s.db.QueryRow(query, enclosureID)
@@ -135,7 +135,7 @@ func (s *Storage) GetEnclosure(enclosureID int64) (*model.Enclosure, error) {
 		&enclosure.MediaProgression,
 	)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	} else if err != nil {
 		return nil, fmt.Errorf(`store: unable to fetch enclosure row: %v`, err)
@@ -244,25 +244,4 @@ func (s *Storage) UpdateEnclosure(enclosure *model.Enclosure) error {
 	}
 
 	return nil
-}
-
-// DeleteEnclosuresOfRemovedEntries deletes enclosures associated with entries marked as "removed".
-func (s *Storage) DeleteEnclosuresOfRemovedEntries() (int64, error) {
-	query := `
-		DELETE FROM
-			enclosures
-		WHERE
-			enclosures.entry_id IN (SELECT id FROM entries WHERE status=$1)
-	`
-	result, err := s.db.Exec(query, model.EntryStatusRemoved)
-	if err != nil {
-		return 0, fmt.Errorf(`store: unable to delete enclosures from removed entries: %v`, err)
-	}
-
-	count, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf(`store: unable to get the number of rows affected while deleting enclosures from removed entries: %v`, err)
-	}
-
-	return count, nil
 }

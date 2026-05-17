@@ -11,10 +11,13 @@ import (
 const (
 	EntryStatusUnread       = "unread"
 	EntryStatusRead         = "read"
-	EntryStatusRemoved      = "removed"
 	DefaultSortingOrder     = "published_at"
 	DefaultSortingDirection = "asc"
 )
+
+// MaxEntryLimit is the maximum allowed value for the "limit" query parameter
+// and for the user "entries_per_page" preference.
+const MaxEntryLimit = 1000
 
 // Entry represents a feed item in the system.
 type Entry struct {

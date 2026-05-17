@@ -9,7 +9,6 @@ import (
 	"miniflux.app/v2/internal/http/request"
 	"miniflux.app/v2/internal/http/response"
 	"miniflux.app/v2/internal/model"
-	"miniflux.app/v2/internal/ui/session"
 	"miniflux.app/v2/internal/ui/view"
 )
 
@@ -28,6 +27,7 @@ func (h *handler) showUnreadPage(w http.ResponseWriter, r *http.Request) {
 	builder.WithOffset(offset)
 	builder.WithLimit(user.EntriesPerPage)
 	builder.WithGloballyVisible()
+	builder.WithoutContent()
 	builder.WithEnclosures()
 
 	entries, countUnread, err := builder.GetEntriesWithCount()
@@ -44,6 +44,7 @@ func (h *handler) showUnreadPage(w http.ResponseWriter, r *http.Request) {
 		builder.WithSorting("id", user.EntryDirection)
 		builder.WithLimit(user.EntriesPerPage)
 		builder.WithGloballyVisible()
+		builder.WithoutContent()
 
 		entries, countUnread, err = builder.GetEntriesWithCount()
 		if err != nil {
@@ -52,15 +53,15 @@ func (h *handler) showUnreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	sess := session.New(h.store, request.SessionID(r))
-	view := view.New(h.tpl, r, sess)
+	view := view.New(h.tpl, r)
 	view.Set("entries", entries)
 	view.Set("pagination", getPagination(h.routePath("/unread"), countUnread, offset, user.EntriesPerPage))
 	view.Set("menu", "unread")
 	view.Set("user", user)
+	navMetadata, _ := h.store.GetNavMetadata(user.ID)
 	view.Set("countUnread", countUnread)
-	view.Set("countErrorFeeds", h.store.CountUserFeedsWithErrors(user.ID))
-	view.Set("hasSaveEntry", h.store.HasSaveEntry(user.ID))
+	view.Set("countErrorFeeds", navMetadata.CountErrorFeeds)
+	view.Set("hasSaveEntry", navMetadata.HasSaveEntry)
 
 	response.HTML(w, r, view.Render("unread_entries"))
 }

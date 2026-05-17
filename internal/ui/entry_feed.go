@@ -10,7 +10,6 @@ import (
 	"miniflux.app/v2/internal/http/response"
 	"miniflux.app/v2/internal/model"
 	"miniflux.app/v2/internal/storage"
-	"miniflux.app/v2/internal/ui/session"
 	"miniflux.app/v2/internal/ui/view"
 )
 
@@ -27,7 +26,6 @@ func (h *handler) showFeedEntryPage(w http.ResponseWriter, r *http.Request) {
 	builder := h.store.NewEntryQueryBuilder(user.ID)
 	builder.WithFeedID(feedID)
 	builder.WithEntryID(entryID)
-	builder.WithoutStatus(model.EntryStatusRemoved)
 
 	entry, err := builder.GetEntry()
 	if err != nil {
@@ -73,8 +71,7 @@ func (h *handler) showFeedEntryPage(w http.ResponseWriter, r *http.Request) {
 		prevEntryRoute = h.routePath("/feed/%d/entry/%d", feedID, prevEntry.ID)
 	}
 
-	sess := session.New(h.store, request.SessionID(r))
-	view := view.New(h.tpl, r, sess)
+	view := view.New(h.tpl, r)
 	view.Set("entry", entry)
 	view.Set("prevEntry", prevEntry)
 	view.Set("nextEntry", nextEntry)
@@ -82,9 +79,10 @@ func (h *handler) showFeedEntryPage(w http.ResponseWriter, r *http.Request) {
 	view.Set("prevEntryRoute", prevEntryRoute)
 	view.Set("menu", "feeds")
 	view.Set("user", user)
-	view.Set("countUnread", h.store.CountUnreadEntries(user.ID))
-	view.Set("countErrorFeeds", h.store.CountUserFeedsWithErrors(user.ID))
-	view.Set("hasSaveEntry", h.store.HasSaveEntry(user.ID))
+	navMetadata, _ := h.store.GetNavMetadata(user.ID)
+	view.Set("countUnread", navMetadata.CountUnread)
+	view.Set("countErrorFeeds", navMetadata.CountErrorFeeds)
+	view.Set("hasSaveEntry", navMetadata.HasSaveEntry)
 
 	response.HTML(w, r, view.Render("entry"))
 }

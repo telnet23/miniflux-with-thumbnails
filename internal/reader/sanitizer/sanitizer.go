@@ -148,53 +148,6 @@ var (
 		"x.com/share",
 	}
 
-	// See https://www.iana.org/assignments/uri-schemes/uri-schemes.xhtml
-	validURISchemes = []string{
-		// Most commong schemes on top.
-		"https:",
-		"http:",
-
-		// Then the rest.
-		"apt:",
-		"bitcoin:",
-		"callto:",
-		"dav:",
-		"davs:",
-		"ed2k:",
-		"facetime:",
-		"feed:",
-		"ftp:",
-		"geo:",
-		"git:",
-		"gopher:",
-		"irc:",
-		"irc6:",
-		"ircs:",
-		"itms-apps:",
-		"itms:",
-		"magnet:",
-		"mailto:",
-		"news:",
-		"nntp:",
-		"rtmp:",
-		"sftp:",
-		"sip:",
-		"sips:",
-		"skype:",
-		"spotify:",
-		"ssh:",
-		"steam:",
-		"svn:",
-		"svn+ssh:",
-		"tel:",
-		"webcal:",
-		"xmpp:",
-
-		// iOS Apps
-		"opener:", // https://www.opener.link
-		"hack:",   // https://apps.apple.com/it/app/hack-for-hacker-news-reader/id1464477788?l=en-GB
-	}
-
 	dataAttributeAllowedPrefixes = []string{
 		"data:image/avif",
 		"data:image/apng",
@@ -350,15 +303,6 @@ func hasRequiredAttributes(s *mandatoryAttributesStruct, tagName string) bool {
 	return true
 }
 
-func hasValidURIScheme(absoluteURL string) bool {
-	for _, scheme := range validURISchemes {
-		if strings.HasPrefix(absoluteURL, scheme) {
-			return true
-		}
-	}
-	return false
-}
-
 func isBlockedResource(absoluteURL string) bool {
 	for _, blockedURL := range blockedResourceURLSubstrings {
 		if strings.Contains(absoluteURL, blockedURL) {
@@ -504,7 +448,20 @@ func trackAttributes(s *mandatoryAttributesStruct, attributeName string) {
 }
 
 func sanitizeAttributes(parsedBaseUrl *url.URL, tagName string, attributes []html.Attribute, sanitizerOptions *SanitizerOptions) (string, bool) {
-	htmlAttrs := make([]string, 0, len(attributes))
+	var htmlAttrs strings.Builder
+	// Rough estimate: most attributes are short; ~24 bytes (key + ="value") is
+	// a reasonable starting point. Avoids early grows for typical elements.
+	htmlAttrs.Grow(len(attributes) * 24)
+
+	// writeAttr appends key="value" to htmlAttrs, prefixing with a single
+	// space when not the first written attribute. value is HTML-escaped.
+	writeAttr := func(key, value string) {
+		htmlAttrs.WriteByte(' ')
+		htmlAttrs.WriteString(key)
+		htmlAttrs.WriteString(`="`)
+		htmlAttrs.WriteString(html.EscapeString(value))
+		htmlAttrs.WriteByte('"')
+	}
 
 	// Keep track of mandatory attributes for some tags
 	mandatoryAttributes := mandatoryAttributesStruct{false, false, false}
@@ -587,20 +544,24 @@ func sanitizeAttributes(parsedBaseUrl *url.URL, tagName string, attributes []htm
 					continue
 				}
 
-				if !hasValidURIScheme(value) {
+				if !HasValidURIScheme(value) {
 					continue
 				}
 
-				// TODO use feedURL instead of baseURL twice.
-				parsedValueUrl, _ := url.Parse(value)
-				if cleanedURL, err := urlcleaner.RemoveTrackingParameters(parsedBaseUrl, parsedBaseUrl, parsedValueUrl); err == nil {
-					value = cleanedURL
+				// Skip the parse + RemoveTrackingParameters round trip when there
+				// is no query string to clean, which is common for <img>.
+				if strings.IndexByte(value, '?') >= 0 {
+					parsedValueUrl, _ := url.Parse(value)
+					// TODO use feedURL instead of baseURL twice.
+					if cleanedURL, err := urlcleaner.RemoveTrackingParameters(parsedBaseUrl, parsedBaseUrl, parsedValueUrl); err == nil {
+						value = cleanedURL
+					}
 				}
 			}
 		}
 
 		trackAttributes(&mandatoryAttributes, attribute.Key)
-		htmlAttrs = append(htmlAttrs, attribute.Key+`="`+html.EscapeString(value)+`"`)
+		writeAttr(attribute.Key, value)
 	}
 
 	if !hasRequiredAttributes(&mandatoryAttributes, tagName) {
@@ -610,27 +571,29 @@ func sanitizeAttributes(parsedBaseUrl *url.URL, tagName string, attributes []htm
 	if !isAnchorLink {
 		switch tagName {
 		case "a":
-			htmlAttrs = append(htmlAttrs, `rel="noopener noreferrer"`, `referrerpolicy="no-referrer"`)
+			writeAttr("rel", "noopener noreferrer")
+			writeAttr("referrerpolicy", "no-referrer")
 			if sanitizerOptions.OpenLinksInNewTab {
-				htmlAttrs = append(htmlAttrs, `target="_blank"`)
+				writeAttr("target", "_blank")
 			}
 		case "video", "audio":
-			htmlAttrs = append(htmlAttrs, "controls")
+			htmlAttrs.WriteString(" controls")
 		case "iframe":
-			htmlAttrs = append(htmlAttrs, `sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"`, `loading="lazy"`)
+			writeAttr("sandbox", "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox")
+			writeAttr("loading", "lazy")
 
 			// Note: the referrerpolicy seems to be required to avoid YouTube error 153 video player configuration error
 			// See https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
 			if isYouTubeEmbed {
-				htmlAttrs = append(htmlAttrs, `referrerpolicy="strict-origin-when-cross-origin"`)
+				writeAttr("referrerpolicy", "strict-origin-when-cross-origin")
 			}
 
 		case "img":
-			htmlAttrs = append(htmlAttrs, `loading="lazy"`)
+			writeAttr("loading", "lazy")
 		}
 	}
 
-	return strings.Join(htmlAttrs, " "), true
+	return strings.TrimLeft(htmlAttrs.String(), " "), true
 }
 
 func sanitizeSrcsetAttr(parsedBaseURL *url.URL, value string) string {
@@ -647,7 +610,7 @@ func sanitizeSrcsetAttr(parsedBaseURL *url.URL, value string) string {
 			continue
 		}
 
-		if !hasValidURIScheme(absoluteURL) || isBlockedResource(absoluteURL) {
+		if !HasValidURIScheme(absoluteURL) || isBlockedResource(absoluteURL) {
 			continue
 		}
 

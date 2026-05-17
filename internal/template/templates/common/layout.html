@@ -107,15 +107,18 @@
                 </li>
                 {{ if not hasAuthProxy }}
                     <li>
-                        <a href="{{ routePath "/logout" }}" title="{{ t "tooltip.logged_user" .user.Username }}">{{ icon "logout" }}{{ t "menu.logout" }}</a>
+                        <form action="{{ routePath "/logout" }}" method="post" class="logout-form">
+                            <input type="hidden" name="csrf" value="{{ .csrf }}">
+                            <button type="submit" class="logout-button" title="{{ t "tooltip.logged_user" .user.Username }}">{{ icon "logout" }}{{ t "menu.logout" }}</button>
+                        </form>
                     </li>
                 {{ end }}
             </ul>
         </nav>
     </header>
     {{ end }}
-    {{ if .flashMessage }}
-        <div role="alert" class="flash-message alert alert-success">{{ .flashMessage }}</div>
+    {{ if .flashSuccessMessage }}
+        <div role="alert" class="flash-message alert alert-success">{{ .flashSuccessMessage }}</div>
     {{ end }}
     {{ if .flashErrorMessage }}
         <div role="alert" class="flash-error-message alert alert-error">{{ .flashErrorMessage }}</div>

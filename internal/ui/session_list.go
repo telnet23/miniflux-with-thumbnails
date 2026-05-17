@@ -8,7 +8,6 @@ import (
 
 	"miniflux.app/v2/internal/http/request"
 	"miniflux.app/v2/internal/http/response"
-	"miniflux.app/v2/internal/ui/session"
 	"miniflux.app/v2/internal/ui/view"
 )
 
@@ -19,24 +18,24 @@ func (h *handler) showSessionsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessions, err := h.store.UserSessions(user.ID)
+	sessions, err := h.store.WebSessionsByUserID(user.ID)
 	if err != nil {
 		response.HTMLServerError(w, r, err)
 		return
 	}
 
-	for _, sess := range sessions {
-		sess.UseTimezone(user.Timezone)
+	for i := range sessions {
+		sessions[i].UseTimezone(user.Timezone)
 	}
 
-	sess := session.New(h.store, request.SessionID(r))
-	view := view.New(h.tpl, r, sess)
-	view.Set("currentSessionToken", request.UserSessionToken(r))
+	view := view.New(h.tpl, r)
+	view.Set("currentSessionID", request.WebSession(r).ID)
 	view.Set("sessions", sessions)
 	view.Set("menu", "settings")
 	view.Set("user", user)
-	view.Set("countUnread", h.store.CountUnreadEntries(user.ID))
-	view.Set("countErrorFeeds", h.store.CountUserFeedsWithErrors(user.ID))
+	navMetadata, _ := h.store.GetNavMetadata(user.ID)
+	view.Set("countUnread", navMetadata.CountUnread)
+	view.Set("countErrorFeeds", navMetadata.CountErrorFeeds)
 
 	response.HTML(w, r, view.Render("sessions"))
 }
