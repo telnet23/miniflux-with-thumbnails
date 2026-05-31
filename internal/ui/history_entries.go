@@ -20,16 +20,16 @@ func (h *handler) showHistoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset := request.QueryIntParam(r, "offset", 0)
-	builder := h.store.NewEntryQueryBuilder(user.ID)
-	builder.WithStatus(model.EntryStatusRead)
-	builder.WithSorting("changed_at", "DESC")
-	builder.WithSorting("published_at", "DESC")
-	builder.WithoutContent()
-	builder.WithOffset(offset)
-	builder.WithLimit(user.EntriesPerPage)
-	builder.WithEnclosures()
 
-	entries, count, err := builder.GetEntriesWithCount()
+	entries, count, err := h.store.NewEntryQueryBuilder(user.ID).
+		WithStatuses(model.EntryStatusRead).
+		WithSorting("changed_at", "DESC").
+		WithSorting("published_at", "DESC").
+		WithoutContent().
+		WithEnclosures().
+		WithOffset(offset).
+		WithLimit(user.EntriesPerPage).
+		GetEntriesWithCount()
 	if err != nil {
 		response.HTMLServerError(w, r, err)
 		return
