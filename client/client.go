@@ -888,6 +888,55 @@ func (c *Client) EntryContext(ctx context.Context, entryID int64) (*Entry, error
 	return entry, nil
 }
 
+// EntryIDs returns entry IDs for the current user, optionally filtered by starred status and/or read status.
+func (c *Client) EntryIDs(filter *EntryIDsFilter) (*EntryIDsResultSet, error) {
+	ctx, cancel := withDefaultTimeout()
+	defer cancel()
+	return c.EntryIDsContext(ctx, filter)
+}
+
+// EntryIDsContext returns entry IDs for the current user, optionally filtered by starred status and/or read status.
+func (c *Client) EntryIDsContext(ctx context.Context, filter *EntryIDsFilter) (*EntryIDsResultSet, error) {
+	body, err := c.request.Get(ctx, buildEntryIDsFilterQueryString("/v1/entries/ids", filter))
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+
+	var result EntryIDsResultSet
+	if err := json.NewDecoder(body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("miniflux: response error (%v)", err)
+	}
+
+	return &result, nil
+}
+
+func buildEntryIDsFilterQueryString(path string, filter *EntryIDsFilter) string {
+	if filter == nil {
+		return path
+	}
+
+	params := url.Values{}
+	if filter.Limit > 0 {
+		params.Set("limit", strconv.Itoa(filter.Limit))
+	}
+	if filter.Offset > 0 {
+		params.Set("offset", strconv.Itoa(filter.Offset))
+	}
+	if filter.Starred != nil {
+		params.Set("starred", strconv.FormatBool(*filter.Starred))
+	}
+	if filter.Status != "" {
+		params.Set("status", filter.Status)
+	}
+
+	if len(params) == 0 {
+		return path
+	}
+
+	return path + "?" + params.Encode()
+}
+
 // Entries fetches entries using the given filter.
 func (c *Client) Entries(filter *Filter) (*EntryResultSet, error) {
 	ctx, cancel := withDefaultTimeout()
@@ -978,6 +1027,24 @@ func (c *Client) UpdateEntriesContext(ctx context.Context, entryIDs []int64, sta
 	}
 
 	_, err := c.request.Put(ctx, "/v1/entries", &payload{EntryIDs: entryIDs, Status: status})
+	return err
+}
+
+// UpdateEntriesStarred updates the starred state of a list of entries.
+func (c *Client) UpdateEntriesStarred(entryIDs []int64, starred bool) error {
+	ctx, cancel := withDefaultTimeout()
+	defer cancel()
+	return c.UpdateEntriesStarredContext(ctx, entryIDs, starred)
+}
+
+// UpdateEntriesStarredContext updates the starred state of a list of entries.
+func (c *Client) UpdateEntriesStarredContext(ctx context.Context, entryIDs []int64, starred bool) error {
+	type payload struct {
+		EntryIDs []int64 `json:"entry_ids"`
+		Starred  *bool   `json:"starred"`
+	}
+
+	_, err := c.request.Put(ctx, "/v1/entries", &payload{EntryIDs: entryIDs, Starred: &starred})
 	return err
 }
 
@@ -1229,6 +1296,10 @@ func buildFilterQueryString(path string, filter *Filter) string {
 
 		for _, status := range filter.Statuses {
 			values.Add("status", status)
+		}
+
+		for _, tag := range filter.Tags {
+			values.Add("tags", tag)
 		}
 
 		path = fmt.Sprintf("%s?%s", path, values.Encode())

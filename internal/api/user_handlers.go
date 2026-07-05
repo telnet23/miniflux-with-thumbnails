@@ -22,6 +22,11 @@ func (h *handler) currentUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if user == nil {
+		response.JSONNotFound(w, r)
+		return
+	}
+
 	response.JSON(w, r, user)
 }
 
@@ -113,7 +118,13 @@ func (h *handler) markUserAsReadHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if _, err := h.store.UserByID(userID); err != nil {
+	user, err := h.store.UserByID(userID)
+	if err != nil {
+		response.JSONServerError(w, r, err)
+		return
+	}
+
+	if user == nil {
 		response.JSONNotFound(w, r)
 		return
 	}
@@ -128,7 +139,13 @@ func (h *handler) markUserAsReadHandler(w http.ResponseWriter, r *http.Request) 
 
 func (h *handler) getIntegrationsStatusHandler(w http.ResponseWriter, r *http.Request) {
 	userID := request.UserID(r)
-	if _, err := h.store.UserByID(userID); err != nil {
+	user, err := h.store.UserByID(userID)
+	if err != nil {
+		response.JSONServerError(w, r, err)
+		return
+	}
+
+	if user == nil {
 		response.JSONNotFound(w, r)
 		return
 	}
@@ -181,7 +198,7 @@ func (h *handler) userByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.store.UserByID(userID)
 	if err != nil {
-		response.JSONBadRequest(w, r, errors.New("unable to fetch this user from the database"))
+		response.JSONServerError(w, r, err)
 		return
 	}
 
@@ -203,7 +220,7 @@ func (h *handler) userByUsernameHandler(w http.ResponseWriter, r *http.Request) 
 	username := request.RouteStringParam(r, "username")
 	user, err := h.store.UserByUsername(username)
 	if err != nil {
-		response.JSONBadRequest(w, r, errors.New("unable to fetch this user from the database"))
+		response.JSONServerError(w, r, err)
 		return
 	}
 

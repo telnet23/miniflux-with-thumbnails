@@ -175,11 +175,11 @@ func (h *handler) findEntries(w http.ResponseWriter, r *http.Request, feedID int
 		globallyVisible := request.QueryBoolParam(r, "globally_visible", true)
 
 		if globallyVisible {
-			builder.WithGloballyVisible()
+			builder = builder.WithGloballyVisible()
 		}
 	}
 
-	configureFilters(builder, r)
+	builder = configureFilters(builder, r)
 
 	entries, count, err := builder.GetEntriesWithCount()
 	if err != nil {
@@ -189,26 +189,36 @@ func (h *handler) findEntries(w http.ResponseWriter, r *http.Request, feedID int
 
 	for i := range entries {
 		entries[i].Content = mediaproxy.RewriteDocumentWithAbsoluteProxyURL(entries[i].Content)
+		entries[i].Enclosures.ProxifyEnclosureURL(config.Opts.MediaProxyMode(), config.Opts.MediaProxyResourceTypes())
 	}
 
 	response.JSON(w, r, &entriesResponse{Total: count, Entries: entries})
 }
 
-func (h *handler) setEntryStatusHandler(w http.ResponseWriter, r *http.Request) {
+func (h *handler) setEntryStatusAndStarredHandler(w http.ResponseWriter, r *http.Request) {
 	var entriesStatusUpdateRequest model.EntriesStatusUpdateRequest
 	if err := json_parser.NewDecoder(r.Body).Decode(&entriesStatusUpdateRequest); err != nil {
 		response.JSONBadRequest(w, r, err)
 		return
 	}
 
-	if err := validator.ValidateEntriesStatusUpdateRequest(&entriesStatusUpdateRequest); err != nil {
+	if err := validator.ValidateEntriesStatusAndStarredUpdateRequest(&entriesStatusUpdateRequest); err != nil {
 		response.JSONBadRequest(w, r, err)
 		return
 	}
 
-	if err := h.store.SetEntriesStatus(request.UserID(r), entriesStatusUpdateRequest.EntryIDs, entriesStatusUpdateRequest.Status); err != nil {
-		response.JSONServerError(w, r, err)
-		return
+	if entriesStatusUpdateRequest.Status != "" {
+		if err := h.store.SetEntriesStatus(request.UserID(r), entriesStatusUpdateRequest.EntryIDs, entriesStatusUpdateRequest.Status); err != nil {
+			response.JSONServerError(w, r, err)
+			return
+		}
+	}
+
+	if entriesStatusUpdateRequest.Starred != nil {
+		if err := h.store.SetEntriesStarredState(request.UserID(r), entriesStatusUpdateRequest.EntryIDs, *entriesStatusUpdateRequest.Starred); err != nil {
+			response.JSONServerError(w, r, err)
+			return
+		}
 	}
 
 	response.NoContent(w, r)
@@ -497,57 +507,108 @@ func (h *handler) fetchContentHandler(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, r, entryContentResponse{Content: mediaproxy.RewriteDocumentWithAbsoluteProxyURL(entry.Content), ReadingTime: entry.ReadingTime})
 }
 
+func (h *handler) getEntryIDsHandler(w http.ResponseWriter, r *http.Request) {
+	if request.HasQueryParam(r, "starred") {
+		starredValue := request.QueryStringParam(r, "starred", "")
+		if starredValue != "true" && starredValue != "false" {
+			response.JSONBadRequest(w, r, errors.New(`invalid starred parameter, must be "true" or "false"`))
+			return
+		}
+	}
+
+	if request.HasQueryParam(r, "status") {
+		statusValue := request.QueryStringParam(r, "status", "")
+		if statusValue != model.EntryStatusRead && statusValue != model.EntryStatusUnread {
+			response.JSONBadRequest(w, r, errors.New(`invalid status parameter, must be "read" or "unread"`))
+			return
+		}
+	}
+
+	limit, offset := parseEntryIDsParams(r)
+	builder := h.store.NewEntryQueryBuilder(request.UserID(r)).
+		WithSorting("id", "DESC").
+		WithLimitAndMaximum(limit, model.MaxEntryIDsLimit).
+		WithOffset(offset)
+
+	if request.HasQueryParam(r, "starred") {
+		builder.WithStarred(request.QueryBoolParam(r, "starred", false))
+	}
+
+	if request.HasQueryParam(r, "status") {
+		builder.WithStatuses(request.QueryStringParam(r, "status", ""))
+	}
+
+	entryIDs, total, err := builder.GetEntryIDsWithCount()
+	if err != nil {
+		response.JSONServerError(w, r, err)
+		return
+	}
+
+	if entryIDs == nil {
+		entryIDs = []int64{}
+	}
+
+	response.JSON(w, r, entryIDsResponse{Total: total, EntryIDs: entryIDs})
+}
+
 func (h *handler) flushHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	loggedUserID := request.UserID(r)
 	go h.store.FlushHistory(loggedUserID)
 	response.JSONAccepted(w, r)
 }
 
-func configureFilters(builder *storage.EntryQueryBuilder, r *http.Request) {
+func configureFilters(builder *storage.EntryQueryBuilder, r *http.Request) *storage.EntryQueryBuilder {
 	if beforeEntryID := request.QueryInt64Param(r, "before_entry_id", 0); beforeEntryID > 0 {
-		builder.BeforeEntryID(beforeEntryID)
+		builder = builder.BeforeEntryID(beforeEntryID)
 	}
 
 	if afterEntryID := request.QueryInt64Param(r, "after_entry_id", 0); afterEntryID > 0 {
-		builder.AfterEntryID(afterEntryID)
+		builder = builder.AfterEntryID(afterEntryID)
 	}
 
 	if beforePublishedTimestamp := request.QueryInt64Param(r, "before", 0); beforePublishedTimestamp > 0 {
-		builder.BeforePublishedDate(time.Unix(beforePublishedTimestamp, 0))
+		builder = builder.BeforePublishedDate(time.Unix(beforePublishedTimestamp, 0))
 	}
 
 	if afterPublishedTimestamp := request.QueryInt64Param(r, "after", 0); afterPublishedTimestamp > 0 {
-		builder.AfterPublishedDate(time.Unix(afterPublishedTimestamp, 0))
+		builder = builder.AfterPublishedDate(time.Unix(afterPublishedTimestamp, 0))
 	}
 
 	if beforePublishedTimestamp := request.QueryInt64Param(r, "published_before", 0); beforePublishedTimestamp > 0 {
-		builder.BeforePublishedDate(time.Unix(beforePublishedTimestamp, 0))
+		builder = builder.BeforePublishedDate(time.Unix(beforePublishedTimestamp, 0))
 	}
 
 	if afterPublishedTimestamp := request.QueryInt64Param(r, "published_after", 0); afterPublishedTimestamp > 0 {
-		builder.AfterPublishedDate(time.Unix(afterPublishedTimestamp, 0))
+		builder = builder.AfterPublishedDate(time.Unix(afterPublishedTimestamp, 0))
 	}
 
 	if beforeChangedTimestamp := request.QueryInt64Param(r, "changed_before", 0); beforeChangedTimestamp > 0 {
-		builder.BeforeChangedDate(time.Unix(beforeChangedTimestamp, 0))
+		builder = builder.BeforeChangedDate(time.Unix(beforeChangedTimestamp, 0))
 	}
 
 	if afterChangedTimestamp := request.QueryInt64Param(r, "changed_after", 0); afterChangedTimestamp > 0 {
-		builder.AfterChangedDate(time.Unix(afterChangedTimestamp, 0))
-	}
-
-	if categoryID := request.QueryInt64Param(r, "category_id", 0); categoryID > 0 {
-		builder.WithCategoryID(categoryID)
+		builder = builder.AfterChangedDate(time.Unix(afterChangedTimestamp, 0))
 	}
 
 	if request.HasQueryParam(r, "starred") {
 		starred, err := strconv.ParseBool(r.URL.Query().Get("starred"))
 		if err == nil {
-			builder.WithStarred(starred)
+			builder = builder.WithStarred(starred)
 		}
 	}
 
 	if searchQuery := request.QueryStringParam(r, "search", ""); searchQuery != "" {
-		builder.WithSearchQuery(searchQuery)
+		builder = builder.WithSearchQuery(searchQuery)
 	}
+
+	return builder
+}
+
+func parseEntryIDsParams(r *http.Request) (limit, offset int) {
+	limit = request.QueryIntParam(r, "limit", model.MaxEntryIDsLimit)
+	if limit <= 0 || limit > model.MaxEntryIDsLimit {
+		limit = model.MaxEntryIDsLimit
+	}
+	offset = request.QueryIntParam(r, "offset", 0)
+	return limit, offset
 }
