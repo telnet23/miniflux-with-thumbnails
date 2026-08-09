@@ -199,19 +199,19 @@ func (e *EntryQueryBuilder) WithSorting(column, direction string) *EntryQueryBui
 	return e
 }
 
-// WithLimit set the limit.
+// WithLimit sets the limit. A non-positive limit is clamped to
+// model.MaxEntryLimit so callers cannot request an unbounded result set.
 func (e *EntryQueryBuilder) WithLimit(limit int) *EntryQueryBuilder {
-	if limit > 0 {
-		e.limit = min(limit, model.MaxEntryLimit)
-	}
-	return e
+	return e.WithLimitAndMaximum(limit, model.MaxEntryLimit)
 }
 
 // WithLimitAndMaximum sets the limit, capped at the given maximum.
+// A non-positive limit is clamped to the maximum.
 func (e *EntryQueryBuilder) WithLimitAndMaximum(limit, maximum int) *EntryQueryBuilder {
-	if limit > 0 {
-		e.limit = min(limit, maximum)
+	if limit <= 0 || limit > maximum {
+		limit = maximum
 	}
+	e.limit = limit
 	return e
 }
 
@@ -273,10 +273,22 @@ func (e *EntryQueryBuilder) GetEntries() (model.Entries, error) {
 }
 
 // GetEntriesWithCount returns a list of entries and the total count of matching
-// rows (ignoring limit/offset) in a single query using a window function.
-// This avoids a separate CountEntries() round-trip.
+// rows, ignoring limit and offset. It uses a window function for non-empty pages
+// and falls back to a separate count when the requested offset returns no rows.
 func (e *EntryQueryBuilder) GetEntriesWithCount() (model.Entries, int, error) {
-	return e.fetchEntries(true)
+	entries, total, err := e.fetchEntries(true)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if len(entries) == 0 && e.offset > 0 {
+		total, err = e.CountEntries()
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+
+	return entries, total, nil
 }
 
 // fetchEntries is the shared implementation for GetEntries and GetEntriesWithCount.
@@ -308,10 +320,12 @@ func (e *EntryQueryBuilder) fetchEntries(withCount bool) (model.Entries, int, er
 			e.created_at,
 			e.changed_at,
 			e.tags,
+			e.language,
 			f.title as feed_title,
 			f.feed_url,
 			f.site_url,
 			f.description,
+			f.language,
 			f.checked_at,
 			f.category_id,
 			c.title as category_title,
@@ -378,10 +392,12 @@ func (e *EntryQueryBuilder) fetchEntries(withCount bool) (model.Entries, int, er
 			&entry.CreatedAt,
 			&entry.ChangedAt,
 			pq.Array(&entry.Tags),
+			&entry.Language,
 			&entry.Feed.Title,
 			&entry.Feed.FeedURL,
 			&entry.Feed.SiteURL,
 			&entry.Feed.Description,
+			&entry.Feed.Language,
 			&entry.Feed.CheckedAt,
 			&entry.Feed.Category.ID,
 			&entry.Feed.Category.Title,

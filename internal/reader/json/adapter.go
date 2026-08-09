@@ -5,6 +5,7 @@ package json // import "miniflux.app/v2/internal/reader/json"
 
 import (
 	"cmp"
+	"html"
 	"log/slog"
 	"slices"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"miniflux.app/v2/internal/crypto"
 	"miniflux.app/v2/internal/model"
 	"miniflux.app/v2/internal/reader/date"
+	"miniflux.app/v2/internal/reader/language"
 	"miniflux.app/v2/internal/reader/sanitizer"
 	"miniflux.app/v2/internal/urllib"
 )
@@ -31,6 +33,7 @@ func (j *JSONAdapter) BuildFeed(baseURL string) *model.Feed {
 		FeedURL:     strings.TrimSpace(j.jsonFeed.FeedURL),
 		SiteURL:     strings.TrimSpace(j.jsonFeed.HomePageURL),
 		Description: strings.TrimSpace(j.jsonFeed.Description),
+		Language:    language.Normalize(j.jsonFeed.Language),
 	}
 
 	if feed.FeedURL == "" {
@@ -70,6 +73,14 @@ func (j *JSONAdapter) BuildFeed(baseURL string) *model.Feed {
 	for _, item := range j.jsonFeed.Items {
 		entry := model.NewEntry()
 
+		// Populate the entry language. Per the JSON Feed spec, an item
+		// declares a language only when it differs from the primary
+		// language of the feed.
+		entry.Language = language.Normalize(item.Language)
+		if entry.Language == "" {
+			entry.Language = feed.Language
+		}
+
 		for _, itemURL := range []string{item.URL, item.ExternalURL} {
 			if itemURL = strings.TrimSpace(itemURL); itemURL == "" {
 				continue
@@ -100,14 +111,16 @@ func (j *JSONAdapter) BuildFeed(baseURL string) *model.Feed {
 			entry.Title = entry.URL
 		}
 
-		// Populate the entry content.
-		for _, value := range []string{item.ContentHTML, item.ContentText, item.Summary} {
-			if value = strings.TrimSpace(value); value == "" {
-				continue
-			}
-
-			entry.Content = value
-			break
+		// Populate the entry content. content_html is HTML, but content_text
+		// and summary are plain text (JSON Feed 1.1), so they must be escaped
+		// before being stored as HTML, otherwise the sanitizer drops any
+		// markup-like characters they contain.
+		if contentHTML := strings.TrimSpace(item.ContentHTML); contentHTML != "" {
+			entry.Content = contentHTML
+		} else if contentText := strings.TrimSpace(item.ContentText); contentText != "" {
+			entry.Content = html.EscapeString(contentText)
+		} else if summary := strings.TrimSpace(item.Summary); summary != "" {
+			entry.Content = html.EscapeString(summary)
 		}
 
 		// Populate the entry date.

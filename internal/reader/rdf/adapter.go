@@ -12,6 +12,7 @@ import (
 	"miniflux.app/v2/internal/crypto"
 	"miniflux.app/v2/internal/model"
 	"miniflux.app/v2/internal/reader/date"
+	"miniflux.app/v2/internal/reader/language"
 	"miniflux.app/v2/internal/reader/sanitizer"
 	"miniflux.app/v2/internal/urllib"
 )
@@ -26,6 +27,7 @@ func (r *rdfAdapter) buildFeed(baseURL string) *model.Feed {
 		FeedURL:     strings.TrimSpace(baseURL),
 		SiteURL:     strings.TrimSpace(r.rdf.Channel.Link),
 		Description: strings.TrimSpace(r.rdf.Channel.Description),
+		Language:    language.Normalize(r.rdf.Channel.DublinCoreLanguage),
 	}
 
 	if feed.Title == "" {
@@ -98,6 +100,13 @@ func (r *rdfAdapter) buildFeed(baseURL string) *model.Feed {
 			entry.Author = sanitizer.StripTags(item.DublinCoreCreator)
 		case r.rdf.Channel.DublinCoreCreator != "":
 			entry.Author = sanitizer.StripTags(r.rdf.Channel.DublinCoreCreator)
+		}
+
+		// Populate the entry language, falling back to the channel
+		// language: items are part of the channel's content.
+		entry.Language = language.Normalize(item.DublinCoreLanguage)
+		if entry.Language == "" {
+			entry.Language = feed.Language
 		}
 
 		feed.Entries = append(feed.Entries, entry)

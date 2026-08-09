@@ -2314,3 +2314,123 @@ func TestParseEntriesWithUniqueGUIDsAreUnchanged(t *testing.T) {
 		t.Errorf("Entry 1: incorrect hash, got: %s", feed.Entries[1].Hash)
 	}
 }
+
+func TestParseFeedWithLanguage(t *testing.T) {
+	data := `<?xml version="1.0" encoding="utf-8"?>
+		<rss version="2.0">
+		<channel>
+			<title>Example</title>
+			<link>https://example.org/</link>
+			<language>en-US</language>
+		</channel>
+		</rss>`
+
+	feed, err := Parse("https://example.org/", bytes.NewReader([]byte(data)))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if feed.Language != "en-us" {
+		t.Errorf("Incorrect language, got: %q", feed.Language)
+	}
+}
+
+func TestParseFeedWithoutLanguage(t *testing.T) {
+	data := `<?xml version="1.0" encoding="utf-8"?>
+		<rss version="2.0">
+		<channel>
+			<title>Example</title>
+			<link>https://example.org/</link>
+		</channel>
+		</rss>`
+
+	feed, err := Parse("https://example.org/", bytes.NewReader([]byte(data)))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if feed.Language != "" {
+		t.Errorf("Expected empty language, got: %q", feed.Language)
+	}
+}
+
+func TestParseItemWithDublinCoreLanguage(t *testing.T) {
+	data := `<?xml version="1.0" encoding="utf-8"?>
+		<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+		<channel>
+			<title>Example</title>
+			<link>https://example.org/</link>
+			<language>en-US</language>
+			<item>
+				<title>Item</title>
+				<link>https://example.org/item</link>
+				<dc:language>fr-FR</dc:language>
+			</item>
+		</channel>
+		</rss>`
+
+	feed, err := Parse("https://example.org/", bytes.NewReader([]byte(data)))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(feed.Entries) != 1 {
+		t.Fatalf("Expected 1 entry, got: %d", len(feed.Entries))
+	}
+
+	if feed.Entries[0].Language != "fr-fr" {
+		t.Errorf("Incorrect entry language, got: %q", feed.Entries[0].Language)
+	}
+}
+
+func TestParseFeedWithDublinCoreChannelLanguage(t *testing.T) {
+	data := `<?xml version="1.0" encoding="utf-8"?>
+		<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+		<channel>
+			<title>Example</title>
+			<link>https://example.org/</link>
+			<dc:language>fr-FR</dc:language>
+			<item>
+				<title>Item</title>
+				<link>https://example.org/item</link>
+			</item>
+		</channel>
+		</rss>`
+
+	feed, err := Parse("https://example.org/", bytes.NewReader([]byte(data)))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if feed.Language != "fr-fr" {
+		t.Errorf("Incorrect feed language, got: %q", feed.Language)
+	}
+}
+
+func TestParseItemWithoutDublinCoreLanguageInheritsChannelLanguage(t *testing.T) {
+	data := `<?xml version="1.0" encoding="utf-8"?>
+		<rss version="2.0">
+		<channel>
+			<title>Example</title>
+			<link>https://example.org/</link>
+			<language>en-US</language>
+			<item>
+				<title>Item</title>
+				<link>https://example.org/item</link>
+			</item>
+		</channel>
+		</rss>`
+
+	feed, err := Parse("https://example.org/", bytes.NewReader([]byte(data)))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(feed.Entries) != 1 {
+		t.Fatalf("Expected 1 entry, got: %d", len(feed.Entries))
+	}
+
+	if feed.Entries[0].Language != "en-us" {
+		t.Errorf("Expected entry to inherit channel language, got: %q", feed.Entries[0].Language)
+	}
+}

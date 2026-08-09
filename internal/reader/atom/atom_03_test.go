@@ -294,3 +294,47 @@ func TestParseAtom03WithBase64Content(t *testing.T) {
 		t.Errorf("Incorrect entry content, got: %s", feed.Entries[0].Content)
 	}
 }
+
+func TestParseAtom03WithLanguage(t *testing.T) {
+	data := `<?xml version="1.0" encoding="utf-8"?>
+	<feed version="0.3" xmlns="http://purl.org/atom/ns#" xmlns:foo="http://example.org/ns" xml:lang="fr-CA" foo:lang="zz">
+		<title>dive into mark</title>
+		<link rel="alternate" type="text/html" href="http://diveintomark.org/"/>
+		<modified>2003-12-13T18:30:02Z</modified>
+		<entry xml:lang="pt-BR" foo:lang="zz">
+			<title>Atom 0.3 snapshot</title>
+			<link rel="alternate" type="text/html" href="http://diveintomark.org/2003/12/13/atom03"/>
+			<id>tag:diveintomark.org,2003:3.2397</id>
+			<issued>2003-12-13T08:29:29-04:00</issued>
+			<modified>2003-12-13T18:30:02Z</modified>
+		</entry>
+		<entry>
+			<title>Atom 0.3 second snapshot</title>
+			<link rel="alternate" type="text/html" href="http://diveintomark.org/2003/12/14/atom03"/>
+			<id>tag:diveintomark.org,2003:3.2398</id>
+			<issued>2003-12-14T08:29:29-04:00</issued>
+			<modified>2003-12-14T18:30:02Z</modified>
+		</entry>
+	</feed>`
+
+	feed, err := Parse("http://diveintomark.org/atom.xml", bytes.NewReader([]byte(data)), "0.3")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if feed.Language != "fr-ca" {
+		t.Errorf("Incorrect language, got: %q", feed.Language)
+	}
+
+	if len(feed.Entries) != 2 {
+		t.Fatalf("Expected 2 entries, got: %d", len(feed.Entries))
+	}
+
+	if feed.Entries[0].Language != "pt-br" {
+		t.Errorf("Incorrect entry language, got: %q", feed.Entries[0].Language)
+	}
+
+	if feed.Entries[1].Language != "fr-ca" {
+		t.Errorf("Expected entry to inherit feed language, got: %q", feed.Entries[1].Language)
+	}
+}

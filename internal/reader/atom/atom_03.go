@@ -13,6 +13,12 @@ import (
 type atom03Feed struct {
 	Version string `xml:"version,attr"`
 
+	// Language is the natural language of the feed, declared by an
+	// xml:lang attribute on the atom:feed element. The tag is
+	// namespace-qualified so that lang attributes from other namespaces
+	// cannot override the real xml:lang value.
+	Language string `xml:"http://www.w3.org/XML/1998/namespace lang,attr"`
+
 	// The "atom:id" element's content conveys a permanent, globally unique identifier for the feed.
 	// It MUST NOT change over time, even if the feed is relocated. atom:feed elements MAY contain an atom:id element,
 	// but MUST NOT contain more than one. The content of this element, when present, MUST be a URI.
@@ -46,6 +52,12 @@ type atom03Entry struct {
 	// It MUST NOT change over time, even if other representations of the entry (such as a web representation pointed to by the entry's atom:link element) are relocated.
 	// If the same entry is syndicated in two atom:feeds published by the same entity, the entry's atom:id MUST be the same in both feeds.
 	ID string `xml:"id"`
+
+	// Language is the natural language of the entry, declared by an
+	// xml:lang attribute on the atom:entry element. The tag is
+	// namespace-qualified so that lang attributes from other namespaces
+	// cannot override the real xml:lang value.
+	Language string `xml:"http://www.w3.org/XML/1998/namespace lang,attr"`
 
 	// The "atom:title" element is a Content construct that conveys a human-readable title for the entry.
 	// atom:entry elements MUST have exactly one "atom:title" element.

@@ -4,12 +4,14 @@
 package dublincore // import "miniflux.app/v2/internal/reader/dublincore"
 
 type DublinCoreChannelElement struct {
-	DublinCoreCreator string `xml:"http://purl.org/dc/elements/1.1/ creator"`
+	DublinCoreCreator  string `xml:"http://purl.org/dc/elements/1.1/ creator"`
+	DublinCoreLanguage string `xml:"http://purl.org/dc/elements/1.1/ language"`
 }
 
 type DublinCoreItemElement struct {
-	DublinCoreTitle   string `xml:"http://purl.org/dc/elements/1.1/ title"`
-	DublinCoreDate    string `xml:"http://purl.org/dc/elements/1.1/ date"`
-	DublinCoreCreator string `xml:"http://purl.org/dc/elements/1.1/ creator"`
-	DublinCoreContent string `xml:"http://purl.org/rss/1.0/modules/content/ encoded"`
+	DublinCoreTitle    string `xml:"http://purl.org/dc/elements/1.1/ title"`
+	DublinCoreDate     string `xml:"http://purl.org/dc/elements/1.1/ date"`
+	DublinCoreCreator  string `xml:"http://purl.org/dc/elements/1.1/ creator"`
+	DublinCoreContent  string `xml:"http://purl.org/rss/1.0/modules/content/ encoded"`
+	DublinCoreLanguage string `xml:"http://purl.org/dc/elements/1.1/ language"`
 }
