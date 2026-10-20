@@ -21,7 +21,10 @@ func TestParseRules(t *testing.T) {
 		{name: "remove", args: []string{".spam, .ads:not(.keep)"}},
 	}
 
-	actual := parseRules(rulesText)
+	actual, errs := parseRules(rulesText)
+	if len(errs) != 0 {
+		t.Errorf(`Unexpected errors while parsing rules: %v`, errs)
+	}
 
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf(`Parsed rules do not match expected rules: got %v instead of %v`, actual, expected)
@@ -123,6 +126,26 @@ func TestRewriteIncorrectYoutubeLink(t *testing.T) {
 
 	if !reflect.DeepEqual(testEntry, controlEntry) {
 		t.Errorf(`Not expected output: got "%+v" instead of "%+v"`, testEntry, controlEntry)
+	}
+}
+
+func TestRewriteYoutubeLinkRejectsLookalikeDomain(t *testing.T) {
+	config.Opts = config.NewConfigOptions()
+
+	controlEntry := &model.Entry{
+		URL:     "https://notyoutube.com/watch?v=1234",
+		Title:   `A title`,
+		Content: `Video Description`,
+	}
+	testEntry := &model.Entry{
+		URL:     "https://notyoutube.com/watch?v=1234",
+		Title:   `A title`,
+		Content: `Video Description`,
+	}
+	ApplyContentRewriteRules(testEntry, `add_youtube_video`)
+
+	if !reflect.DeepEqual(testEntry, controlEntry) {
+		t.Errorf(`A domain that merely ends in "youtube.com" must not be treated as YouTube: got "%+v" instead of "%+v"`, testEntry, controlEntry)
 	}
 }
 

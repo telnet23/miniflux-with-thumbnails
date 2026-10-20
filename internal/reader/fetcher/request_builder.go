@@ -15,12 +15,15 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
 	"miniflux.app/v2/internal/config"
 	"miniflux.app/v2/internal/proxyrotator"
 	"miniflux.app/v2/internal/urllib"
+
+	"golang.org/x/net/http/httpproxy"
 )
 
 const (
@@ -31,6 +34,15 @@ const (
 var (
 	ErrHostnameResolution = errors.New("fetcher: unable to resolve request hostname")
 	ErrPrivateNetworkHost = errors.New("fetcher: refusing to access private network host")
+)
+
+type proxySource int
+
+const (
+	proxySourceNone proxySource = iota
+	proxySourceFeed
+	proxySourceApplication
+	proxySourceRotator
 )
 
 type RequestBuilder struct {
@@ -151,6 +163,7 @@ func (r *RequestBuilder) WithoutCompression() *RequestBuilder {
 
 func (r *RequestBuilder) ExecuteRequest(requestURL string) (*http.Response, error) {
 	var clientProxyURL *url.URL
+	proxySource := proxySourceNone
 
 	switch {
 	case r.feedProxyURL != "":
@@ -159,10 +172,13 @@ func (r *RequestBuilder) ExecuteRequest(requestURL string) (*http.Response, erro
 		if err != nil {
 			return nil, fmt.Errorf(`fetcher: invalid feed proxy URL %q: %w`, r.feedProxyURL, err)
 		}
+		proxySource = proxySourceFeed
 	case r.useClientProxy && r.clientProxyURL != nil:
 		clientProxyURL = r.clientProxyURL
+		proxySource = proxySourceApplication
 	case r.proxyRotator != nil && r.proxyRotator.HasProxies():
 		clientProxyURL = r.proxyRotator.GetNextProxy()
+		proxySource = proxySourceRotator
 	}
 
 	directDialer := &net.Dialer{
@@ -175,7 +191,16 @@ func (r *RequestBuilder) ExecuteRequest(requestURL string) (*http.Response, erro
 		KeepAlive: 15 * time.Second, // Default is 30s.
 	}
 
-	proxyDialAddress := normalizeProxyDialAddress(clientProxyURL)
+	// The proxy is resolved with httpproxy rather than http.ProxyFromEnvironment,
+	// which caches the environment on first use. Routing and the trusted hop below
+	// are then decided by the same call.
+	envProxyFunc := httpproxy.FromEnvironment().ProxyFunc()
+
+	trustedProxies := &trustedProxyAddresses{}
+	allowPrivateFeedProxy := config.Opts != nil && config.Opts.FetcherAllowPrivateFeedProxy()
+	if proxySource != proxySourceFeed || allowPrivateFeedProxy {
+		trustedProxies.add(clientProxyURL)
+	}
 
 	// Perform the private-network check inside the dialer's Control callback,
 	// which fires after DNS resolution but before the TCP connection is made.
@@ -199,7 +224,14 @@ func (r *RequestBuilder) ExecuteRequest(requestURL string) (*http.Response, erro
 	}
 
 	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+		Proxy: func(req *http.Request) (*url.URL, error) {
+			proxyURL, err := envProxyFunc(req.URL)
+			if err == nil {
+				trustedProxies.add(proxyURL)
+			}
+
+			return proxyURL, err
+		},
 		// Setting `DialContext` disables HTTP/2, this option forces the transport to try HTTP/2 regardless.
 		ForceAttemptHTTP2: true,
 		MaxIdleConns:      50,               // Default is 100.
@@ -207,11 +239,11 @@ func (r *RequestBuilder) ExecuteRequest(requestURL string) (*http.Response, erro
 	}
 
 	transport.DialContext = directDialer.DialContext
-	if !allowPrivateNetworks && proxyDialAddress != "" {
+	if !allowPrivateNetworks {
 		// Explicitly configured proxies are a trusted hop. Keep the private-network
 		// check for direct requests and redirects, but allow the connection to the proxy itself.
 		transport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-			if normalizeDialAddress(addr) == proxyDialAddress {
+			if trustedProxies.contains(normalizeDialAddress(addr)) {
 				return proxyDialer.DialContext(ctx, network, addr)
 			}
 
@@ -321,4 +353,33 @@ func normalizeProxyDialAddress(proxyURL *url.URL) string {
 	}
 
 	return net.JoinHostPort(strings.ToLower(proxyURL.Hostname()), port)
+}
+
+// trustedProxyAddresses holds the dial addresses of the proxies used for a
+// request. The proxy taken from the environment is resolved per request URL, so
+// a redirect can select a different proxy than the initial request did.
+type trustedProxyAddresses struct {
+	mu        sync.Mutex
+	addresses []string
+}
+
+func (p *trustedProxyAddresses) add(proxyURL *url.URL) {
+	address := normalizeProxyDialAddress(proxyURL)
+	if address == "" {
+		return
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if !slices.Contains(p.addresses, address) {
+		p.addresses = append(p.addresses, address)
+	}
+}
+
+func (p *trustedProxyAddresses) contains(address string) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	return slices.Contains(p.addresses, address)
 }

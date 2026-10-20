@@ -285,6 +285,10 @@ When set to true, the username/password form is hidden from
 the login screen, and the options to change username/password
 or unlink OAuth2 account are hidden from the settings page.
 .br
+Password authentication is also rejected by the login form and
+by the REST API HTTP Basic Authentication, and passwords can no
+longer be changed. API clients must use an API key instead.
+.br
 This option requires an alternative authentication source
 such as OAuth2 or auth proxy\&.
 .br
@@ -301,6 +305,11 @@ Default is false (The internal scheduler service is enabled)\&.
 Set to 1 to allow outgoing fetcher requests to private or loopback networks\&.
 .br
 Disabled by default, private networks are refused\&.
+.TP
+.B FETCHER_ALLOW_PRIVATE_FEED_PROXY
+Set to 1 to allow feed proxy URLs to use private or loopback network addresses\&.
+.br
+Disabled by default\&. This option applies to all authenticated users and should only be enabled when the private proxy boundary is trusted\&.
 .TP
 .B FETCH_BILIBILI_WATCH_TIME
 Set the value to 1 to scrape video duration from Bilibili website and
@@ -391,6 +400,10 @@ Default is empty\&.
 Address to listen on.
 Use absolute path to listen on Unix socket
 (/var/run/miniflux.sock)\&.
+.br
+When Miniflux creates the socket itself, it uses mode \fB0660\fR\&.
+.br
+This mode is hardcoded and cannot be configured\&.
 .br
 Multiple addresses can be specified, separated by commas.
 For example: 127.0.0.1:8080, 127.0.0.1:8081\&.

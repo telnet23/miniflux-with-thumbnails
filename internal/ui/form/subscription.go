@@ -14,12 +14,8 @@ import (
 
 // SubscriptionForm represents the subscription form.
 type SubscriptionForm struct {
-	URL                         string
 	CategoryID                  int64
-	Crawler                     bool
-	IgnoreEntryUpdates          bool
-	FetchViaProxy               bool
-	AllowSelfSignedCertificates bool
+	URL                         string
 	UserAgent                   string
 	Cookie                      string
 	Username                    string
@@ -31,8 +27,12 @@ type SubscriptionForm struct {
 	KeeplistRules               string
 	BlockFilterEntryRules       string
 	KeepFilterEntryRules        string
-	DisableHTTP2                bool
 	ProxyURL                    string
+	DisableHTTP2                bool
+	Crawler                     bool
+	IgnoreEntryUpdates          bool
+	FetchViaProxy               bool
+	AllowSelfSignedCertificates bool
 }
 
 // Validate makes sure the form values locale.are valid.
@@ -53,8 +53,12 @@ func (s *SubscriptionForm) Validate() *locale.LocalizedError {
 		return locale.NewLocalizedError("error.feed_invalid_keeplist_rule")
 	}
 
-	if !validator.IsValidRegex(s.UrlRewriteRules) {
+	if !validator.IsValidURLRewriteRules(s.UrlRewriteRules) {
 		return locale.NewLocalizedError("error.feed_invalid_urlrewrite_rule")
+	}
+
+	if err := validator.IsValidRewriteRules(s.RewriteRules); err != nil {
+		return err
 	}
 
 	if s.ProxyURL != "" && !urllib.IsValidProxyURL(s.ProxyURL) {

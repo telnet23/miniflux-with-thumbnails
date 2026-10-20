@@ -63,7 +63,7 @@ func (s *Storage) GoogleReaderUserCheckPassword(username, password string) error
 		FROM
 			integrations
 		WHERE
-			integrations.googlereader_enabled='t' AND integrations.googlereader_username=$1
+			integrations.googlereader_enabled='t' AND integrations.googlereader_username=$1 AND integrations.googlereader_password <> ''
 	`
 
 	err := s.db.QueryRow(query, username).Scan(&hash)
@@ -93,7 +93,7 @@ func (s *Storage) GoogleReaderUserGetIntegration(username string) (*model.Integr
 		FROM
 			integrations
 		WHERE
-			integrations.googlereader_enabled='t' AND integrations.googlereader_username=$1
+			integrations.googlereader_enabled='t' AND integrations.googlereader_username=$1 AND integrations.googlereader_password <> ''
 	`
 
 	err := s.db.QueryRow(query, username).Scan(&integration.UserID, &integration.GoogleReaderEnabled, &integration.GoogleReaderUsername, &integration.GoogleReaderPassword)
@@ -231,7 +231,11 @@ func (s *Storage) Integration(userID int64) (*model.Integration, error) {
 			linktaco_org_slug,
 			linktaco_tags,
 			linktaco_visibility,
-			archiveorg_enabled
+			archiveorg_enabled,
+			gotify_enabled,
+			gotify_url,
+			gotify_token,
+			gotify_priority
 		FROM
 			integrations
 		WHERE
@@ -361,6 +365,10 @@ func (s *Storage) Integration(userID int64) (*model.Integration, error) {
 		&integration.LinktacoTags,
 		&integration.LinktacoVisibility,
 		&integration.ArchiveorgEnabled,
+		&integration.GotifyEnabled,
+		&integration.GotifyURL,
+		&integration.GotifyToken,
+		&integration.GotifyPriority,
 	)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -498,9 +506,13 @@ func (s *Storage) UpdateIntegration(integration *model.Integration) error {
 			linktaco_visibility=$118,
 			archiveorg_enabled=$119,
 			linkwarden_collection_id=$120,
-			readeck_push_enabled=$121
+			readeck_push_enabled=$121,
+			gotify_enabled=$122,
+			gotify_url=$123,
+			gotify_token=$124,
+			gotify_priority=$125
 		WHERE
-			user_id=$122
+			user_id=$126
 	`
 	_, err := s.db.Exec(
 		query,
@@ -625,6 +637,10 @@ func (s *Storage) UpdateIntegration(integration *model.Integration) error {
 		integration.ArchiveorgEnabled,
 		integration.LinkwardenCollectionID,
 		integration.ReadeckPushEnabled,
+		integration.GotifyEnabled,
+		integration.GotifyURL,
+		integration.GotifyToken,
+		integration.GotifyPriority,
 		integration.UserID,
 	)
 

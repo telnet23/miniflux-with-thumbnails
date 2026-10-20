@@ -37,17 +37,17 @@ const (
 
 type configValue struct {
 	parsedStringValue string
-	parsedBoolValue   bool
 	parsedIntValue    int
 	parsedInt64Value  int64
 	parsedDuration    time.Duration
 	parsedStringList  []string
 	parsedURLValue    *url.URL
 	parsedBytesValue  []byte
+	parsedBoolValue   bool
 
+	secret    bool
 	rawValue  string
 	valueType configValueType
-	secret    bool
 	targetKey string
 
 	validator func(string) error
@@ -221,6 +221,11 @@ func NewConfigOptions() *configOptions {
 				valueType:       boolType,
 			},
 			"FETCHER_ALLOW_PRIVATE_NETWORKS": {
+				parsedBoolValue: false,
+				rawValue:        "0",
+				valueType:       boolType,
+			},
+			"FETCHER_ALLOW_PRIVATE_FEED_PROXY": {
 				parsedBoolValue: false,
 				rawValue:        "0",
 				valueType:       boolType,
@@ -805,6 +810,10 @@ func (c *configOptions) HTTPS() bool {
 
 func (c *configOptions) FetcherAllowPrivateNetworks() bool {
 	return c.options["FETCHER_ALLOW_PRIVATE_NETWORKS"].parsedBoolValue
+}
+
+func (c *configOptions) FetcherAllowPrivateFeedProxy() bool {
+	return c.options["FETCHER_ALLOW_PRIVATE_FEED_PROXY"].parsedBoolValue
 }
 
 func (c *configOptions) IntegrationAllowPrivateNetworks() bool {

@@ -1508,6 +1508,56 @@ func TestCannotCreateDuplicatedFeed(t *testing.T) {
 	}
 }
 
+func TestFeedCreationWithoutCategoryReturnsBadRequest(t *testing.T) {
+	t.Parallel()
+
+	testConfig := newIntegrationTestConfig()
+	if !testConfig.isConfigured() {
+		t.Skip(skipIntegrationTestsMessage)
+	}
+
+	adminClient := miniflux.NewClient(testConfig.testBaseURL, testConfig.testAdminUsername, testConfig.testAdminPassword)
+
+	regularTestUser, err := adminClient.CreateUser(testConfig.genRandomUsername(), testConfig.testRegularPassword, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer adminClient.DeleteUser(regularTestUser.ID)
+
+	regularUserClient := miniflux.NewClient(testConfig.testBaseURL, regularTestUser.Username, testConfig.testRegularPassword)
+	categories, err := regularUserClient.Categories()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, category := range categories {
+		if err := regularUserClient.DeleteCategory(category.ID); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	t.Run("REST API", func(t *testing.T) {
+		_, err := regularUserClient.CreateFeed(&miniflux.FeedCreationRequest{FeedURL: testConfig.testFeedURL})
+		if !errors.Is(err, miniflux.ErrBadRequest) {
+			t.Fatalf(`Expected a bad request error, got %v`, err)
+		}
+	})
+
+	t.Run("OPML import", func(t *testing.T) {
+		data := `<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+    <body>
+        <outline title="Test" text="Test" xmlUrl="` + testConfig.testFeedURL + `"></outline>
+    </body>
+</opml>`
+
+		err := regularUserClient.Import(io.NopCloser(bytes.NewReader([]byte(data))))
+		if !errors.Is(err, miniflux.ErrBadRequest) {
+			t.Fatalf(`Expected a bad request error, got %v`, err)
+		}
+	})
+}
+
 func TestCreateFeedWithInexistingCategory(t *testing.T) {
 	t.Parallel()
 
@@ -1786,6 +1836,123 @@ func TestUpdateFeedWithInvalidCategory(t *testing.T) {
 
 	if _, err := regularUserClient.UpdateFeed(feedID, feedUpdateRequest); err == nil {
 		t.Fatalf(`Updating a feed with an inexisting category should raise an error`)
+	}
+}
+
+func TestCreateFeedWithInvalidRewriteRules(t *testing.T) {
+	testConfig := newIntegrationTestConfig()
+	if !testConfig.isConfigured() {
+		t.Skip(skipIntegrationTestsMessage)
+	}
+
+	adminClient := miniflux.NewClient(testConfig.testBaseURL, testConfig.testAdminUsername, testConfig.testAdminPassword)
+
+	regularTestUser, err := adminClient.CreateUser(testConfig.genRandomUsername(), testConfig.testRegularPassword, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer adminClient.DeleteUser(regularTestUser.ID)
+
+	regularUserClient := miniflux.NewClient(testConfig.testBaseURL, regularTestUser.Username, testConfig.testRegularPassword)
+
+	// Missing the second backslash in the search term makes this an invalid Go
+	// string literal, which the rewrite rule parser must reject.
+	_, err = regularUserClient.CreateFeed(&miniflux.FeedCreationRequest{
+		FeedURL:      testConfig.testFeedURL,
+		RewriteRules: `replace("\d+"|"x")`,
+	})
+	if err == nil {
+		t.Fatalf(`Creating a feed with a malformed rewrite rule should raise an error`)
+	}
+}
+
+func TestUpdateFeedWithInvalidRewriteRules(t *testing.T) {
+	testConfig := newIntegrationTestConfig()
+	if !testConfig.isConfigured() {
+		t.Skip(skipIntegrationTestsMessage)
+	}
+
+	adminClient := miniflux.NewClient(testConfig.testBaseURL, testConfig.testAdminUsername, testConfig.testAdminPassword)
+
+	regularTestUser, err := adminClient.CreateUser(testConfig.genRandomUsername(), testConfig.testRegularPassword, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer adminClient.DeleteUser(regularTestUser.ID)
+
+	regularUserClient := miniflux.NewClient(testConfig.testBaseURL, regularTestUser.Username, testConfig.testRegularPassword)
+
+	feedID, err := regularUserClient.CreateFeed(&miniflux.FeedCreationRequest{
+		FeedURL: testConfig.testFeedURL,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	feedUpdateRequest := &miniflux.FeedModificationRequest{
+		RewriteRules: new(`replace("\d+"|"x")`),
+	}
+
+	if _, err := regularUserClient.UpdateFeed(feedID, feedUpdateRequest); err == nil {
+		t.Fatalf(`Updating a feed with a malformed rewrite rule should raise an error`)
+	}
+}
+
+func TestCreateFeedWithInvalidURLRewriteRules(t *testing.T) {
+	testConfig := newIntegrationTestConfig()
+	if !testConfig.isConfigured() {
+		t.Skip(skipIntegrationTestsMessage)
+	}
+
+	adminClient := miniflux.NewClient(testConfig.testBaseURL, testConfig.testAdminUsername, testConfig.testAdminPassword)
+
+	regularTestUser, err := adminClient.CreateUser(testConfig.genRandomUsername(), testConfig.testRegularPassword, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer adminClient.DeleteUser(regularTestUser.ID)
+
+	regularUserClient := miniflux.NewClient(testConfig.testBaseURL, regularTestUser.Username, testConfig.testRegularPassword)
+
+	// "[" is an unterminated character class and therefore an invalid regexp.
+	_, err = regularUserClient.CreateFeed(&miniflux.FeedCreationRequest{
+		FeedURL:         testConfig.testFeedURL,
+		UrlRewriteRules: "[",
+	})
+	if err == nil {
+		t.Fatalf(`Creating a feed with an invalid URL rewrite rule should raise an error`)
+	}
+}
+
+func TestUpdateFeedWithInvalidURLRewriteRules(t *testing.T) {
+	testConfig := newIntegrationTestConfig()
+	if !testConfig.isConfigured() {
+		t.Skip(skipIntegrationTestsMessage)
+	}
+
+	adminClient := miniflux.NewClient(testConfig.testBaseURL, testConfig.testAdminUsername, testConfig.testAdminPassword)
+
+	regularTestUser, err := adminClient.CreateUser(testConfig.genRandomUsername(), testConfig.testRegularPassword, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer adminClient.DeleteUser(regularTestUser.ID)
+
+	regularUserClient := miniflux.NewClient(testConfig.testBaseURL, regularTestUser.Username, testConfig.testRegularPassword)
+
+	feedID, err := regularUserClient.CreateFeed(&miniflux.FeedCreationRequest{
+		FeedURL: testConfig.testFeedURL,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	feedUpdateRequest := &miniflux.FeedModificationRequest{
+		UrlRewriteRules: new("["),
+	}
+
+	if _, err := regularUserClient.UpdateFeed(feedID, feedUpdateRequest); err == nil {
+		t.Fatalf(`Updating a feed with an invalid URL rewrite rule should raise an error`)
 	}
 }
 
