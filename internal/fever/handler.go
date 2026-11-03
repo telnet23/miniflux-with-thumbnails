@@ -250,23 +250,22 @@ func (h *feverHandler) handleItems(w http.ResponseWriter, r *http.Request) {
 				slog.Int64("since_id", sinceID),
 			)
 			builder = builder.AfterEntryID(sinceID)
-			builder = builder.WithSorting("id", "ASC")
 		}
+		builder = builder.WithSorting("id", "ASC")
 	case request.HasQueryParam(r, "max_id"):
 		maxID := request.QueryInt64Param(r, "max_id", 0)
-		if maxID == 0 {
-			slog.Debug("[Fever] Fetching most recent items",
-				slog.Int64("user_id", userID),
-			)
-			builder = builder.WithSorting("id", "DESC")
-		} else if maxID > 0 {
+		if maxID > 0 {
 			slog.Debug("[Fever] Fetching items before a given item ID",
 				slog.Int64("user_id", userID),
 				slog.Int64("max_id", maxID),
 			)
 			builder = builder.BeforeEntryID(maxID)
-			builder = builder.WithSorting("id", "DESC")
+		} else {
+			slog.Debug("[Fever] Fetching most recent items",
+				slog.Int64("user_id", userID),
+			)
 		}
+		builder = builder.WithSorting("id", "DESC")
 	case request.HasQueryParam(r, "with_ids"):
 		csvItemIDs := request.QueryStringParam(r, "with_ids", "")
 		if csvItemIDs != "" {
@@ -280,10 +279,12 @@ func (h *feverHandler) handleItems(w http.ResponseWriter, r *http.Request) {
 
 			builder = builder.WithEntryIDs(itemIDs...)
 		}
+		builder = builder.WithSorting("id", "ASC")
 	default:
 		slog.Debug("[Fever] Fetching oldest items",
 			slog.Int64("user_id", userID),
 		)
+		builder = builder.WithSorting("id", "ASC")
 	}
 
 	entries, err := builder.GetEntries()
@@ -444,7 +445,11 @@ func (h *feverHandler) handleWriteItems(w http.ResponseWriter, r *http.Request) 
 			slog.Int64("user_id", userID),
 			slog.Int64("entry_id", entryID),
 		)
-		if err := h.store.ToggleStarred(userID, entryID); err != nil {
+		if entry.Starred {
+			break
+		}
+
+		if err := h.store.SetEntriesStarredState(userID, []int64{entryID}, true); err != nil {
 			response.JSONServerError(w, r, err)
 			return
 		}
@@ -463,7 +468,11 @@ func (h *feverHandler) handleWriteItems(w http.ResponseWriter, r *http.Request) 
 			slog.Int64("user_id", userID),
 			slog.Int64("entry_id", entryID),
 		)
-		if err := h.store.ToggleStarred(userID, entryID); err != nil {
+		if !entry.Starred {
+			break
+		}
+
+		if err := h.store.SetEntriesStarredState(userID, []int64{entryID}, false); err != nil {
 			response.JSONServerError(w, r, err)
 			return
 		}
@@ -516,14 +525,22 @@ func (h *feverHandler) handleWriteGroups(w http.ResponseWriter, r *http.Request)
 	}
 
 	var err error
+	beforeTimestamp := request.FormInt64Value(r, "before")
+	before := time.Unix(beforeTimestamp, 0)
 
-	if groupID == 0 {
+	switch {
+	case groupID == 0 && beforeTimestamp <= 0:
 		err = h.store.MarkAllAsRead(userID)
 		slog.Debug("[Fever] Mark all items as read",
 			slog.Int64("user_id", userID),
 		)
-	} else {
-		before := time.Unix(request.FormInt64Value(r, "before"), 0)
+	case groupID == 0:
+		err = h.store.MarkAllAsReadBeforeDate(userID, before)
+		slog.Debug("[Fever] Mark all items as read before a given date",
+			slog.Int64("user_id", userID),
+			slog.Time("before_ts", before),
+		)
+	default:
 		err = h.store.MarkCategoryAsRead(userID, groupID, before)
 		slog.Debug("[Fever] Mark group as read before a given date",
 			slog.Int64("user_id", userID),

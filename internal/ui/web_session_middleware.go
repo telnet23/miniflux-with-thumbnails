@@ -36,14 +36,31 @@ func (m *webSessionMiddleware) handle(next http.Handler) http.Handler {
 			response.HTMLServerError(w, r, err)
 			return
 		}
+		persisted := session != nil
 		if session == nil {
-			var secret string
-			session, secret = model.NewWebSession(r.UserAgent(), request.ClientIP(r))
-			if err := m.store.CreateWebSession(session); err != nil {
-				response.HTMLServerError(w, r, err)
+			// Visitors without a session are sent to the login page and have
+			// nothing to remember yet, so don't persist a session for them.
+			if !isPublicRoute(r) {
+				response.HTMLRedirect(w, r, loginRedirectURL(m.basePath, r.RequestURI))
 				return
 			}
-			setSessionCookie(w, session, secret)
+
+			var secret string
+			session, secret = model.NewWebSession(r.UserAgent(), request.ClientIP(r))
+			if language, theme, ok := preferencesFromCookie(r); ok {
+				session.SeedPreferences(language, theme)
+			}
+
+			// Other public routes either only render pages or expect a session
+			// started earlier, so an in-memory session is enough for them.
+			if isSessionStartRoute(r) {
+				if err := m.store.CreateWebSession(session); err != nil {
+					response.HTMLServerError(w, r, err)
+					return
+				}
+				setSessionCookie(w, session, secret)
+				persisted = true
+			}
 		}
 
 		ctx := context.WithValue(r.Context(), request.WebSessionContextKey, session)
@@ -56,7 +73,7 @@ func (m *webSessionMiddleware) handle(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 
-		if session.IsDirty() {
+		if persisted && session.IsDirty() {
 			if err := m.store.UpdateWebSession(session); err != nil {
 				slog.Error("Unable to persist web session changes",
 					slog.String("session_id", session.ID),

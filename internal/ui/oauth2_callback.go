@@ -8,6 +8,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"slices"
 
 	"miniflux.app/v2/internal/config"
 	"miniflux.app/v2/internal/http/request"
@@ -82,7 +83,7 @@ func (h *handler) oauth2Callback(w http.ResponseWriter, r *http.Request) {
 				slog.String("oauth2_profile_id", profile.ID),
 			)
 			sess.SetErrorMessage(printer.Print("error.duplicate_linked_account"))
-			response.HTMLRedirect(w, r, h.routePath("/settings"))
+			response.HTMLRedirect(w, r, h.routePath("/authentication"))
 			return
 		}
 
@@ -95,7 +96,7 @@ func (h *handler) oauth2Callback(w http.ResponseWriter, r *http.Request) {
 				slog.String("new_profile_id", profile.ID),
 			)
 			sess.SetErrorMessage(printer.Print("error.duplicate_linked_account"))
-			response.HTMLRedirect(w, r, h.routePath("/settings"))
+			response.HTMLRedirect(w, r, h.routePath("/authentication"))
 			return
 		}
 
@@ -106,7 +107,7 @@ func (h *handler) oauth2Callback(w http.ResponseWriter, r *http.Request) {
 		}
 
 		sess.SetSuccessMessage(printer.Print("alert.account_linked"))
-		response.HTMLRedirect(w, r, h.routePath("/settings"))
+		response.HTMLRedirect(w, r, h.routePath("/authentication"))
 		return
 	}
 
@@ -115,6 +116,11 @@ func (h *handler) oauth2Callback(w http.ResponseWriter, r *http.Request) {
 		response.HTMLServerError(w, r, err)
 		return
 	}
+
+	groupClaim := config.Opts.Oauth2GroupClaim()
+	adminGroup := config.Opts.Oauth2AdminGroup()
+	adminRoleMappingEnabled := provider == "oidc" && groupClaim != "" && adminGroup != ""
+	isAdmin := adminRoleMappingEnabled && slices.Contains(profile.Groups, adminGroup)
 
 	if user == nil {
 		if !config.Opts.IsOAuth2UserCreationAllowed() {
@@ -127,7 +133,7 @@ func (h *handler) oauth2Callback(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		userCreationRequest := &model.UserCreationRequest{Username: profile.Username}
+		userCreationRequest := &model.UserCreationRequest{Username: profile.Username, IsAdmin: isAdmin}
 		authProvider.PopulateUserCreationWithProfileID(userCreationRequest, profile)
 
 		user, err = h.store.CreateUser(userCreationRequest)
@@ -144,6 +150,21 @@ func (h *handler) oauth2Callback(w http.ResponseWriter, r *http.Request) {
 		slog.Int64("user_id", user.ID),
 		slog.String("username", user.Username),
 	)
+
+	if adminRoleMappingEnabled && user.IsAdmin != isAdmin {
+		user.IsAdmin = isAdmin
+		if err := h.store.UpdateUser(user); err != nil {
+			response.HTMLServerError(w, r, err)
+			return
+		}
+
+		slog.Info("Updated admin role from OIDC group membership",
+			slog.Int64("user_id", user.ID),
+			slog.String("username", user.Username),
+			slog.Bool("is_admin", isAdmin),
+			slog.String("admin_group", adminGroup),
+		)
+	}
 
 	h.store.SetLastLogin(user.ID)
 	if err := authenticateWebSession(w, r, h.store, user); err != nil {

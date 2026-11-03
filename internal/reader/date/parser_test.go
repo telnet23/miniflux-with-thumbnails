@@ -45,6 +45,42 @@ func TestParseAtomDate(t *testing.T) {
 	}
 }
 
+func TestParseAtomDateWithLowerCaseSeparators(t *testing.T) {
+	// RFC 3339 section 5.6 allows "T" and "Z" to be lower case.
+	testCases := map[string]int64{
+		"2003-12-13t18:30:02z":      1071340202,
+		"2003-12-13T18:30:02z":      1071340202,
+		"2003-12-13t18:30:02Z":      1071340202,
+		"1985-04-12t23:20:50.52z":   482196050,
+		"1996-12-19t16:39:57-08:00": 851042397,
+	}
+
+	for input, expectedTS := range testCases {
+		date, err := Parse(input)
+		if err != nil {
+			t.Errorf(`Unable to parse date %q: %v`, input, err)
+			continue
+		}
+
+		if date.Unix() != expectedTS {
+			t.Errorf(`The Unix timestamp for %q should be %v instead of %v`, input, expectedTS, date.Unix())
+		}
+	}
+}
+
+func TestParseAtomDateWithLowerCaseSeparatorsAndSurroundingWhitespace(t *testing.T) {
+	// The separators are looked for at fixed positions, after the input is trimmed.
+	date, err := Parse(" 2003-12-13t18:30:02z\n")
+	if err != nil {
+		t.Fatalf(`Unable to parse date: %v`, err)
+	}
+
+	expectedTS := int64(1071340202)
+	if date.Unix() != expectedTS {
+		t.Errorf(`The Unix timestamp should be %v instead of %v`, expectedTS, date.Unix())
+	}
+}
+
 func TestParseRSSDateTimezone(t *testing.T) {
 	date, err := Parse("Fri, 31 Mar 2023 20:19:00 America/Los_Angeles")
 	if err != nil {
